@@ -1,4 +1,4 @@
-package nl.bioinf.degs.visualisations;
+package main.java.nl.bioinf.dgsea.visualisations;
 
 import nl.bioinf.degs.data_processing.Deg;
 import nl.bioinf.degs.data_processing.EnrichmentResult;
