@@ -1,9 +1,9 @@
 package nl.bioinf.dgsea.visualisations;
 
-import nl.bioinf.degs.data_processing.Deg;
-import nl.bioinf.degs.data_processing.EnrichmentResult;
-import nl.bioinf.degs.data_processing.Pathway;
-import nl.bioinf.degs.data_processing.PathwayGene;
+import nl.bioinf.dgsea.data_processing.Deg;
+import nl.bioinf.dgsea.data_processing.EnrichmentResult;
+import nl.bioinf.dgsea.data_processing.Pathway;
+import nl.bioinf.dgsea.data_processing.PathwayGene;
 import org.w3c.dom.ranges.Range;
 
 import java.util.ArrayList;

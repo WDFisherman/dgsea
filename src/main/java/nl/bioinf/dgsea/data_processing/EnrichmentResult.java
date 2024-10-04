@@ -1,4 +1,4 @@
-package nl.bioinf.degs.data_processing;
+package nl.bioinf.dgsea.data_processing;
 
 public record EnrichmentResult(String pathwayId, double enrichmentScore, double pValue) {
 }

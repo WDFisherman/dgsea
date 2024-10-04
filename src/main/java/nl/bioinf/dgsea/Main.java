@@ -1,4 +1,4 @@
-package nl.bioinf.degs;
+package nl.bioinf.dgsea;
 
 import picocli.CommandLine;
 

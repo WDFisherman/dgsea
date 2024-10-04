@@ -1,8 +1,8 @@
-package nl.bioinf.degs.table_outputs;
+package nl.bioinf.dgsea.table_outputs;
 
-import nl.bioinf.degs.data_processing.Deg;
-import nl.bioinf.degs.data_processing.Pathway;
-import nl.bioinf.degs.data_processing.PathwayGene;
+import nl.bioinf.dgsea.data_processing.Deg;
+import nl.bioinf.dgsea.data_processing.Pathway;
+import nl.bioinf.dgsea.data_processing.PathwayGene;
 
 import java.util.List;
 
