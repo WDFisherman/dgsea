@@ -4,29 +4,40 @@ import nl.bioinf.dgsea.data_processing.Deg;
 import nl.bioinf.dgsea.data_processing.EnrichmentResult;
 import nl.bioinf.dgsea.data_processing.Pathway;
 import nl.bioinf.dgsea.data_processing.PathwayGene;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartUtils;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.CategoryPlot;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.data.category.DefaultCategoryDataset;
 import org.w3c.dom.ranges.Range;
 
+import java.awt.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+
 public class ChartGenerators {
-    public String                   title;
-    public String                   xAxis;
-    public String                   yAxis;
-    public int                      dpi;
-    public String                   colorScheme;
-    public String[]                 colorManual; // Give warning when too few colors are given
-    public double                   dotSize;
-    public float                    dotTransparency;
-    public String                   imageFormat;
-    public String                   outputFilePath;
-    public HashMap<String, Range>   positionRanges;
-    public List<Pathway>            pathways;
-    public List<PathwayGene>        pathwayGenes;
-    public List<Deg>                degs;
-    public List<EnrichmentResult>   enrichmentResults;
-    public int                      maxNPathways;
+    final String                   title;
+    final String                   xAxis;
+    final String                   yAxis;
+    final double                   dpi;
+    final String                   colorScheme;
+    final String[]                 colorManual; // Give warning when too few colors are given
+    final Color                    singleColor;
+    final double                   dotSize;
+    final float                    dotTransparency;
+    final String                   imageFormat;
+    final File                     outputFilePath;
+    final HashMap<String, Range>   positionRanges;
+    final List<Pathway>            pathways;
+    final List<PathwayGene>        pathwayGenes;
+    final List<Deg>                degs;
+    final List<EnrichmentResult>   enrichmentResults;
+    final int                      maxNPathways;
 
 
     public ChartGenerators(Builder builder) {
@@ -36,6 +47,7 @@ public class ChartGenerators {
         dpi                 = builder.dpi;
         colorScheme         = builder.colorScheme;
         colorManual         = builder.colorManual;
+        singleColor         = builder.singleColor;
         dotSize             = builder.dotSize;
         dotTransparency     = builder.dotTransparency;
         imageFormat         = builder.imageFormat;
@@ -56,13 +68,14 @@ public class ChartGenerators {
         private final List<Pathway> pathways;
         private final List<PathwayGene> pathwayGenes;
         private final List<Deg> degs;
-        private final String outputFilePath;
+        private final File outputFilePath;
 
 
 
-        private int                     dpi = 0;
+        private double                  dpi = 0;
         private String                  colorScheme = "virdiris";
         private String[]                colorManual = null;
+        private Color                   singleColor = Color.BLACK;
         private double                  dotSize = 1.0;
         private float                   dotTransparency = 1.0f;
         private String                  imageFormat = "png";
@@ -70,7 +83,7 @@ public class ChartGenerators {
         private List<EnrichmentResult>  enrichmentResults = null;
         private int                     maxNPathways = -1;
 
-        public Builder(String title, String xAxis, String yAxis, List<Pathway> pathways, List<PathwayGene> pathwayGenes, List<Deg> degs, String outputFilePath) {
+        public Builder(String title, String xAxis, String yAxis, List<Pathway> pathways, List<PathwayGene> pathwayGenes, List<Deg> degs, File outputFilePath) {
             this.title              = title;
             this.xAxis              = xAxis;
             this.yAxis              = yAxis;
@@ -84,13 +97,14 @@ public class ChartGenerators {
             { positionRanges = val; return this; }
         public Builder enrichmentResults(ArrayList<EnrichmentResult> val)
         { enrichmentResults = val; return this; }
-        public Builder dpi(int val) { dpi = val; return this; }
-        public Builder colorScheme(String val) { colorScheme = val; return this; }
-        public Builder colorManual(String[] val) { colorManual = val; return this; }
-        public Builder dotSize(double val) { dotSize = val; return this; }
-        public Builder dotTransparency(float val) { dotTransparency = val; return this; }
-        public Builder imageFormat(String val) { imageFormat = val; return this; }
-        public Builder maxNPathways(int val) { maxNPathways = val; return this; }
+        public void dpi(double val) { dpi = val; }
+        public void colorScheme(String val) { colorScheme = val; }
+        public void colorManual(String[] val) { colorManual = val; }
+        public void singleColor(Color val) { singleColor = val; }
+        public void dotSize(double val) { dotSize = val; }
+        public void dotTransparency(float val) { dotTransparency = val; }
+        public void imageFormat(String val) { imageFormat = val; }
+        public void maxNPathways(int val) { maxNPathways = val; }
 
         public ChartGenerators build() {
             return new ChartGenerators(this);
@@ -99,18 +113,58 @@ public class ChartGenerators {
     }
 
     void outputEnrichmentBarChart() {
-
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     void outputEnrichmentDotChart() {
-
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     void outputRunningSumPlot() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    void outputCummVarChart() throws IOException {
+        DefaultCategoryDataset objDataset = CummVarChart.getDefaultCategoryDataset();
+
+        JFreeChart objChart = ChartFactory.createBarChart(
+                title,
+                xAxis,
+                yAxis,
+                objDataset, //Chart Data
+                PlotOrientation.VERTICAL,
+                true,
+                true,
+                false
+        );
+        CategoryPlot cplot = (CategoryPlot)objChart.getPlot();
+        cplot.getRenderer().setSeriesPaint(0, singleColor);
+        if (imageFormat.equals("png")) {
+            ChartUtils.saveChartAsPNG(outputFilePath, objChart, 1000, 1000);
+        } else {
+            ChartUtils.saveChartAsJPEG(outputFilePath, 1.0f, objChart, 1000, 1000);
+        }
 
     }
 
-    void outputCummVarChart() {
+    static class CummVarChart {
+        private static DefaultCategoryDataset getDefaultCategoryDataset() {
+            DefaultCategoryDataset objDataset = new DefaultCategoryDataset();
 
+            objDataset.setValue(65,"","Glycolysis / Gluconeogenesis");
+            objDataset.setValue(24,"","Citrate cycle (TCA cycle)");
+            objDataset.setValue(11,"","Pentose phosphate pathway");
+            return objDataset;
+        }
+
+        /**
+         * Calculates average log-fold-change on genes in a particular pathway.
+         * @param pathwayId hsa or similar id, common in `Table.pathways` and `Table.pathwayGenes`
+         */
+        private static double averageLogFChangePathway(String pathwayId) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
     }
+
+
 }
