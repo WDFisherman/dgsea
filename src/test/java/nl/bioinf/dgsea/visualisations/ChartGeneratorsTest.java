@@ -1,6 +1,7 @@
 package nl.bioinf.dgsea.visualisations;
 
 import nl.bioinf.dgsea.data_processing.FileParseUtils;
+import nl.bioinf.dgsea.data_processing.Pathway;
 import nl.bioinf.dgsea.table_outputs.Table;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -8,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 class ChartGeneratorsTest {
 
@@ -24,6 +26,7 @@ class ChartGeneratorsTest {
     }
 
     private ChartGenerators.Builder getChartGeneratorsBuilderForCummVar() {
+        List<Pathway> pathways;
         ChartGenerators.Builder chartGeneratorsBuilder = new ChartGenerators.Builder(
                 "Promising pathway combinations",
                 "pathways",
@@ -44,8 +47,18 @@ class ChartGeneratorsTest {
         chartGenerators.outputCummVarChart();
 
         assertTrue(new File("output.png").exists());
-
-
-
     }
+//    @Test
+//    void averageLogFChangePathway() {
+//        ChartGenerators.Builder chartGeneratorsBuilder = new ChartGenerators.Builder(
+//                "Promising pathway combinations",
+//                "pathways",
+//                "perc share differential expression",
+//                Table.pathways,
+//                Table.pathwayGenes,
+//                Table.degs,
+//                new File("output.png")
+//        );
+//        double output = chartGeneratorsBuilder
+//    }
 }
