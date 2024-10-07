@@ -4,6 +4,7 @@ import nl.bioinf.dgsea.data_processing.Deg;
 import nl.bioinf.dgsea.data_processing.Pathway;
 import nl.bioinf.dgsea.data_processing.PathwayGene;
 import nl.bioinf.dgsea.data_processing.FileParsing;
+import nl.bioinf.dgsea.table_outputs.EnrichmentTable;
 import nl.bioinf.dgsea.table_outputs.Table;
 
 import java.io.File;
@@ -11,11 +12,16 @@ import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
+        Main m = new Main();
+        m.start();
+    }
+
+    private  void start() {
         try {
             // Specify your file paths here
-            String degFilePath = "/Users/jortgommers/Downloads/dgsea-master/test_data/degs.csv";          // Change this to the actual path
-            String pathwayFilePath = "/Users/jortgommers/Downloads/dgsea-master/test_data/hsa_pathways.csv";  // Change this to the actual path
-            String pathwayGeneFilePath = "/Users/jortgommers/Downloads/dgsea-master/test_data/pathways.csv";  // Change this to the actual path
+            String degFilePath = "test_data/degs.csv";          // Change this to the actual path
+            String pathwayFilePath = "test_data/hsa_pathways.csv";  // Change this to the actual path
+            String pathwayGeneFilePath = "test_data/pathways.csv";  // Change this to the actual path
 
             // Set your parameters
             double adjustedPValueThreshold = 0.01;  // Example threshold
@@ -33,6 +39,10 @@ public class Main {
             Table.degs = degs;           // Set the DEGs
             Table.pathways = pathways;   // Set the pathways
             Table.pathwayGenes = pathwayGenes; // Set the pathway genes
+
+            // Create enrichment table
+            EnrichmentTable enrichmentTable = new EnrichmentTable(pathways, degs, pathwayGenes);
+            enrichmentTable.calculateEnrichment();
 
             // Create an instance of Table and print the contingency table
             Table table = new Table() {}; // Anonymous class since Table is abstract

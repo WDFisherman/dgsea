@@ -29,7 +29,7 @@ public abstract class Table {
             int totalNonDEGsInPathway = sumTotalPathway - significantInPathwayCount; // Total genes - DEGs in the pathway
 
             // Build output for the current pathway
-            output.append(pathway.description()).append(" | D | D* | Sum\n");
+            output.append(pathway.description()).append("\n | D | D* | Sum\n");
             output.append("C| ").append(significantInPathwayCount).append(" | ")
                     .append(nonSignificantInPathwayCount).append(" | ")
                     .append(significantInPathwayCount + nonSignificantInPathwayCount).append("\n");
@@ -39,6 +39,7 @@ public abstract class Table {
             output.append("Sum | ").append(getSumTotalDeg()).append(" | ")
                     .append(totalNonDEGsInPathway + notInPathwayCount).append(" | ")
                     .append(getSumTotalDeg() + totalNonDEGsInPathway + notInPathwayCount).append("\n\n");
+
         }
 
         return output.toString();
