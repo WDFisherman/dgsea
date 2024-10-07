@@ -4,6 +4,7 @@ import nl.bioinf.dgsea.data_processing.Deg;
 import nl.bioinf.dgsea.data_processing.EnrichmentResult;
 import nl.bioinf.dgsea.data_processing.Pathway;
 import nl.bioinf.dgsea.data_processing.PathwayGene;
+import nl.bioinf.dgsea.table_outputs.Table;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartUtils;
 import org.jfree.chart.JFreeChart;
@@ -18,6 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 public class ChartGenerators {
@@ -145,6 +147,10 @@ public class ChartGenerators {
             ChartUtils.saveChartAsJPEG(outputFilePath, 1.0f, objChart, 1000, 1000);
         }
 
+        Map<String, Double> averageLogFChangeAllPathways = CummVarChart.getAverageLogFChangeAllPathways(new String[]{"hsa00010", "hsa04613"});
+        Map<String, Double> percentageLogFChangeAllPathways = CummVarChart.getPercentageLogFChangeAllPathways(averageLogFChangeAllPathways);
+        System.out.println("percentageLogFChangeAllPathways = " + percentageLogFChangeAllPathways);
+
     }
 
     static class CummVarChart {
@@ -161,8 +167,44 @@ public class ChartGenerators {
          * Calculates average log-fold-change on genes in a particular pathway.
          * @param pathwayId hsa or similar id, common in `Table.pathways` and `Table.pathwayGenes`
          */
-        private static double averageLogFChangePathway(String pathwayId) {
-            throw new UnsupportedOperationException("Not supported yet.");
+        private static double getAverageLogFChangePathway(String pathwayId) {
+            double[] totalLogFChangePathway = new double[]{0.0};
+            int[] countDegs = {0};
+            List<PathwayGene> pathwayGeneList = Table.pathwayGenes.stream().filter(v->v.pathwayId().equals(pathwayId)).toList();
+            List<Deg> degList = new ArrayList<>();
+            for (PathwayGene pathwayGene : pathwayGeneList) {
+                List<Deg> newDegList = Table.degs.stream().filter(v->v.geneSymbol().equals(pathwayGene.geneSymbol())).toList();
+                if (!newDegList.isEmpty()) degList.add(newDegList.getFirst());
+            }
+            degList.forEach(v-> {
+                totalLogFChangePathway[0] = totalLogFChangePathway[0] + Math.abs(v.logFoldChange());
+                countDegs[0] += 1;
+            });
+            return totalLogFChangePathway[0] / countDegs[0];
+        }
+
+        private static Map<String, Double> getAverageLogFChangeAllPathways(String[] pathwayIdArray) {
+            Map<String, Double> averageLogFChangeAllPathways = new HashMap<>();
+            for (String pathwayId : pathwayIdArray) {
+                averageLogFChangeAllPathways.put(pathwayId, getAverageLogFChangePathway(pathwayId));
+            }
+            return averageLogFChangeAllPathways;
+        }
+
+        private static Map<String, Double> getPercentageLogFChangeAllPathways(Map<String, Double> averageLogFChangeAllPathways) {
+            Map<String, Double> percentageLogFChangeAllPathways = new HashMap<>();
+            double totalLogFChange = 0.0;
+            totalLogFChange = getTotalLogFChange(averageLogFChangeAllPathways);
+            for (String pathwayId : averageLogFChangeAllPathways.keySet()) {
+                percentageLogFChangeAllPathways.put(pathwayId, averageLogFChangeAllPathways.get(pathwayId) / totalLogFChange * 100);
+            }
+            return percentageLogFChangeAllPathways;
+        }
+
+        private static double getTotalLogFChange(Map<String, Double> averageLogFChangePathway) {
+            double totalLogFChange = 0.0;
+            totalLogFChange = averageLogFChangePathway.values().stream().mapToDouble(Double::doubleValue).sum();;
+            return totalLogFChange;
         }
     }
 
