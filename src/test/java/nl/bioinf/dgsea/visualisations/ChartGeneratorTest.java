@@ -12,7 +12,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-class ChartGeneratorsTest {
+class ChartGeneratorTest {
     static List<Deg> degs;
     static List<Pathway> pathways;
     static List<PathwayGene> pathwayGenes;
@@ -24,19 +24,19 @@ class ChartGeneratorsTest {
         File pathwayGenesFile = new File(dataFolder, "pathways.csv");
         File degsFile = new File(dataFolder, "degs.csv");
         FileParseUtils fileParseUtils = new FileParseUtils();
-        ChartGeneratorsTest.degs = fileParseUtils.parseDegsFile(degsFile);
-        ChartGeneratorsTest.pathwayGenes = fileParseUtils.parsePathwayGeneFile(pathwayGenesFile);
-        ChartGeneratorsTest.pathways = fileParseUtils.parsePathwayFile(pathwayFile);
+        ChartGeneratorTest.degs = fileParseUtils.parseDegsFile(degsFile);
+        ChartGeneratorTest.pathwayGenes = fileParseUtils.parsePathwayGeneFile(pathwayGenesFile);
+        ChartGeneratorTest.pathways = fileParseUtils.parsePathwayFile(pathwayFile);
     }
 
-    private ChartGenerators.Builder getChartGeneratorsBuilderForCummVar() {
-        ChartGenerators.Builder chartGeneratorsBuilder = new ChartGenerators.Builder(
+    private ChartGenerator.Builder getChartGeneratorsBuilderForCummVar() {
+        ChartGenerator.Builder chartGeneratorsBuilder = new ChartGenerator.Builder(
                 "Promising pathway combinations",
                 "pathways",
                 "perc share differential expression",
-                ChartGeneratorsTest.pathways,
-                ChartGeneratorsTest.pathwayGenes,
-                ChartGeneratorsTest.degs,
+                ChartGeneratorTest.pathways,
+                ChartGeneratorTest.pathwayGenes,
+                ChartGeneratorTest.degs,
                 new File("output.png")
         );
         chartGeneratorsBuilder.dpi(0.5);
@@ -45,9 +45,9 @@ class ChartGeneratorsTest {
 
     @Test
     void outputCummVarChart() throws IOException {
-        ChartGenerators.Builder chartGeneratorsBuilder = getChartGeneratorsBuilderForCummVar();
-        ChartGenerators chartGenerators = new ChartGenerators(chartGeneratorsBuilder);
-        chartGenerators.outputCummVarChart();
+        ChartGenerator.Builder chartGeneratorsBuilder = getChartGeneratorsBuilderForCummVar();
+        ChartGenerator chartGenerator = new ChartGenerator(chartGeneratorsBuilder);
+        chartGenerator.saveChartPercLogFChangePerPathway();
 
         assertTrue(new File("output.png").exists());
 

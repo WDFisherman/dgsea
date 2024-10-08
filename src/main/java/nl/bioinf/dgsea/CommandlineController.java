@@ -1,8 +1,11 @@
 package nl.bioinf.dgsea;
 
 
+import nl.bioinf.dgsea.data_processing.Deg;
 import nl.bioinf.dgsea.data_processing.FileParseUtils;
-import nl.bioinf.dgsea.visualisations.ChartGenerators;
+import nl.bioinf.dgsea.data_processing.Pathway;
+import nl.bioinf.dgsea.data_processing.PathwayGene;
+import nl.bioinf.dgsea.visualisations.ChartGenerator;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
@@ -13,9 +16,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 
-@Command(name="main", version="main 1.0", mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class, EnrichBarChart.class, EnrichDotChart.class, CumulativeExprVarChart.class, ContinuityTable.class})
+@Command(name="main", version="main 1.0", mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class, EnrichBarChart.class, EnrichDotChart.class, PercLogFChangePerPathwayCmd.class, ContinuityTable.class})
 public class CommandlineController implements Runnable {
     private final Logger logger = LogManager.getLogger(CommandlineController.class.getName());
     @CommandLine.Spec
@@ -68,9 +73,9 @@ class EnrichDotChart implements Runnable {
     }
 }
 
-@Command(name = "cumm_expr_var_chart", version = "Cumulative expression variation chart 1.0", mixinStandardHelpOptions = true)
-class CumulativeExprVarChart implements Runnable {
-    private final Logger logger = LogManager.getLogger(CumulativeExprVarChart.class.getName());
+@Command(name = "perc_lfc_per_pathway_chart", version = "percLogFChangePerPathway 1.0", mixinStandardHelpOptions = true, description = "Makes a bar-chart showing ratio's average log-fold-change on differently expressed genes per pathway.")
+class PercLogFChangePerPathwayCmd implements Runnable {
+    private final Logger logger = LogManager.getLogger(PercLogFChangePerPathwayCmd.class.getName());
 
     @Mixin
     CommonToAll commonToAll = new CommonToAll();
@@ -79,7 +84,6 @@ class CumulativeExprVarChart implements Runnable {
     @Mixin
     CommonChartParams commonChartParams = new CommonChartParams();
 
-    FileParseUtils fileParseUtils = new FileParseUtils();
 
     @Option(names = {"--pathway-ids"}, paramLabel = "hsa(...)", arity = "0..*", split = ",", description = "Pathway ids of interest")
     private String[] pathwayIds;
@@ -89,30 +93,32 @@ class CumulativeExprVarChart implements Runnable {
 
     @Override
     public void run() {
-        ChartGenerators.Builder chartGeneratorsBuilder;
+        ChartGenerator.Builder chartGeneratorsBuilder;
         try {
             chartGeneratorsBuilder = getChartGeneratorsBuilder();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        if (commonChartParams.colorScheme != null) chartGeneratorsBuilder.colorScheme(commonChartParams.colorScheme);
-        if (commonChartParams.colorManual != null) chartGeneratorsBuilder.colorManual(commonChartParams.colorManual);
-        if (commonChartParams.imageDpi != 1.0) chartGeneratorsBuilder.dpi(commonChartParams.imageDpi);
-        if (maxNPathways > 0) chartGeneratorsBuilder.maxNPathways(maxNPathways);
-        if (!commonChartParams.imageFormat.isEmpty()) chartGeneratorsBuilder.imageFormat(commonChartParams.imageFormat);
+            if (commonChartParams.colorScheme != null) chartGeneratorsBuilder.colorScheme(commonChartParams.colorScheme);
+            if (commonChartParams.colorManual != null) chartGeneratorsBuilder.colorManual(commonChartParams.colorManual);
+            if (commonChartParams.imageDpi != 1.0) chartGeneratorsBuilder.dpi(commonChartParams.imageDpi);
+            if (maxNPathways > 0) chartGeneratorsBuilder.maxNPathways(maxNPathways);
+            if (!commonChartParams.imageFormat.isEmpty()) chartGeneratorsBuilder.imageFormat(commonChartParams.imageFormat);
 
-        ChartGenerators chartGenerators = new ChartGenerators(chartGeneratorsBuilder);
+            ChartGenerator chartGenerator = new ChartGenerator(chartGeneratorsBuilder);
+        } catch (Exception e) {
+            logger.error(e);
+        }
+
+
 
     }
 
-    private ChartGenerators.Builder getChartGeneratorsBuilder() throws Exception {
-        return new ChartGenerators.Builder(
+    private ChartGenerator.Builder getChartGeneratorsBuilder() throws Exception {
+        return new ChartGenerator.Builder(
                 commonChartParams.title,
                 commonChartParams.xAxisTitle,
                 commonChartParams.yAxisTitle,
-                fileParseUtils.parsePathwayFile(commonFileParams.inputFilePathwayDescriptions),
-                fileParseUtils.parsePathwayGeneFile(commonFileParams.inputFilePathwayGenes),
-                fileParseUtils.parseDegsFile(commonFileParams.inputFileDegs),
+                commonFileParams.getPathways(),
+                commonFileParams.getPathwayGenes(),
+                commonFileParams.getDegs(),
                 commonChartParams.outputPath
         );
     }
@@ -149,19 +155,51 @@ class CommonToAll {
 
 @Command
 class CommonFileParams {
+    private final FileParseUtils fileParseUtils = new FileParseUtils();
+
     @Parameters(
             index = "0", paramLabel = "<inputDEGS.csv|tsv>",
             description = "Input degs file in csv or tsv format, columns: gene-symbol, log-fold change and adjusted p-value."
     )
-    File inputFileDegs;
+    private File inputFileDegs;
 
     @Parameters(
             index = "1", paramLabel = "<inputPathwayDescriptions.csv|tsv>", description = "Input pathway descriptions file, columns: pathway-id and description of pathway."
     )
-    File inputFilePathwayDescriptions;
+    private File inputFilePathwayDescriptions;
 
     @Parameters(index = "2", paramLabel = "<inputPathwayGenes.csv|tsv>", description = "Input pathway + genes file, columns: pathway-id, entrez gene-id, gene-symbol and ensembl gene-id")
-    File inputFilePathwayGenes;
+    private File inputFilePathwayGenes;
+
+    public List<Deg> getDegs() throws IOException {
+        try {
+            return fileParseUtils.parseDegsFile(inputFileDegs);
+        } catch (IOException e) {
+            throw new IOException(e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public List<Pathway> getPathways() throws IOException {
+        try {
+            return fileParseUtils.parsePathwayFile(inputFilePathwayDescriptions);
+        } catch (IOException e) {
+            throw new IOException(e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public List<PathwayGene> getPathwayGenes() throws IOException {
+            try {
+                return fileParseUtils.parsePathwayGeneFile(inputFilePathwayGenes);
+            } catch (IOException e) {
+                throw new IOException(e);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+    }
 }
 
 @Command

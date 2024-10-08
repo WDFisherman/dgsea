@@ -1,9 +1,8 @@
 package nl.bioinf.dgsea.visualisations;
 
-import nl.bioinf.dgsea.data_processing.Deg;
-import nl.bioinf.dgsea.data_processing.EnrichmentResult;
-import nl.bioinf.dgsea.data_processing.Pathway;
-import nl.bioinf.dgsea.data_processing.PathwayGene;
+import nl.bioinf.dgsea.data_processing.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartUtils;
 import org.jfree.chart.JFreeChart;
@@ -20,27 +19,29 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ChartGenerators {
-    final String                   title;
-    final String                   xAxis;
-    final String                   yAxis;
-    final double                   dpi;
-    final String                   colorScheme;
-    final String[]                 colorManual; // Give warning when too few colors are given
-    final Color                    singleColor;
-    final double                   dotSize;
-    final float                    dotTransparency;
-    final String                   imageFormat;
-    final File                     outputFilePath;
-    final HashMap<String, Range>   positionRanges;
-    final List<Pathway>            pathways;
-    final List<PathwayGene>        pathwayGenes;
-    final List<Deg>                degs;
-    final List<EnrichmentResult>   enrichmentResults;
-    final int                      maxNPathways;
+public class ChartGenerator {
+    private final String                   title;
+    private final String                   xAxis;
+    private final String                   yAxis;
+    private final double                   dpi;
+    private final String                   colorScheme;
+    private final String[]                 colorManual; // Give warning when too few colors are given
+    private final Color                    singleColor;
+    private final double                   dotSize;
+    private final float                    dotTransparency;
+    private final String                   imageFormat;
+    private final File                     outputFilePath;
+    private final HashMap<String, Range>   positionRanges;
+    private final List<Pathway>            pathways;
+    private final List<PathwayGene>        pathwayGenes;
+    private final List<Deg>                degs;
+    private final List<EnrichmentResult>   enrichmentResults;
+    private final int                      maxNPathways;
+
+    private final Logger logger = LogManager.getLogger(ChartGenerator.class.getName());
 
 
-    public ChartGenerators(Builder builder) {
+    public ChartGenerator(Builder builder) {
         title               = builder.title;
         xAxis               = builder.xAxis;
         yAxis               = builder.yAxis;
@@ -69,8 +70,6 @@ public class ChartGenerators {
         private final List<PathwayGene> pathwayGenes;
         private final List<Deg> degs;
         private final File outputFilePath;
-
-
 
         private double                  dpi = 0;
         private String                  colorScheme = "virdiris";
@@ -106,8 +105,8 @@ public class ChartGenerators {
         public void imageFormat(String val) { imageFormat = val; }
         public void maxNPathways(int val) { maxNPathways = val; }
 
-        public ChartGenerators build() {
-            return new ChartGenerators(this);
+        public ChartGenerator build() {
+            return new ChartGenerator(this);
         }
 
     }
@@ -124,7 +123,16 @@ public class ChartGenerators {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
-    void outputCummVarChart() throws IOException {
+    /**
+     * Gets logFoldChange per deg per pathway,
+     *  gets absolute total logFoldChange per pathway,
+     *  gets average logFoldChange based on absolute total,
+     *  gets total of average logFoldChanges of all pathways.
+     * Calculates percentage logFoldChange per pathway.
+     *
+     * percentage logFoldChange per pathway, based on absolute average logFoldChange per deg in pathway
+     */
+    public void saveChartPercLogFChangePerPathway() {
         DefaultCategoryDataset objDataset = getDefaultCategoryDataset();
 
         JFreeChart objChart = ChartFactory.createBarChart(
@@ -139,19 +147,23 @@ public class ChartGenerators {
         );
         CategoryPlot cplot = (CategoryPlot)objChart.getPlot();
         cplot.getRenderer().setSeriesPaint(0, singleColor);
-        if (imageFormat.equals("png")) {
-            ChartUtils.saveChartAsPNG(outputFilePath, objChart, 1000, 1000);
-        } else {
-            ChartUtils.saveChartAsJPEG(outputFilePath, 1.0f, objChart, 1000, 1000);
+        try {
+            if (imageFormat.equals("png")) {
+                ChartUtils.saveChartAsPNG(outputFilePath, objChart, 1000, 1000);
+            } else {
+                ChartUtils.saveChartAsJPEG(outputFilePath, 1.0f, objChart, 1000, 1000);
+            }
+            logger.info("Chart was saved to file: {}", outputFilePath);
+        } catch(IOException e) {
+            logger.error("Failed to save chart to image file, error: {}", String.valueOf(e));
         }
 
-        CummVarChart cummVarChart = new CummVarChart();
-        Map<String, Double> averageLogFChangeAllPathways = cummVarChart.getAverageLogFChangeAllPathways(new String[]{"hsa00010", "hsa04613"});
-        Map<String, Double> percentageLogFChangeAllPathways = cummVarChart.getPercentageLogFChangeAllPathways(averageLogFChangeAllPathways);
-        System.out.println("percentageLogFChangeAllPathways = " + percentageLogFChangeAllPathways);
 
-
+        PercLogFChangePerPathway percLogFChangePerPathway = new PercLogFChangePerPathway(this.degs, this.pathwayGenes);
+        Map<String, Double> percentageAllPathways = percLogFChangePerPathway.getPercAllPathways(new String[]{"hsa00010", "hsa04613"});
+        System.out.println("percentageAllPathways = " + percentageAllPathways);
     }
+
 
     private DefaultCategoryDataset getDefaultCategoryDataset() {
         DefaultCategoryDataset objDataset = new DefaultCategoryDataset();
@@ -162,52 +174,6 @@ public class ChartGenerators {
         return objDataset;
     }
 
-    class CummVarChart {
-
-        /**
-         * Calculates average log-fold-change on genes in a particular pathway.
-         * @param pathwayId hsa or similar id, common in `Table.pathways` and `Table.pathwayGenes`
-         */
-        private double getAverageLogFChangePathway(String pathwayId) {
-            double[] totalLogFChangePathway = new double[]{0.0};
-            int[] countDegs = {0};
-            List<PathwayGene> pathwayGeneList = pathwayGenes.stream().filter(v->v.pathwayId().equals(pathwayId)).toList();
-            List<Deg> degList = new ArrayList<>();
-            for (PathwayGene pathwayGene : pathwayGeneList) {
-                List<Deg> newDegList = degs.stream().filter(v->v.geneSymbol().equals(pathwayGene.geneSymbol())).toList();
-                if (!newDegList.isEmpty()) degList.add(newDegList.getFirst());
-            }
-            degList.forEach(v-> {
-                totalLogFChangePathway[0] = totalLogFChangePathway[0] + Math.abs(v.logFoldChange());
-                countDegs[0] += 1;
-            });
-            return totalLogFChangePathway[0] / countDegs[0];
-        }
-
-        private Map<String, Double> getAverageLogFChangeAllPathways(String[] pathwayIdArray) {
-            Map<String, Double> averageLogFChangeAllPathways = new HashMap<>();
-            for (String pathwayId : pathwayIdArray) {
-                averageLogFChangeAllPathways.put(pathwayId, getAverageLogFChangePathway(pathwayId));
-            }
-            return averageLogFChangeAllPathways;
-        }
-
-        private Map<String, Double> getPercentageLogFChangeAllPathways(Map<String, Double> averageLogFChangeAllPathways) {
-            Map<String, Double> percentageLogFChangeAllPathways = new HashMap<>();
-            double totalLogFChange;
-            totalLogFChange = getTotalLogFChange(averageLogFChangeAllPathways);
-            for (String pathwayId : averageLogFChangeAllPathways.keySet()) {
-                percentageLogFChangeAllPathways.put(pathwayId, averageLogFChangeAllPathways.get(pathwayId) / totalLogFChange * 100);
-            }
-            return percentageLogFChangeAllPathways;
-        }
-
-        private double getTotalLogFChange(Map<String, Double> averageLogFChangePathway) {
-            double totalLogFChange;
-            totalLogFChange = averageLogFChangePathway.values().stream().mapToDouble(Double::doubleValue).sum();
-            return totalLogFChange;
-        }
-    }
 
 
 }
