@@ -2,7 +2,7 @@ plugins {
     id 'java'
 }
 
-group = 'nl.bioinf.degs'
+group = 'nl.bioinf.dgsea'
 version = '1.0-SNAPSHOT'
 
 repositories {
@@ -43,7 +43,7 @@ jar {
     duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
     manifest {
         attributes(
-                'Main-Class': 'nl.bioinf.degs.Main'
+                'Main-Class': 'nl.bioinf.dgsea.Main'
         )
     }
     from {
