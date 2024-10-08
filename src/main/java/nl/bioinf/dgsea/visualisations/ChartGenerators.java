@@ -4,7 +4,6 @@ import nl.bioinf.dgsea.data_processing.Deg;
 import nl.bioinf.dgsea.data_processing.EnrichmentResult;
 import nl.bioinf.dgsea.data_processing.Pathway;
 import nl.bioinf.dgsea.data_processing.PathwayGene;
-import nl.bioinf.dgsea.table_outputs.Table;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartUtils;
 import org.jfree.chart.JFreeChart;
@@ -126,7 +125,7 @@ public class ChartGenerators {
     }
 
     void outputCummVarChart() throws IOException {
-        DefaultCategoryDataset objDataset = CummVarChart.getDefaultCategoryDataset();
+        DefaultCategoryDataset objDataset = getDefaultCategoryDataset();
 
         JFreeChart objChart = ChartFactory.createBarChart(
                 title,
@@ -146,33 +145,36 @@ public class ChartGenerators {
             ChartUtils.saveChartAsJPEG(outputFilePath, 1.0f, objChart, 1000, 1000);
         }
 
-        Map<String, Double> averageLogFChangeAllPathways = CummVarChart.getAverageLogFChangeAllPathways(new String[]{"hsa00010", "hsa04613"});
-        Map<String, Double> percentageLogFChangeAllPathways = CummVarChart.getPercentageLogFChangeAllPathways(averageLogFChangeAllPathways);
+        CummVarChart cummVarChart = new CummVarChart();
+        Map<String, Double> averageLogFChangeAllPathways = cummVarChart.getAverageLogFChangeAllPathways(new String[]{"hsa00010", "hsa04613"});
+        Map<String, Double> percentageLogFChangeAllPathways = cummVarChart.getPercentageLogFChangeAllPathways(averageLogFChangeAllPathways);
         System.out.println("percentageLogFChangeAllPathways = " + percentageLogFChangeAllPathways);
+
 
     }
 
-    static class CummVarChart {
-        private static DefaultCategoryDataset getDefaultCategoryDataset() {
-            DefaultCategoryDataset objDataset = new DefaultCategoryDataset();
+    private DefaultCategoryDataset getDefaultCategoryDataset() {
+        DefaultCategoryDataset objDataset = new DefaultCategoryDataset();
 
-            objDataset.setValue(65,"","Glycolysis / Gluconeogenesis");
-            objDataset.setValue(24,"","Citrate cycle (TCA cycle)");
-            objDataset.setValue(11,"","Pentose phosphate pathway");
-            return objDataset;
-        }
+        objDataset.setValue(65,"","Glycolysis / Gluconeogenesis");
+        objDataset.setValue(24,"","Citrate cycle (TCA cycle)");
+        objDataset.setValue(11,"","Pentose phosphate pathway");
+        return objDataset;
+    }
+
+    class CummVarChart {
 
         /**
          * Calculates average log-fold-change on genes in a particular pathway.
          * @param pathwayId hsa or similar id, common in `Table.pathways` and `Table.pathwayGenes`
          */
-        private static double getAverageLogFChangePathway(String pathwayId) {
+        private double getAverageLogFChangePathway(String pathwayId) {
             double[] totalLogFChangePathway = new double[]{0.0};
             int[] countDegs = {0};
-            List<PathwayGene> pathwayGeneList = Table.pathwayGenes.stream().filter(v->v.pathwayId().equals(pathwayId)).toList();
+            List<PathwayGene> pathwayGeneList = pathwayGenes.stream().filter(v->v.pathwayId().equals(pathwayId)).toList();
             List<Deg> degList = new ArrayList<>();
             for (PathwayGene pathwayGene : pathwayGeneList) {
-                List<Deg> newDegList = Table.degs.stream().filter(v->v.geneSymbol().equals(pathwayGene.geneSymbol())).toList();
+                List<Deg> newDegList = degs.stream().filter(v->v.geneSymbol().equals(pathwayGene.geneSymbol())).toList();
                 if (!newDegList.isEmpty()) degList.add(newDegList.getFirst());
             }
             degList.forEach(v-> {
@@ -182,7 +184,7 @@ public class ChartGenerators {
             return totalLogFChangePathway[0] / countDegs[0];
         }
 
-        private static Map<String, Double> getAverageLogFChangeAllPathways(String[] pathwayIdArray) {
+        private Map<String, Double> getAverageLogFChangeAllPathways(String[] pathwayIdArray) {
             Map<String, Double> averageLogFChangeAllPathways = new HashMap<>();
             for (String pathwayId : pathwayIdArray) {
                 averageLogFChangeAllPathways.put(pathwayId, getAverageLogFChangePathway(pathwayId));
@@ -190,9 +192,9 @@ public class ChartGenerators {
             return averageLogFChangeAllPathways;
         }
 
-        private static Map<String, Double> getPercentageLogFChangeAllPathways(Map<String, Double> averageLogFChangeAllPathways) {
+        private Map<String, Double> getPercentageLogFChangeAllPathways(Map<String, Double> averageLogFChangeAllPathways) {
             Map<String, Double> percentageLogFChangeAllPathways = new HashMap<>();
-            double totalLogFChange = 0.0;
+            double totalLogFChange;
             totalLogFChange = getTotalLogFChange(averageLogFChangeAllPathways);
             for (String pathwayId : averageLogFChangeAllPathways.keySet()) {
                 percentageLogFChangeAllPathways.put(pathwayId, averageLogFChangeAllPathways.get(pathwayId) / totalLogFChange * 100);
@@ -200,9 +202,9 @@ public class ChartGenerators {
             return percentageLogFChangeAllPathways;
         }
 
-        private static double getTotalLogFChange(Map<String, Double> averageLogFChangePathway) {
-            double totalLogFChange = 0.0;
-            totalLogFChange = averageLogFChangePathway.values().stream().mapToDouble(Double::doubleValue).sum();;
+        private double getTotalLogFChange(Map<String, Double> averageLogFChangePathway) {
+            double totalLogFChange;
+            totalLogFChange = averageLogFChangePathway.values().stream().mapToDouble(Double::doubleValue).sum();
             return totalLogFChange;
         }
     }
