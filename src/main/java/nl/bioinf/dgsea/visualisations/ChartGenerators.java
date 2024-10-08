@@ -6,6 +6,7 @@ import nl.bioinf.dgsea.data_processing.Pathway;
 import nl.bioinf.dgsea.data_processing.PathwayGene;
 import org.w3c.dom.ranges.Range;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -14,13 +15,13 @@ public class ChartGenerators {
     public String                   title;
     public String                   xAxis;
     public String                   yAxis;
-    public int                      dpi;
+    public double                   dpi;
     public String                   colorScheme;
     public String[]                 colorManual; // Give warning when too few colors are given
     public double                   dotSize;
     public float                    dotTransparency;
     public String                   imageFormat;
-    public String                   outputFilePath;
+    public File                   outputFilePath;
     public HashMap<String, Range>   positionRanges;
     public List<Pathway>            pathways;
     public List<PathwayGene>        pathwayGenes;
@@ -56,11 +57,11 @@ public class ChartGenerators {
         private final List<Pathway> pathways;
         private final List<PathwayGene> pathwayGenes;
         private final List<Deg> degs;
-        private final String outputFilePath;
+        private final File outputFilePath;
 
 
 
-        private int                     dpi = 0;
+        private double                  dpi = 0;
         private String                  colorScheme = "virdiris";
         private String[]                colorManual = null;
         private double                  dotSize = 1.0;
@@ -70,7 +71,7 @@ public class ChartGenerators {
         private List<EnrichmentResult>  enrichmentResults = null;
         private int                     maxNPathways = -1;
 
-        public Builder(String title, String xAxis, String yAxis, List<Pathway> pathways, List<PathwayGene> pathwayGenes, List<Deg> degs, String outputFilePath) {
+        public Builder(String title, String xAxis, String yAxis, List<Pathway> pathways, List<PathwayGene> pathwayGenes, List<Deg> degs, File outputFilePath) {
             this.title              = title;
             this.xAxis              = xAxis;
             this.yAxis              = yAxis;
@@ -84,7 +85,7 @@ public class ChartGenerators {
             { positionRanges = val; return this; }
         public Builder enrichmentResults(ArrayList<EnrichmentResult> val)
         { enrichmentResults = val; return this; }
-        public Builder dpi(int val) { dpi = val; return this; }
+        public Builder dpi(double val) { dpi = val; return this; }
         public Builder colorScheme(String val) { colorScheme = val; return this; }
         public Builder colorManual(String[] val) { colorManual = val; return this; }
         public Builder dotSize(double val) { dotSize = val; return this; }
