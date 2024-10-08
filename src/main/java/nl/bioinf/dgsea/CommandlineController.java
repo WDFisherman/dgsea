@@ -166,9 +166,14 @@ class CommonFileParams {
 
 @Command
 class CommonChartParams {
+    @Option(names = {"--title"}, description = "Title of chart, default = 'png'", defaultValue = "png")
+    String title;
+    @Option(names = {"--x-axis"}, description = "X-axis title of chart, default = 'png'", defaultValue = "png")
+    String xAxisTitle;
+    @Option(names = {"--y-axis"}, description = "Y-axis title of chart, default = 'png'", defaultValue = "png")
+    String yAxisTitle;
     @Option(names = {"--image-format"}, paramLabel = "[png|jpg ? png]", description = "Image format of output image, default = 'png'", defaultValue = "png")
     String imageFormat;
-
     @Option(names = {"--image-dpi"}, paramLabel = "[0.0-inf ? 1.0]", description = "Dpi of output image, default = 1.0", defaultValue="1.0")
     double imageDpi;
 
