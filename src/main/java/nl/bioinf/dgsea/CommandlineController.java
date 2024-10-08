@@ -1,6 +1,8 @@
 package nl.bioinf.dgsea;
 
 
+import nl.bioinf.dgsea.data_processing.FileParseUtils;
+import nl.bioinf.dgsea.visualisations.ChartGenerators;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
@@ -38,6 +40,13 @@ class CommonFileParams {
 
 @Command
 class CommonChartParams {
+    @Option(names = {"--title"}, description = "Title of chart, default = 'png'", defaultValue = "png")
+    String title;
+    @Option(names = {"--x-axis"}, description = "X-axis title of chart, default = 'png'", defaultValue = "png")
+    String xAxisTitle;
+    @Option(names = {"--y-axis"}, description = "Y-axis title of chart, default = 'png'", defaultValue = "png")
+    String yAxisTitle;
+
     @Option(names = {"--image-format"}, paramLabel = "[png|jpg ? png]", description = "Image format of output image, default = 'png'", defaultValue = "png")
     String imageFormat;
 
@@ -125,6 +134,8 @@ class CumulativeExprVarChart implements Runnable {
     @Mixin
     CommonChartParams commonChartParams = new CommonChartParams();
 
+    FileParseUtils fileParseUtils = new FileParseUtils();
+
     @Option(names = {"--pathway-ids"}, paramLabel = "hsa(...)", arity = "0..*", split = ",", description = "Pathway ids of interest")
     private String[] pathwayIds;
 
@@ -133,7 +144,32 @@ class CumulativeExprVarChart implements Runnable {
 
     @Override
     public void run() {
+        ChartGenerators.Builder chartGeneratorsBuilder;
+        try {
+            chartGeneratorsBuilder = getChartGeneratorsBuilder();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        if (commonChartParams.colorScheme != null) chartGeneratorsBuilder.colorScheme(commonChartParams.colorScheme);
+        if (commonChartParams.colorManual != null) chartGeneratorsBuilder.colorManual(commonChartParams.colorManual);
+        if (commonChartParams.imageDpi != 1.0) chartGeneratorsBuilder.dpi(commonChartParams.imageDpi);
+        if (maxNPathways > 0) chartGeneratorsBuilder.maxNPathways(maxNPathways);
+        if (!commonChartParams.imageFormat.isEmpty()) chartGeneratorsBuilder.imageFormat(commonChartParams.imageFormat);
 
+        ChartGenerators chartGenerators = new ChartGenerators(chartGeneratorsBuilder);
+
+    }
+
+    private ChartGenerators.Builder getChartGeneratorsBuilder() throws Exception {
+        return new ChartGenerators.Builder(
+                commonChartParams.title,
+                commonChartParams.xAxisTitle,
+                commonChartParams.yAxisTitle,
+                fileParseUtils.parsePathwayFile(commonFileParams.inputFilePathwayDescriptions),
+                fileParseUtils.parsePathwayGeneFile(commonFileParams.inputFilePathwayGenes),
+                fileParseUtils.parseDegsFile(commonFileParams.inputFileDegs),
+                commonChartParams.outputPath
+        );
     }
 }
 
