@@ -7,8 +7,108 @@ import picocli.CommandLine.Parameters;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Mixin;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.File;
 import java.util.Arrays;
+
+@Command(name="main", version="main 1.0", mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class, EnrichBarChart.class, EnrichDotChart.class, CumulativeExprVarChart.class, ContinuityTable.class})
+public class CommandlineController implements Runnable {
+    private final Logger logger = LogManager.getLogger(CommandlineController.class.getName());
+    @CommandLine.Spec
+    CommandLine.Model.CommandSpec spec;
+
+    @Override
+    public void run() {
+        logger.info("Started main");
+        throw new CommandLine.ParameterException(spec.commandLine(), "Missing required subcommand");
+    }
+}
+
+@Command(name = "enrich_bar_chart", version = "Enrichment bar-chart 1.0", mixinStandardHelpOptions = true)
+class EnrichBarChart implements Runnable {
+    private final Logger logger = LogManager.getLogger(EnrichBarChart.class.getName());
+    @Mixin
+    CommonToAll commonToAll = new CommonToAll();
+    @Mixin
+    CommonFileParams commonFileParams = new CommonFileParams();
+    @Mixin
+    CommonChartParams commonChartParams = new CommonChartParams();
+
+
+    @Override
+    public void run() {
+        System.out.println("commonToAll.pval = " + commonToAll.pval);
+        System.out.println("commonToAll.verbose = " + Arrays.toString(commonToAll.verbose));
+    }
+}
+
+@Command(name = "enrich_dot_chart", version = "Enrichment dot-chart 1.0", mixinStandardHelpOptions = true)
+class EnrichDotChart implements Runnable {
+    private final Logger logger = LogManager.getLogger(EnrichDotChart.class.getName());
+    @Mixin
+    CommonToAll commonToAll = new CommonToAll();
+    @Mixin
+    CommonFileParams commonFileParams = new CommonFileParams();
+    @Mixin
+    CommonChartParams commonChartParams = new CommonChartParams();
+
+    @Option(names = {"--dot-size"}, paramLabel = "[0.0-inf]", description = "Dot size, default = ${DEFAULT-VALUE}", defaultValue = "1.0")
+    private double dotSize;
+
+    @Option(names = {"--dot-transparency"}, paramLabel = "[0.0-1.0]", description = "Dot transparency, default = ${DEFAULT-VALUE}", defaultValue = "1.0")
+    private double dotTransparency;
+
+    @Override
+    public void run() {
+        System.out.println("dotSize = " + dotSize);
+        System.out.println("dotTransparency = " + dotTransparency);
+    }
+}
+
+@Command(name = "cumm_expr_var_chart", version = "Cumulative expression variation chart 1.0", mixinStandardHelpOptions = true)
+class CumulativeExprVarChart implements Runnable {
+    private final Logger logger = LogManager.getLogger(CumulativeExprVarChart.class.getName());
+
+    @Mixin
+    CommonToAll commonToAll = new CommonToAll();
+    @Mixin
+    CommonFileParams commonFileParams = new CommonFileParams();
+    @Mixin
+    CommonChartParams commonChartParams = new CommonChartParams();
+
+    @Option(names = {"--pathway-ids"}, paramLabel = "hsa(...)", arity = "0..*", split = ",", description = "Pathway ids of interest")
+    private String[] pathwayIds;
+
+    @Option(names = {"--max-n-pathways"}, paramLabel = "[1-inf]", description = "Max number of pathways to include in chart. '--pathway-ids' overrides this option.")
+    private int maxNPathways;
+
+    @Override
+    public void run() {
+
+    }
+}
+
+@Command(name = "con_table", version = "Continuity table 1.0", mixinStandardHelpOptions = true)
+class ContinuityTable implements Runnable {
+    private final Logger logger = LogManager.getLogger(ContinuityTable.class.getName());
+    @Mixin
+    CommonToAll commonToAll = new CommonToAll();
+    @Mixin
+    CommonFileParams commonFileParams = new CommonFileParams();
+
+    @Option(names = {"--output"}, paramLabel = "[csv|print]", description = "Option on how to return output table. (csv-file or print to terminal)")
+    private String output;
+
+    @Option(names = {"--outputFilePath"}, description = "File to write table text to.")
+    private File outputFilePath;
+
+    @Override
+    public void run() {
+
+    }
+}
 
 @Command
 class CommonToAll {
@@ -65,96 +165,3 @@ class CommonChartParams {
         }
     }
 }
-
-@Command(name="main", version="main 1.0", mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class, EnrichBarChart.class, EnrichDotChart.class, CumulativeExprVarChart.class, ContinuityTable.class})
-public class CommandlineController implements Runnable {
-    @CommandLine.Spec
-    CommandLine.Model.CommandSpec spec;
-
-    @Override
-    public void run() {
-        throw new CommandLine.ParameterException(spec.commandLine(), "Missing required subcommand");
-    }
-}
-
-@Command(name = "enrich_bar_chart", version = "Enrichment bar-chart 1.0", mixinStandardHelpOptions = true)
-class EnrichBarChart implements Runnable {
-    @Mixin
-    CommonToAll commonToAll = new CommonToAll();
-    @Mixin
-    CommonFileParams commonFileParams = new CommonFileParams();
-    @Mixin
-    CommonChartParams commonChartParams = new CommonChartParams();
-
-
-    @Override
-    public void run() {
-        System.out.println("commonToAll.pval = " + commonToAll.pval);
-        System.out.println("commonToAll.verbose = " + Arrays.toString(commonToAll.verbose));
-    }
-}
-
-@Command(name = "enrich_dot_chart", version = "Enrichment dot-chart 1.0", mixinStandardHelpOptions = true)
-class EnrichDotChart implements Runnable {
-    @Mixin
-    CommonToAll commonToAll = new CommonToAll();
-    @Mixin
-    CommonFileParams commonFileParams = new CommonFileParams();
-    @Mixin
-    CommonChartParams commonChartParams = new CommonChartParams();
-
-    @Option(names = {"--dot-size"}, paramLabel = "[0.0-inf]", description = "Dot size, default = ${DEFAULT-VALUE}", defaultValue = "1.0")
-    private double dotSize;
-
-    @Option(names = {"--dot-transparency"}, paramLabel = "[0.0-1.0]", description = "Dot transparency, default = ${DEFAULT-VALUE}", defaultValue = "1.0")
-    private double dotTransparency;
-
-    @Override
-    public void run() {
-        System.out.println("dotSize = " + dotSize);
-        System.out.println("dotTransparency = " + dotTransparency);
-    }
-}
-
-@Command(name = "cumm_expr_var_chart", version = "Cumulative expression variation chart 1.0", mixinStandardHelpOptions = true)
-class CumulativeExprVarChart implements Runnable {
-    @Mixin
-    CommonToAll commonToAll = new CommonToAll();
-    @Mixin
-    CommonFileParams commonFileParams = new CommonFileParams();
-    @Mixin
-    CommonChartParams commonChartParams = new CommonChartParams();
-
-    @Option(names = {"--pathway-ids"}, paramLabel = "hsa(...)", arity = "0..*", split = ",", description = "Pathway ids of interest")
-    private String[] pathwayIds;
-
-    @Option(names = {"--max-n-pathways"}, paramLabel = "[1-inf]", description = "Max number of pathways to include in chart. '--pathway-ids' overrides this option.")
-    private int maxNPathways;
-
-    @Override
-    public void run() {
-
-    }
-}
-
-@Command(name = "con_table", version = "Continuity table 1.0", mixinStandardHelpOptions = true)
-class ContinuityTable implements Runnable {
-    @Mixin
-    CommonToAll commonToAll = new CommonToAll();
-    @Mixin
-    CommonFileParams commonFileParams = new CommonFileParams();
-
-    @Option(names = {"--output"}, paramLabel = "[csv|print]", description = "Option on how to return output table. (csv-file or print to terminal)")
-    private String output;
-
-    @Option(names = {"--outputFilePath"}, description = "File to write table text to.")
-    private File outputFilePath;
-
-    @Override
-    public void run() {
-
-    }
-}
-
-
-

@@ -7,28 +7,40 @@ import nl.bioinf.dgsea.data_processing.PathwayGene;
 import java.util.List;
 
 public class Table {
-    public List<Deg> degs;
-    public List<Pathway> pathways;
-    public List<PathwayGene> pathwayGenes;
+    private List<Deg> degs;
+    private List<Pathway> pathways;
+    private List<PathwayGene> pathwayGenes;
 
-    public String getTwoByTwoContingencyTable() throws Exception {
-        throw new Exception("Not implemented yet");
+    public String getTwoByTwoContingencyTable() {
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
-    private int getSumInPathway() throws Exception {
-        throw new Exception("Not implemented yet");
+    private int getSumInPathway() {
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
-    private int getSumTotalPathway() throws Exception {
-        throw new Exception("Not implemented yet");
+    private int getSumTotalPathway() {
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
-    private int getSumIsSignificantDeg() throws Exception {
-        throw new Exception("Not implemented yet");
+    private int getSumIsSignificantDeg() {
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
-    private int getSumTotalDeg() throws Exception {
-        throw new Exception("Not implemented yet");
+    private int getSumTotalDeg() {
+        throw new UnsupportedOperationException("Not implemented yet");
+    }
+
+    public void setDegs(List<Deg> degs) {
+        this.degs = degs;
+    }
+
+    public void setPathways(List<Pathway> pathways) {
+        this.pathways = pathways;
+    }
+
+    public void setPathwayGenes(List<PathwayGene> pathwayGenes) {
+        this.pathwayGenes = pathwayGenes;
     }
 }
 
