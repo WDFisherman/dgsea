@@ -40,14 +40,16 @@ public class Main {
             Table.pathways = pathways;   // Set the pathways
             Table.pathwayGenes = pathwayGenes; // Set the pathway genes
 
-            // Create enrichment table
-            EnrichmentTable enrichmentTable = new EnrichmentTable(pathways, degs, pathwayGenes);
-            enrichmentTable.calculateEnrichment();
-
             // Create an instance of Table and print the contingency table
             Table table = new Table() {}; // Anonymous class since Table is abstract
             String output = table.getTwoByTwoContingencyTable();
             System.out.println(output);
+
+            // Create enrichment table
+            EnrichmentTable enrichmentTable = new EnrichmentTable(pathways, degs, pathwayGenes);
+            enrichmentTable.calculateEnrichment();
+
+
 
         } catch (Exception e) {
             e.printStackTrace();

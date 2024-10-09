@@ -4,8 +4,18 @@ import nl.bioinf.dgsea.data_processing.Deg;
 import nl.bioinf.dgsea.data_processing.EnrichmentResult;
 import nl.bioinf.dgsea.data_processing.Pathway;
 import nl.bioinf.dgsea.data_processing.PathwayGene;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartUtils;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.data.category.CategoryDataset;
+import org.jfree.data.category.DefaultCategoryDataset;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
 import org.w3c.dom.ranges.Range;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -21,10 +31,10 @@ public class ChartGenerators {
     public float                    dotTransparency;
     public String                   imageFormat;
     public String                   outputFilePath;
-    public HashMap<String, Range>   positionRanges;
+    public HashMap<String, Range> positionRanges;
     public List<Pathway>            pathways;
     public List<PathwayGene>        pathwayGenes;
-    public List<Deg>                degs;
+    public List<Deg> degs;
     public List<EnrichmentResult>   enrichmentResults;
     public int                      maxNPathways;
 
