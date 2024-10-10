@@ -73,10 +73,11 @@ public class EnrichmentTable {
 
     public double calculateEnrichmentScore(int observedDegCount, double expectedDegCount) {
         if (expectedDegCount == 0) {
-            return 0;
+            return 0; // Zorgt ervoor dat er niet gedeeld wordt door nul
         }
         return (observedDegCount - expectedDegCount) / Math.sqrt(expectedDegCount);
     }
+
 
     private boolean isDeg(String geneSymbol) {
         return degs.stream().anyMatch(deg -> deg.geneSymbol().equals(geneSymbol));
@@ -92,15 +93,19 @@ public class EnrichmentTable {
      * @return P-value based on hypergeometric test
      */
     public double calculateHypergeometricPValue(int observedDegCount, int totalGenesInPathway, int totalGenes, int totalDegs) {
-        double pValue = 0.0;
+        if (totalGenesInPathway == 0 || totalDegs == 0) {
+            return 1.0; // Als er geen genen of geen DEGs zijn, kan de p-waarde niet worden berekend
+        }
 
-        // We calculate the cumulative probability for observedDegCount and higher
+        double pValue = 0.0;
         for (int k = observedDegCount; k <= totalGenesInPathway; k++) {
             pValue += hypergeometricProbability(k, totalGenesInPathway, totalDegs, totalGenes);
         }
 
         return pValue;
     }
+
+
 
     /**
      * Hypergeometric probability
@@ -112,10 +117,15 @@ public class EnrichmentTable {
      * @return Hypergeometric probability
      */
     public double hypergeometricProbability(int k, int n, int K, int N) {
+        if (k > n || K > N || k < 0 || n < 0 || K < 0 || N < 0) {
+            return 0.0; // Ongeldige parameters leveren een kans van 0 op
+        }
+
         double numerator = binomialCoefficient(K, k) * binomialCoefficient(N - K, n - k);
         double denominator = binomialCoefficient(N, n);
         return numerator / denominator;
     }
+
 
     private double binomialCoefficient(int n, int k) {
         if (k > n) return 0;
@@ -131,8 +141,14 @@ public class EnrichmentTable {
 
     public double adjustPValue(double pValue) {
         int totalTests = pathways.size();
-        return Math.min(pValue * totalTests, 1.0);
+
+        if (Double.isNaN(pValue)) {
+            return 1.0; // Als de p-waarde NaN is, stel de aangepaste p-waarde in op 1
+        }
+
+        return Math.min(pValue * totalTests, 1.0); // Zorg ervoor dat de p-waarde nooit groter dan 1 is
     }
+
 
     // Method to retrieve enrichment results
     public List<EnrichmentResult> getEnrichmentResults() {
