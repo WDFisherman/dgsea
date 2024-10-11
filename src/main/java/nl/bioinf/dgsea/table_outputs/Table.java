@@ -65,7 +65,7 @@ public abstract class Table {
 
     protected int getSumIsSignificantDeg() {
         return (int) degs.stream()
-                .filter(deg -> deg.adjustedPValue() <= 0.01) // Adjust threshold as necessary
+                .filter(deg -> deg.adjustedPValue() <= 0.01)
                 .count();
     }
 
