@@ -1,9 +1,10 @@
 package nl.bioinf.dgsea;
 
 import nl.bioinf.dgsea.data_processing.Deg;
+import nl.bioinf.dgsea.data_processing.FileParseUtils;
 import nl.bioinf.dgsea.data_processing.Pathway;
 import nl.bioinf.dgsea.data_processing.PathwayGene;
-import nl.bioinf.dgsea.data_processing.FileParsing;
+import nl.bioinf.dgsea.data_processing.FileParseUtils;
 import nl.bioinf.dgsea.table_outputs.EnrichmentTable;
 import nl.bioinf.dgsea.table_outputs.Table;
 
@@ -18,6 +19,7 @@ public class Main {
 
     private  void start() {
         try {
+
             // Specify your file paths here
             String degFilePath = "test_data/degs.csv";          // Change this to the actual path
             String pathwayFilePath = "test_data/hsa_pathways.csv";  // Change this to the actual path
@@ -28,12 +30,12 @@ public class Main {
             String[] selectedPathwayIds = new String[] {}; // Add any pathway IDs you want to select
 
             // Create an instance of FileParsing
-            FileParsing fileParsing = new FileParsing(adjustedPValueThreshold, selectedPathwayIds, degFilePath, pathwayFilePath);
+            FileParseUtils fileParseUtils = new FileParseUtils();
 
             // Parse the files
-            List<Deg> degs = fileParsing.parseDegsFile(new File(degFilePath));
-            List<Pathway> pathways = fileParsing.parsePathwayFile(new File(pathwayFilePath));
-            List<PathwayGene> pathwayGenes = fileParsing.parsePathwayGeneFile(new File(pathwayGeneFilePath));
+            List<Deg> degs = fileParseUtils.parseDegsFile(new File(degFilePath));
+            List<Pathway> pathways = fileParseUtils.parsePathwayFile(new File(pathwayFilePath));
+            List<PathwayGene> pathwayGenes = fileParseUtils.parsePathwayGeneFile(new File(pathwayGeneFilePath));
 
             // Initialize the Table class with parsed data
             Table.degs = degs;           // Set the DEGs
