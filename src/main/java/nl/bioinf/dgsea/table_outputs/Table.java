@@ -4,43 +4,83 @@ import nl.bioinf.dgsea.data_processing.Deg;
 import nl.bioinf.dgsea.data_processing.Pathway;
 import nl.bioinf.dgsea.data_processing.PathwayGene;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class Table {
-    private List<Deg> degs;
-    private List<Pathway> pathways;
-    private List<PathwayGene> pathwayGenes;
+public abstract class Table {
+    public static List<Deg> degs = new ArrayList<>();
+    public static List<Pathway> pathways = new ArrayList<>();
+    public static List<PathwayGene> pathwayGenes = new ArrayList<>();
 
-    public String getTwoByTwoContingencyTable() {
-        throw new UnsupportedOperationException("Not implemented yet");
+    public String getTwoByTwoContingencyTable() throws IllegalStateException {
+        if (pathways == null || degs == null || pathwayGenes == null) {
+            throw new IllegalStateException("Data lists must be initialized before use.");
+        }
+
+        StringBuilder output = new StringBuilder();
+
+        for (Pathway pathway : pathways) {
+            String pathwayId = pathway.pathwayId();
+            int sumInPathway = getSumInPathway(pathwayId);
+            int sumTotalPathway = getSumTotalPathway(pathwayId);
+            int sumIsSignificantDeg = getSumIsSignificantDeg();
+
+            // Calculate counts for the contingency table
+            int significantInPathwayCount = sumInPathway;
+            int notInPathwayCount = getSumTotalDeg() - significantInPathwayCount;
+
+            // Count non-significant DEGs in the pathway
+            int nonSignificantInPathwayCount = getSumNonSignificantInPathway(pathwayId);
+            int totalNonDEGsInPathway = sumTotalPathway - significantInPathwayCount;
+
+            // Build output for the current pathway
+            output.append(pathway.description()).append("\n | D | D* | Sum\n");
+            output.append("C| ").append(significantInPathwayCount).append(" | ")
+                    .append(nonSignificantInPathwayCount).append(" | ")
+                    .append(significantInPathwayCount + nonSignificantInPathwayCount).append("\n");
+            output.append("C*| ").append(notInPathwayCount).append(" | ")
+                    .append(totalNonDEGsInPathway).append(" | ")
+                    .append(notInPathwayCount + totalNonDEGsInPathway).append("\n");
+            output.append("Sum | ").append(getSumTotalDeg()).append(" | ")
+                    .append(totalNonDEGsInPathway + notInPathwayCount).append(" | ")
+                    .append(getSumTotalDeg() + totalNonDEGsInPathway + notInPathwayCount).append("\n\n");
+        }
+
+        return output.toString();
     }
 
-    private int getSumInPathway() {
-        throw new UnsupportedOperationException("Not implemented yet");
+    protected int getSumInPathway(String pathwayId) {
+        return (int) pathwayGenes.stream()
+                .filter(pg -> pg.pathwayId().equals(pathwayId) && isDeg(pg.geneSymbol()))
+                .filter(pg -> degs.stream().anyMatch(deg -> deg.geneSymbol().equals(pg.geneSymbol()) && deg.adjustedPValue() <= 0.01))
+                .count();
     }
 
-    private int getSumTotalPathway() {
-        throw new UnsupportedOperationException("Not implemented yet");
+
+    protected int getSumTotalPathway(String pathwayId) {
+        return (int) pathwayGenes.stream()
+                .filter(pg -> pg.pathwayId().equals(pathwayId))
+                .count();
     }
 
-    private int getSumIsSignificantDeg() {
-        throw new UnsupportedOperationException("Not implemented yet");
+    protected int getSumIsSignificantDeg() {
+        return (int) degs.stream()
+                .filter(deg -> deg.adjustedPValue() <= 0.01) // Adjust threshold as necessary
+                .count();
     }
 
-    private int getSumTotalDeg() {
-        throw new UnsupportedOperationException("Not implemented yet");
+    protected int getSumTotalDeg() {
+        return degs.size();
     }
 
-    public void setDegs(List<Deg> degs) {
-        this.degs = degs;
+    protected boolean isDeg(String geneSymbol) {
+        return degs.stream().anyMatch(deg -> deg.geneSymbol().equals(geneSymbol));
     }
 
-    public void setPathways(List<Pathway> pathways) {
-        this.pathways = pathways;
-    }
-
-    public void setPathwayGenes(List<PathwayGene> pathwayGenes) {
-        this.pathwayGenes = pathwayGenes;
+    protected int getSumNonSignificantInPathway(String pathwayId) {
+        return (int) pathwayGenes.stream()
+                .filter(pg -> pg.pathwayId().equals(pathwayId) && isDeg(pg.geneSymbol()))
+                .filter(pg -> degs.stream().noneMatch(deg -> deg.geneSymbol().equals(pg.geneSymbol()) && deg.adjustedPValue() <= 0.01))
+                .count();
     }
 }
-
