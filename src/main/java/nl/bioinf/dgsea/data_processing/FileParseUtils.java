@@ -7,22 +7,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FileParsing {
-    private final double adjustedPValueThreshold;
-    private final String[] selectedPathwayIds;
-    private final String degFilePath;
-    private final String pathwayFilePath;
-
-    public FileParsing(double adjustedPValueThreshold, String[] selectedPathwayIds, String degFilePath, String pathwayFilePath) {
-        this.adjustedPValueThreshold = adjustedPValueThreshold;
-        this.selectedPathwayIds = selectedPathwayIds;
-        this.degFilePath = degFilePath;
-        this.pathwayFilePath = pathwayFilePath;
-    }
-
-    public File getFileFromFilePath(String filePath) {
-        return new File(filePath);
-    }
+public class FileParseUtils {
 
     public List<Deg> parseDegsFile(File file) throws Exception {
         List<Deg> degs = new ArrayList<>();
