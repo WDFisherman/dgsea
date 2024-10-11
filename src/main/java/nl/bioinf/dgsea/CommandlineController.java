@@ -181,6 +181,7 @@ class CommonFileParams {
             throw new RuntimeException(e);
         }
     }
+
     public List<Pathway> getPathways() throws IOException {
         try {
             return fileParseUtils.parsePathwayFile(inputFilePathwayDescriptions);
@@ -190,7 +191,6 @@ class CommonFileParams {
             throw new RuntimeException(e);
         }
     }
-
 
     public List<PathwayGene> getPathwayGenes() throws IOException {
         try {

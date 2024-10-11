@@ -34,7 +34,7 @@ class TableTest extends Table {
         pathwayGenes.add(new PathwayGene("Pathway1", 101, "GeneA", "ENSG000001"));
         pathwayGenes.add(new PathwayGene("Pathway1", 102, "GeneB", "ENSG000002"));
         pathwayGenes.add(new PathwayGene("Pathway1", 103, "GeneC", "ENSG000003"));
-        pathwayGenes.add(new PathwayGene("Pathway2", 104, "GeneD", "ENSG000004")); // Not a DEG
+        pathwayGenes.add(new PathwayGene("Pathway2", 104, "GeneD", "ENSG000004"));
     }
 
 

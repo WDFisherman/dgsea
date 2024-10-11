@@ -20,7 +20,7 @@ class ChartGeneratorTest {
 
     @BeforeAll
     public static void setData() throws Exception {
-        File dataFolder = new File("C://Users/wd_vi/IdeaProjects/dgsea-java/test_data");
+        File dataFolder = new File("test_data");
         File pathwayFile = new File(dataFolder, "hsa_pathways.csv");
         File pathwayGenesFile = new File(dataFolder, "pathways.csv");
         File degsFile = new File(dataFolder, "degs.csv");

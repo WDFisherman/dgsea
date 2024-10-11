@@ -12,13 +12,13 @@ public class EnrichmentTable {
     private final List<Pathway> pathways;
     private final List<Deg> degs;
     private final List<PathwayGene> pathwayGenes;
-    private final List<EnrichmentResult> enrichmentResults; // List to store results
+    private final List<EnrichmentResult> enrichmentResults;
 
     public EnrichmentTable(List<Pathway> pathways, List<Deg> degs, List<PathwayGene> pathwayGenes) {
         this.pathways = pathways;
         this.degs = degs;
         this.pathwayGenes = pathwayGenes;
-        this.enrichmentResults = new ArrayList<>(); // Initialize the results list
+        this.enrichmentResults = new ArrayList<>();
     }
 
     public void calculateEnrichment() {
@@ -150,7 +150,7 @@ public class EnrichmentTable {
     }
 
 
-    // Method to retrieve enrichment results
+
     public List<EnrichmentResult> getEnrichmentResults() {
         return enrichmentResults;
     }
