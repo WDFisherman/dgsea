@@ -6,6 +6,7 @@ import nl.bioinf.dgsea.data_processing.FileParseUtils;
 import nl.bioinf.dgsea.data_processing.Pathway;
 import nl.bioinf.dgsea.data_processing.PathwayGene;
 import nl.bioinf.dgsea.visualisations.ChartGenerator;
+import nl.bioinf.dgsea.table_outputs.EnrichmentTable;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
@@ -212,6 +213,7 @@ class CommonChartParams {
     String yAxisTitle;
     @Option(names = {"--image-format"}, paramLabel = "[png|jpg ? png]", description = "Image format of output image, default = 'png'", defaultValue = "png")
     String imageFormat;
+
     @Option(names = {"--image-dpi"}, paramLabel = "[0.0-inf ? 1.0]", description = "Dpi of output image, default = 1.0", defaultValue="1.0")
     double imageDpi;
 

@@ -93,7 +93,7 @@ public class ChartGenerator {
         }
 
         public Builder positionRanges(HashMap<String, Range> val)
-            { positionRanges = val; return this; }
+        { positionRanges = val; return this; }
         public Builder enrichmentResults(ArrayList<EnrichmentResult> val)
         { enrichmentResults = val; return this; }
         public void dpi(double val) { dpi = val; }
