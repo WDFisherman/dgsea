@@ -1,16 +1,15 @@
 package nl.bioinf.dgsea.visualisations;
 
-import nl.bioinf.dgsea.data_processing.Deg;
-import nl.bioinf.dgsea.data_processing.FileParseUtils;
-import nl.bioinf.dgsea.data_processing.Pathway;
-import nl.bioinf.dgsea.data_processing.PathwayGene;
+import nl.bioinf.dgsea.data_processing.*;
+import org.jfree.data.time.DateRange;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.List;
+import java.util.*;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ChartGeneratorTest {
     static List<Deg> degs;
@@ -19,7 +18,7 @@ class ChartGeneratorTest {
 
     @BeforeAll
     public static void setData() throws Exception {
-        File dataFolder = new File("C://Users/wd_vi/IdeaProjects/dgsea-java/test_data");
+        File dataFolder = new File("../dgsea-java/test_data");
         File pathwayFile = new File(dataFolder, "hsa_pathways.csv");
         File pathwayGenesFile = new File(dataFolder, "pathways.csv");
         File degsFile = new File(dataFolder, "degs.csv");
@@ -44,14 +43,16 @@ class ChartGeneratorTest {
     }
 
     @Test
-    void outputCummVarChart() throws IOException {
+    void saveChartPercLogFChangePerPathway() {
         ChartGenerator.Builder chartGeneratorsBuilder = getChartGeneratorsBuilderForCummVar();
         ChartGenerator chartGenerator = new ChartGenerator(chartGeneratorsBuilder);
         chartGenerator.saveChartPercLogFChangePerPathway();
 
-        assertTrue(new File("output.png").exists());
-
+        System.out.println("System.currentTimeMillis() = " + System.currentTimeMillis());
+        System.out.println("new File(\"output.png\").lastModified() = " + new File("output.png").lastModified());
+        assertTrue(new DateRange(System.currentTimeMillis() - (100*100), System.currentTimeMillis()).contains(new File("output.png").lastModified()));
 
 
     }
+
 }
