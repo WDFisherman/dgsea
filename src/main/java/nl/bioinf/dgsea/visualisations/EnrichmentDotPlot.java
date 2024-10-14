@@ -2,6 +2,7 @@ package nl.bioinf.dgsea.visualisations;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.labels.ItemLabelPosition;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
@@ -9,6 +10,7 @@ import org.jfree.chart.ui.RectangleInsets;
 import org.jfree.chart.labels.XYItemLabelGenerator;
 import org.jfree.chart.ChartUtils;
 import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.ui.TextAnchor;
 import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
@@ -75,7 +77,7 @@ public class EnrichmentDotPlot {
             renderer.setSeriesPaint(i, color);
         }
 
-        // Add labels with pathway names to the points, avoiding overlap
+        // Add labels with pathway names to the points, positioned to the right of the dots
         XYItemLabelGenerator labelGenerator = new XYItemLabelGenerator() {
             @Override
             public String generateLabel(XYDataset dataset, int series, int item) {
@@ -88,14 +90,13 @@ public class EnrichmentDotPlot {
         // Set the item label generator and make labels visible
         renderer.setDefaultItemLabelGenerator(labelGenerator);
         renderer.setDefaultItemLabelsVisible(true);
-        renderer.setDefaultItemLabelFont(new Font("SansSerif", Font.PLAIN, 9));  // Adjusted label font size
-        renderer.setDefaultItemLabelPaint(Color.BLACK); // set label colour
+        renderer.setDefaultItemLabelFont(new Font("SansSerif", Font.PLAIN, 12));  // Adjusted label font size
+        renderer.setDefaultItemLabelPaint(Color.BLACK); // Set label color
 
-        // Set the item label position
-        renderer.setDefaultPositiveItemLabelPosition(new org.jfree.chart.labels.ItemLabelPosition(
-                ItemLabelAnchor.OUTSIDE12,  // Positioning doesnt work
-                org.jfree.chart.ui.TextAnchor.BOTTOM_CENTER));  // Align to bottom center of the point
-
+        renderer.setDefaultPositiveItemLabelPosition(new ItemLabelPosition(
+                ItemLabelAnchor.OUTSIDE12,  // Position label outside to the right of the point
+                TextAnchor.TOP_LEFT // Align to the top right of the label box
+        ));
         // Save the chart as a PNG file
         int width = 1000;    // Increase width for better spacing
         int height = 700;    // Adjust height for better visibility

@@ -32,10 +32,10 @@ public class FileParseUtils {
             }
         } catch (IOException e) {
             // Handle IOException when reading the file
-            throw new Exception("Error reading DEG file: " + e.getMessage());
+            throw new IOException("Error reading DEG file: " + e.getMessage());
         } catch (NumberFormatException e) {
             // Handle parsing errors for numeric values
-            throw new Exception("Error parsing numeric values in DEG file: " + e.getMessage());
+            throw new NumberFormatException("Error parsing numeric values in DEG file: " + e.getMessage());
         }
         return degs; // Return the list of DEGs
     }
@@ -60,7 +60,7 @@ public class FileParseUtils {
             }
         } catch (IOException e) {
             // Handle IOException when reading the file
-            throw new Exception("Error reading Pathway file: " + e.getMessage());
+            throw new IOException("Error reading Pathway file: " + e.getMessage());
         }
         return pathways; // Return the list of Pathways
     }
@@ -87,10 +87,10 @@ public class FileParseUtils {
             }
         } catch (IOException e) {
             // Handle IOException when reading the file
-            throw new Exception("Error reading PathwayGene file: " + e.getMessage());
+            throw new IOException("Error reading PathwayGene file: " + e.getMessage());
         } catch (NumberFormatException e) {
             // Handle parsing errors for numeric values
-            throw new Exception("Error parsing numeric values in PathwayGene file: " + e.getMessage());
+            throw new NumberFormatException("Error parsing numeric values in PathwayGene file: " + e.getMessage());
         }
         return pathwayGenes; // Return the list of PathwayGene relationships
     }

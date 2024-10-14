@@ -1,13 +1,16 @@
 package nl.bioinf.dgsea.visualisations;
 
+import jdk.jfr.Category;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.CategoryAxis;
+import org.jfree.chart.axis.CategoryLabelPositions;
 import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.renderer.category.BarRenderer;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.chart.ChartUtils;
 
-import java.awt.Color;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -31,7 +34,12 @@ public class EnrichmentBarChart {
 
         // Customize de renderer voor het aanpassen van kleuren
         CategoryPlot plot = barChart.getCategoryPlot();
+        CategoryAxis domainAxis = plot.getDomainAxis();
         BarRenderer renderer = (BarRenderer) plot.getRenderer();
+
+        domainAxis.setCategoryLabelPositions(CategoryLabelPositions.UP_90);
+        domainAxis.setTickLabelFont(new Font("Arial",Font.PLAIN,10));
+
 
         // Pas de kleuren van de balken aan op basis van de adjusted p-value
         for (int i = 0; i < enrichmentResults.size(); i++) {
@@ -72,7 +80,8 @@ public class EnrichmentBarChart {
 
             if (matchingPathway != null) {
                 String description = matchingPathway.description();  // Haal de beschrijving van de pathway op
-                dataset.addValue(result.enrichmentScore(), description, "Enrichment Score");
+                dataset.addValue(result.enrichmentScore(), description, matchingPathway.description());
+
             }
         }
 

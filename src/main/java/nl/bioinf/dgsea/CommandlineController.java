@@ -193,13 +193,13 @@ class CommonFileParams {
     }
 
     public List<PathwayGene> getPathwayGenes() throws IOException {
-        try {
-            return fileParseUtils.parsePathwayGeneFile(inputFilePathwayGenes);
-        } catch (IOException e) {
-            throw new IOException(e);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+            try {
+                return fileParseUtils.parsePathwayGeneFile(inputFilePathwayGenes);
+            } catch (IOException e) {
+                throw new IOException(e);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
     }
 }
 
@@ -213,6 +213,7 @@ class CommonChartParams {
     String yAxisTitle;
     @Option(names = {"--image-format"}, paramLabel = "[png|jpg ? png]", description = "Image format of output image, default = 'png'", defaultValue = "png")
     String imageFormat;
+
     @Option(names = {"--image-dpi"}, paramLabel = "[0.0-inf ? 1.0]", description = "Dpi of output image, default = 1.0", defaultValue="1.0")
     double imageDpi;
 

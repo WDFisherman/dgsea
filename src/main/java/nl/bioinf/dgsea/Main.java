@@ -3,8 +3,8 @@ package nl.bioinf.dgsea;
 import nl.bioinf.dgsea.data_processing.*;
 import nl.bioinf.dgsea.table_outputs.EnrichmentTable;
 import nl.bioinf.dgsea.table_outputs.Table;
-import nl.bioinf.dgsea.visualisations.EnrichmentBarChart;  // Voeg de EnrichmentBarChart toe
-import nl.bioinf.dgsea.visualisations.EnrichmentDotPlot;   // Voeg de EnrichmentDotPlot toe
+import nl.bioinf.dgsea.visualisations.EnrichmentBarChart;
+import nl.bioinf.dgsea.visualisations.EnrichmentDotPlot;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,9 +47,8 @@ public class Main {
             enrichmentTable.calculateEnrichment();
             List<EnrichmentResult> results = enrichmentTable.getEnrichmentResults();
 
-            // Selecteer de pathways met een significante adjusted p-value
             List<EnrichmentResult> significantResults = results.stream()
-                    .filter(result -> !Double.isNaN(result.adjustedPValue()) && result.adjustedPValue() < 0.05) // Filter uit op NaN waarden en significante p-waarden
+                    .filter(result -> result.adjustedPValue() < 1.00) // Filter op p-waarden kleiner dan 1.00
                     .collect(Collectors.toList());
 
             // Sorteer op enrichment score (hoogste eerst) en neem de top 20
