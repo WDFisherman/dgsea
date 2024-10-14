@@ -33,7 +33,6 @@ public class EnrichmentBarChart {
         CategoryPlot plot = barChart.getCategoryPlot();
         BarRenderer renderer = (BarRenderer) plot.getRenderer();
 
-
         // Pas de kleuren van de balken aan op basis van de adjusted p-value
         for (int i = 0; i < enrichmentResults.size(); i++) {
             EnrichmentResult result = enrichmentResults.get(i);
