@@ -3,10 +3,7 @@ package nl.bioinf.dgsea.data_processing;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Calculates the percentage of average expression change, for every differently expressed gene(deg), by 1 or more pathways.
@@ -34,80 +31,57 @@ public class PercLogFChangePerPathway {
     }
 
     /**
-     * Calculates average log-fold-change on degs in a particular pathway.
-     * @param pathwayId organism pathway id, must be in `pathwayGenes`
-     * @return average log-fold-change
+     * Calculates percentage based on proportion average log-fold-change(lfc) of all degs in a pathway, to sum of average lfc in all pathways.
+     * @param pathwayIdSet Set of pathway-ids to distribute percentage under.
+     * @throws IllegalArgumentException if pathwayIdSet is empty/not set
+     * @return pathway-id, percentage-value pairs
      */
-    private double getAveragePathway(String pathwayId) {
-        double[] totalLogFChangePathway = new double[]{0.0}; // --
-        int[] countDegs = {0}; // circumvent lambda issue --
-        List<PathwayGene> pathwayGeneList = pathwayGenes.stream().filter(v->v.pathwayId().equals(pathwayId)).toList();
-        if (pathwayGeneList.isEmpty()) throw new RuntimeException("Given pathway could not be found in the pathway-genes file.");
-        List<Deg> degList = getDegList(pathwayGeneList);
-        if (!degList.isEmpty()) {
-            degList.forEach(v-> {
-                totalLogFChangePathway[0] = totalLogFChangePathway[0] + Math.abs(v.logFoldChange()); // Absolute, to prevent negative values from cancelling out positive ones, lowering the perceived differential expression
-                countDegs[0] += 1;
-            });
-            return totalLogFChangePathway[0] / countDegs[0];
-        } else {
-            return 0.0;
+    public Map<String, Double> percAllPathways(Set<String> pathwayIdSet) {
+        if (pathwayIdSet == null || pathwayIdSet.isEmpty()) throw new IllegalArgumentException("pathwayIdSet cannot be empty or null");
+        Map<String, Double> pathwayPercentages = new HashMap<>(); // could receive averages and then be modified to percentages
+        Map<String, Double> avgLfcAllPathways = new HashMap<>();
+        double totalLfc = getTotalLfc(pathwayIdSet, avgLfcAllPathways);
+        for (Map.Entry<String, Double> entry : avgLfcAllPathways.entrySet()) {
+            String pathwayId = entry.getKey();
+            Double avgLfcPathway = entry.getValue();
+            if(avgLfcPathway == 0.0) {
+                pathwayPercentages.put(pathwayId, 0.0);
+            } else {
+                pathwayPercentages.put(pathwayId, avgLfcPathway / totalLfc * 100);
+            }
         }
+        return pathwayPercentages;
     }
 
     /**
-     * Get list of degs also found in the gene-symbols of pathways in pathwayGeneList.
-     * @param pathwayGeneList a list with geneSymbol matching with gene-symbol in degs
-     * @return list of deg-items
+     * Calculates average log-fold-change(lfc) for every pathway in `pathwayIdSet` and saves in `avgLfcAllPathways`. Also sums all these averages and returns this value
+     * @param pathwayIdSet Set of pathway-ids to calculate average lfc for
+     * @param avgLfcAllPathways map to modify and contain pathway-id; average-lfc pairs
+     * @throws IllegalArgumentException if pathway-id was not found in input data, field: pathwayGenes
+     * @return Sum of averages in all pathways
      */
-    private List<Deg> getDegList(List<PathwayGene> pathwayGeneList) {
-        List<Deg> degList = new ArrayList<>();
-        for (PathwayGene pathwayGene : pathwayGeneList) {
-            List<Deg> newDegList = degs.stream().filter(v->v.geneSymbol().equals(pathwayGene.geneSymbol())).toList();
-            if (!newDegList.isEmpty()) degList.add(newDegList.getFirst());
+    private double getTotalLfc(Set<String> pathwayIdSet, Map<String, Double> avgLfcAllPathways) {
+        double totalLfcAllPathways = 0.0;
+        for (String pathwayId : pathwayIdSet) {
+            double totalLfcPathway = 0.0;
+            int countDegsInPathway = 0;
+            for(PathwayGene pathwayGene : pathwayGenes) {
+                if (!pathwayIdSet.contains(pathwayGene.pathwayId())) // escape early
+                    throw new IllegalArgumentException("Pathway not found: provided pathway-id: %s was not found in the pathway-genes data".formatted(pathwayGene.pathwayId().toLowerCase()));
+                if(!pathwayGene.pathwayId().equals(pathwayId)) continue; // skip pathwayGene entry
+                for(Deg deg : degs) {
+                    if(!pathwayGene.geneSymbol().equals(deg.geneSymbol())) continue; // skip deg entry
+                    totalLfcPathway += Math.abs(deg.logFoldChange());
+                    countDegsInPathway++;
+                }
+
+            }
+            if (countDegsInPathway == 0) logger.warn("No degs on pathway: given pathway-id={}, the pathway-genes data's gene-symbols associated by this pathway had no identical gene-symbols in the deg data. This could be either the input files or the given pathway-ids not having degs.", pathwayId);
+            double avgPathway = countDegsInPathway == 0 ? 0.0 : totalLfcPathway / countDegsInPathway;
+            avgLfcAllPathways.put(pathwayId, avgPathway);
+            totalLfcAllPathways += totalLfcPathway;
         }
-        if (degList.isEmpty()) logger.info("None of given gene-symbols in pathway-genes file where pathway-id={} could be found in the degs file or vice versa. This could be either the input files or the given pathway-ids not having degs.", pathwayGeneList.getFirst().pathwayId());
-        return degList;
+        return totalLfcAllPathways;
     }
 
-    /**
-     * Collects average log-fold-change(lfc) on degs in all given pathway's
-     * @param pathwayIdArray multiple organism pathway ids, must be common in `pathways` and `pathwayGenes`
-     * @return pathway-id and average lfc on that pathway
-     */
-    private Map<String, Double> getAvgAllPathways(String[] pathwayIdArray) {
-        Map<String, Double> averageLogFChangeAllPathways = new HashMap<>();
-        for (String pathwayId : pathwayIdArray) {
-            averageLogFChangeAllPathways.put(pathwayId, getAveragePathway(pathwayId));
-        }
-        return averageLogFChangeAllPathways;
-    }
-
-    /**
-     * Gives percentage average deg- log-fold-change(lfc) per pathway (see class description)
-     * @param pathwayIdArray multiple organism pathway ids, must be common in `pathways` and `pathwayGenes`
-     * @return pathway-id and percentage lfc on that pathway (relative to total lfc by all pathways)
-     * @throws RuntimeException if pathway-id in pathwayIdArray does not match any pathway-id in pathwayGene or degs.
-     * The same error can accor when gene-symbol in pathwayGene, does not match any gene-symbol in degs or vice versa.
-     */
-    public Map<String, Double> getPercAllPathways(String[] pathwayIdArray) {
-        Map<String, Double> avgAllPathways = getAvgAllPathways(pathwayIdArray);
-        Map<String, Double> percLogFChangeAllPathways = new HashMap<>();
-        double totalLogFChange = getTotalPathway(avgAllPathways);
-        for (String pathwayId : avgAllPathways.keySet()) {
-            percLogFChangeAllPathways.put(pathwayId, (avgAllPathways.get(pathwayId) / totalLogFChange * 100));
-        }
-        return percLogFChangeAllPathways;
-    }
-
-    /**
-     * Sums total of all log-fold-change(lfc) averages in all pathways
-     * @param averageLogFChangePathway multiple organism pathway ids, must be common in `pathways` and `pathwayGenes` and average lfc's of those pathways
-     * @return total value
-     */
-    private double getTotalPathway(Map<String, Double> averageLogFChangePathway) {
-        double totalLogFChange;
-        totalLogFChange = averageLogFChangePathway.values().stream().mapToDouble(Double::doubleValue).sum();
-        return totalLogFChange;
-    }
 }
