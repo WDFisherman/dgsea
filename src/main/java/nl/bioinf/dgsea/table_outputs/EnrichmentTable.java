@@ -39,8 +39,10 @@ public class EnrichmentTable {
             double enrichmentScore = calculateEnrichmentScore(observedDegCount, expectedDegCount);
 
             // Step 4: Calculate p-value using the hypergeometric test
-            double pValue = calculateHypergeometricPValue(observedDegCount, totalGenesInPathway, pathwayGenes.size(), degs.size());
-
+            double pValue = 1.0; // Default to 1 (not significant)
+            if (observedDegCount > 0) {
+                pValue = calculateHypergeometricPValue(observedDegCount, totalGenesInPathway, pathwayGenes.size(), degs.size());
+            }
             // Step 5: Adjust p-value (Bonferroni)
             double adjustedPValue = adjustPValue(pValue);
 
@@ -72,11 +74,15 @@ public class EnrichmentTable {
     }
 
     public double calculateEnrichmentScore(int observedDegCount, double expectedDegCount) {
-        if (expectedDegCount == 0) {
+        if (expectedDegCount <= 0) {
             return 0; // Zorgt ervoor dat er niet gedeeld wordt door nul
+        }
+        if (observedDegCount == 0) {
+            return -1; // Of een andere waarde om aan te geven dat er geen DEGs zijn
         }
         return (observedDegCount - expectedDegCount) / Math.sqrt(expectedDegCount);
     }
+
 
 
     private boolean isDeg(String geneSymbol) {
@@ -101,7 +107,9 @@ public class EnrichmentTable {
         for (int k = observedDegCount; k <= totalGenesInPathway; k++) {
             pValue += hypergeometricProbability(k, totalGenesInPathway, totalDegs, totalGenes);
         }
-
+        if (Double.isNaN(pValue)) {
+            return 1.0; // Als de p-waarde NaN is, stel de aangepaste p-waarde in op 1
+        }
         return pValue;
     }
 

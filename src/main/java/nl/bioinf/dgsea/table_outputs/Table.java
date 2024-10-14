@@ -42,8 +42,8 @@ public abstract class Table {
                     .append(totalNonDEGsInPathway).append(" | ")
                     .append(notInPathwayCount + totalNonDEGsInPathway).append("\n");
             output.append("Sum | ").append(getSumTotalDeg()).append(" | ")
-                    .append(totalNonDEGsInPathway + notInPathwayCount).append(" | ")
-                    .append(getSumTotalDeg() + totalNonDEGsInPathway + notInPathwayCount).append("\n\n");
+                    .append(totalNonDEGsInPathway + nonSignificantInPathwayCount).append(" | ")
+                    .append(getSumTotalDeg() + totalNonDEGsInPathway + nonSignificantInPathwayCount).append("\n\n");
         }
 
         return output.toString();
