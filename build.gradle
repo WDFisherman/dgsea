@@ -45,6 +45,7 @@ jar {
         attributes(
                 'Main-Class': 'nl.bioinf.dgsea.Main'
         )
+        attributes 'Multi-Release': 'true'
     }
     from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }

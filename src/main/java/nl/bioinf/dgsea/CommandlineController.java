@@ -1,12 +1,13 @@
 package nl.bioinf.dgsea;
 
 
-import nl.bioinf.dgsea.data_processing.Deg;
-import nl.bioinf.dgsea.data_processing.FileParseUtils;
-import nl.bioinf.dgsea.data_processing.Pathway;
-import nl.bioinf.dgsea.data_processing.PathwayGene;
+import nl.bioinf.dgsea.data_processing.*;
+import nl.bioinf.dgsea.table_outputs.Table;
 import nl.bioinf.dgsea.visualisations.ChartGenerator;
 import nl.bioinf.dgsea.table_outputs.EnrichmentTable;
+import nl.bioinf.dgsea.visualisations.EnrichmentBarChart;
+import nl.bioinf.dgsea.visualisations.EnrichmentDotPlot;
+import org.apache.logging.log4j.Level;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
@@ -19,7 +20,9 @@ import org.apache.logging.log4j.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Command(name="main", version="main 1.0", mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class, EnrichBarChart.class, EnrichDotChart.class, PercLogFChangePerPathwayCmd.class, ContinuityTable.class})
 public class CommandlineController implements Runnable {
@@ -33,7 +36,7 @@ public class CommandlineController implements Runnable {
     }
 }
 
-@Command(name = "enrich_bar_chart", version = "Enrichment bar-chart 1.0", mixinStandardHelpOptions = true)
+@Command(name = "enrich_bar_chart", version = "Enrichment bar-chart 1.0", mixinStandardHelpOptions = true, description = "No description yet")
 class EnrichBarChart implements Runnable {
     private final Logger logger = LogManager.getLogger(EnrichBarChart.class.getName());
     @Mixin
@@ -46,12 +49,13 @@ class EnrichBarChart implements Runnable {
 
     @Override
     public void run() {
+        commonToAll.setLoggingScope();
         System.out.println("commonToAll.pval = " + commonToAll.pval);
         System.out.println("commonToAll.verbose = " + Arrays.toString(commonToAll.verbose));
     }
 }
 
-@Command(name = "enrich_dot_chart", version = "Enrichment dot-chart 1.0", mixinStandardHelpOptions = true)
+@Command(name = "enrich_dot_chart", version = "Enrichment dot-chart 1.0", mixinStandardHelpOptions = true, description = "This command over-aches commands for now: con_table, enrich_bar_chart and enrich_dot_chart")
 class EnrichDotChart implements Runnable {
     private final Logger logger = LogManager.getLogger(EnrichDotChart.class.getName());
     @Mixin
@@ -69,8 +73,62 @@ class EnrichDotChart implements Runnable {
 
     @Override
     public void run() {
-        System.out.println("dotSize = " + dotSize);
-        System.out.println("dotTransparency = " + dotTransparency);
+        commonToAll.setLoggingScope();
+        try {
+            // Pad naar je input CSV-bestanden
+            String degFilePath = "test_data/degs.csv";          // Change this to the actual path
+            String pathwayFilePath = "test_data/hsa_pathways.csv";  // Change this to the actual path
+            String pathwayGeneFilePath = "test_data/pathways.csv";  // Change this to the actual path
+
+            // Parse de bestanden
+            FileParseUtils fileParseUtils = new FileParseUtils();
+            List<Deg> degs = fileParseUtils.parseDegsFile(new File(degFilePath));
+            List<Pathway> pathways = fileParseUtils.parsePathwayFile(new File(pathwayFilePath));
+            List<PathwayGene> pathwayGenes = fileParseUtils.parsePathwayGeneFile(new File(pathwayGeneFilePath));
+
+            // Initialiseer de Table klasse met geparseerde data
+            Table.degs = degs;           // Set the DEGs
+            Table.pathways = pathways;   // Set the pathways
+            Table.pathwayGenes = pathwayGenes; // Set the pathway genes
+
+            // Maak de tabel en print de two-by-two contingency table
+            Table table = new Table() {
+            };
+            String output = table.getTwoByTwoContingencyTable();
+            System.out.println(output);
+
+            // Bereken de enrichment en haal de resultaten op
+            EnrichmentTable enrichmentTable = new EnrichmentTable(pathways, degs, pathwayGenes);
+            enrichmentTable.calculateEnrichment();
+            List<EnrichmentResult> results = enrichmentTable.getEnrichmentResults();
+
+            // Selecteer de pathways met een significante adjusted p-value
+            List<EnrichmentResult> significantResults = results.stream()
+                    .filter(result -> !Double.isNaN(result.adjustedPValue()) && result.adjustedPValue() < 0.05) // Filter uit op NaN waarden en significante p-waarden
+                    .collect(Collectors.toList());
+
+            // Sorteer op enrichment score (hoogste eerst) en neem de top 20
+            List<EnrichmentResult> top20Results = significantResults.stream()
+                    .sorted(Comparator.comparingDouble(EnrichmentResult::enrichmentScore).reversed()) // Sorteer op enrichment score
+                    .limit(20) // Neem de top 20
+                    .collect(Collectors.toList());
+
+            // Maak de bar chart en sla op als PNG
+            String barChartOutputFilePath = "pathway_enrichment_chart.png";  // Pad voor het opslaan van de PNG
+            EnrichmentBarChart barChart = new EnrichmentBarChart("Top 20 Pathway Enrichment met significante padjust value", top20Results, pathways, barChartOutputFilePath);
+            System.out.println("Bar chart opgeslagen als PNG op: " + barChartOutputFilePath);
+
+            // Maak de dot plot en sla op als PNG
+            String dotPlotOutputFilePath = "pathway_enrichment_dot_plot.png";  // Pad voor het opslaan van de PNG
+            EnrichmentDotPlot dotPlot = new EnrichmentDotPlot("Pathway Enrichment Dot Plot", top20Results, pathways, dotPlotOutputFilePath);
+            System.out.println("Dot plot opgeslagen als PNG op: " + dotPlotOutputFilePath);
+
+        } catch (IOException e) {
+            System.err.println("Fout bij het opslaan van de PNG: " + e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
     }
 }
 
@@ -94,25 +152,26 @@ class PercLogFChangePerPathwayCmd implements Runnable {
 
     @Override
     public void run() {
+        commonToAll.setLoggingScope();
+        System.out.println("SHOUT");
         ChartGenerator.Builder chartGeneratorsBuilder;
-        try {
-            chartGeneratorsBuilder = getChartGeneratorsBuilder();
-            if (commonChartParams.colorScheme != null) chartGeneratorsBuilder.colorScheme(commonChartParams.colorScheme);
-            if (commonChartParams.colorManual != null) chartGeneratorsBuilder.colorManual(commonChartParams.colorManual);
-            if (commonChartParams.imageDpi != 1.0) chartGeneratorsBuilder.dpi(commonChartParams.imageDpi);
-            if (maxNPathways > 0) chartGeneratorsBuilder.maxNPathways(maxNPathways);
-            if (!commonChartParams.imageFormat.isEmpty()) chartGeneratorsBuilder.imageFormat(commonChartParams.imageFormat);
 
-            ChartGenerator chartGenerator = new ChartGenerator(chartGeneratorsBuilder);
-        } catch (Exception e) {
-            logger.error(e);
-        }
+        chartGeneratorsBuilder = getChartGeneratorsBuilder();
+        if (commonChartParams.colorScheme != null) chartGeneratorsBuilder.colorScheme(commonChartParams.colorScheme);
+        if (commonChartParams.colorManual != null) chartGeneratorsBuilder.colorManual(commonChartParams.colorManual);
+        if (commonChartParams.imageDpi != 1.0) chartGeneratorsBuilder.dpi(commonChartParams.imageDpi);
+        if (maxNPathways > 0) chartGeneratorsBuilder.maxNPathways(maxNPathways);
+        if (!commonChartParams.imageFormat.isEmpty()) chartGeneratorsBuilder.imageFormat(commonChartParams.imageFormat);
+
+        ChartGenerator chartGenerator = new ChartGenerator(chartGeneratorsBuilder);
+        chartGenerator.saveChartPercLogFChangePerPathway();
+
 
 
 
     }
 
-    private ChartGenerator.Builder getChartGeneratorsBuilder() throws Exception {
+    private ChartGenerator.Builder getChartGeneratorsBuilder() {
         return new ChartGenerator.Builder(
                 commonChartParams.title,
                 commonChartParams.xAxisTitle,
@@ -125,7 +184,7 @@ class PercLogFChangePerPathwayCmd implements Runnable {
     }
 }
 
-@Command(name = "con_table", version = "Continuity table 1.0", mixinStandardHelpOptions = true)
+@Command(name = "con_table", version = "Continuity table 1.0", mixinStandardHelpOptions = true, description = "No description yet")
 class ContinuityTable implements Runnable {
     private final Logger logger = LogManager.getLogger(ContinuityTable.class.getName());
     @Mixin
@@ -140,18 +199,28 @@ class ContinuityTable implements Runnable {
     private File outputFilePath;
 
     @Override
-    public void run() {
-
-    }
+    public void run() {}
 }
 
 @Command
 class CommonToAll {
-    @Option(names = {"-v", "-verbosity"}, description = "Verbose logging")
+    Logger rootLogger = LogManager.getLogger(CommonToAll.class.getName());
+    @Option(names = {"-v", "-verbosity"}, description = "Verbose logging", defaultValue = "true")
     boolean[] verbose;
 
     @Option(names = {"--pval"}, paramLabel = "[0.0-1.0 ? 0.05]", description = "P-value threshold, default = ${DEFAULT-VALUE}", defaultValue="0.05")
     double pval;
+
+    public void setLoggingScope() {
+        System.out.println("verbose = " + Arrays.toString(verbose));
+        if (verbose.length > 1) {
+            LogManager.getLogger().atLevel(Level.WARN).log(verbose);
+        } else if (verbose.length > 0) {
+            LogManager.getLogger().atLevel(Level.INFO).log(verbose);
+        } else {
+            LogManager.getLogger().atLevel(Level.ERROR).log(verbose);
+        }
+    }
 }
 
 @Command
@@ -172,31 +241,25 @@ class CommonFileParams {
     @Parameters(index = "2", paramLabel = "<inputPathwayGenes.csv|tsv>", description = "Input pathway + genes file, columns: pathway-id, entrez gene-id, gene-symbol and ensembl gene-id")
     private File inputFilePathwayGenes;
 
-    public List<Deg> getDegs() throws IOException {
+    public List<Deg> getDegs() {
         try {
             return fileParseUtils.parseDegsFile(inputFileDegs);
-        } catch (IOException e) {
-            throw new IOException(e);
-        } catch (Exception e) {
+        }catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    public List<Pathway> getPathways() throws IOException {
+    public List<Pathway> getPathways() {
         try {
             return fileParseUtils.parsePathwayFile(inputFilePathwayDescriptions);
-        } catch (IOException e) {
-            throw new IOException(e);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    public List<PathwayGene> getPathwayGenes() throws IOException {
+    public List<PathwayGene> getPathwayGenes() {
             try {
                 return fileParseUtils.parsePathwayGeneFile(inputFilePathwayGenes);
-            } catch (IOException e) {
-                throw new IOException(e);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
