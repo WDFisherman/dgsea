@@ -3,6 +3,8 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/dgsea.iml" filepath="$PROJECT_DIR$/dgsea.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/dgsea.main.iml" filepath="$PROJECT_DIR$/.idea/modules/dgsea.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/dgsea.test.iml" filepath="$PROJECT_DIR$/.idea/modules/dgsea.test.iml" />
     </modules>
   </component>
 </project>
