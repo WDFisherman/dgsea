@@ -14,29 +14,28 @@ import org.w3c.dom.ranges.Range;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 public class ChartGenerator {
-    private final String                   title;
+    private final String                   title; // chart-styling >>
     private final String                   xAxis;
     private final String                   yAxis;
     private final double                   dpi;
     private final String                   colorScheme;
-    private final String[]                 colorManual; // Give warning when too few colors are given
+    private final String[]                 colorManual;
     private final Color                    singleColor;
     private final double                   dotSize;
-    private final float                    dotTransparency;
+    private final float                    dotTransparency; //<<
     private final String                   imageFormat;
     private final File                     outputFilePath;
-    private final HashMap<String, Range>   positionRanges;
-    private final List<Pathway>            pathways;
+    private final HashMap<String, Range>   positionRanges; // data-selection >>
+    private final int                      maxNPathways;
+    private Set<String>                    pathwayIds; //<<
+    private final List<Pathway>            pathways; // data >>
     private final List<PathwayGene>        pathwayGenes;
     private final List<Deg>                degs;
-    private final List<EnrichmentResult>   enrichmentResults;
-    private final int                      maxNPathways;
+    private final List<EnrichmentResult>   enrichmentResults; //<<
 
     private final Logger logger = LogManager.getLogger(ChartGenerator.class.getName());
 
@@ -52,13 +51,14 @@ public class ChartGenerator {
         dotSize             = builder.dotSize;
         dotTransparency     = builder.dotTransparency;
         imageFormat         = builder.imageFormat;
+        outputFilePath      = builder.outputFilePath;
         maxNPathways        = builder.maxNPathways;
         positionRanges      = builder.positionRanges;
         pathways            = builder.pathways;
         pathwayGenes        = builder.pathwayGenes;
         degs                = builder.degs;
         enrichmentResults   = builder.enrichmentResults;
-        outputFilePath      = builder.outputFilePath;
+        pathwayIds          = builder.pathwayIds;
 
     }
 
@@ -81,6 +81,7 @@ public class ChartGenerator {
         private HashMap<String, Range>  positionRanges = null;
         private List<EnrichmentResult>  enrichmentResults = null;
         private int                     maxNPathways = -1;
+        private Set<String>             pathwayIds = null;
 
         public Builder(String title, String xAxis, String yAxis, List<Pathway> pathways, List<PathwayGene> pathwayGenes, List<Deg> degs, File outputFilePath) {
             this.title              = title;
@@ -104,6 +105,7 @@ public class ChartGenerator {
         public void dotTransparency(float val) { dotTransparency = val; }
         public void imageFormat(String val) { imageFormat = val; }
         public void maxNPathways(int val) { maxNPathways = val; }
+        public void pathwayIds(Set<String> val) { pathwayIds = val; }
 
         public ChartGenerator build() {
             return new ChartGenerator(this);
@@ -112,15 +114,15 @@ public class ChartGenerator {
     }
 
     void outputEnrichmentBarChart() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException("Not implemented yet.");
     }
 
     void outputEnrichmentDotChart() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException("Not implemented yet.");
     }
 
     void outputRunningSumPlot() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException("Not implemented yet.");
     }
 
     /**
@@ -129,7 +131,6 @@ public class ChartGenerator {
      *  gets average logFoldChange based on absolute total,
      *  gets total of average logFoldChanges of all pathways.
      * Calculates percentage logFoldChange per pathway.
-     *
      * percentage logFoldChange per pathway, based on absolute average logFoldChange per deg in pathway
      */
     public void saveChartPercLogFChangePerPathway() {
@@ -157,23 +158,31 @@ public class ChartGenerator {
         } catch(IOException e) {
             logger.error("Failed to save chart to image file, error: {}", String.valueOf(e));
         }
-
-
-        PercLogFChangePerPathway percLogFChangePerPathway = new PercLogFChangePerPathway(this.degs, this.pathwayGenes);
-        Map<String, Double> percentageAllPathways = percLogFChangePerPathway.getPercAllPathways(new String[]{"hsa00010", "hsa04613"});
-        System.out.println("percentageAllPathways = " + percentageAllPathways);
     }
 
 
     private DefaultCategoryDataset getDefaultCategoryDataset() {
+        PercLogFChangePerPathway percLogFChangePerPathway = new PercLogFChangePerPathway(this.degs, this.pathwayGenes);
+        if (pathwayIds == null) {
+            this.pathwayIds = getPathwayAllAvIds();
+        }
+        Map<String, Double> percentageAllPathways = percLogFChangePerPathway.percAllPathways(pathwayIds);
         DefaultCategoryDataset objDataset = new DefaultCategoryDataset();
 
-        objDataset.setValue(65,"","Glycolysis / Gluconeogenesis");
-        objDataset.setValue(24,"","Citrate cycle (TCA cycle)");
-        objDataset.setValue(11,"","Pentose phosphate pathway");
+         for(Pathway pathway:pathways) {
+             if(pathwayIds.contains(pathway.pathwayId())) {
+                 objDataset.setValue(percentageAllPathways.get(pathway.pathwayId()),"",pathway.description());
+             }
+         }
         return objDataset;
     }
 
-
+    /**
+     * Give all available pathway ids, based on the pathwayGenes field/dataset.
+     * @return pathway ids
+     */
+    private LinkedHashSet<String> getPathwayAllAvIds() {
+        return new LinkedHashSet<>(pathwayGenes.stream().distinct().map(PathwayGene::pathwayId).toList());
+    }
 
 }

@@ -132,7 +132,7 @@ class ContinuityTable implements Runnable {
     @Mixin
     CommonFileParams commonFileParams = new CommonFileParams();
 
-    @Option(names = {"--output"}, paramLabel = "[csv|print]", description = "Option on how to return output table. (csv-file or print to terminal)")
+    @Option(names = {"--output"}, paramLabel = "[csv|print]", description = "Option on how to return output table. (csv-file or print to terminal)", defaultValue = "csv")
     private String output;
 
     @Option(names = {"--outputFilePath"}, description = "File to write table text to.")
