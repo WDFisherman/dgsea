@@ -31,7 +31,6 @@ Basic test usage, based on the test data in this repo under: `src/test/resources
 You can also run any of the other sub-commands:
 ```console
 foo@bar: java -jar dgsea-1.0-SNAPSHOT-24w42a.jar help
-args = [help]
 Usage: main [-hV] [COMMAND]
   -h, --help      Show this help message and exit.
   -V, --version   Print version information and exit.
@@ -40,11 +39,15 @@ Commands:
                                 command.
   enrich_bar_chart            No description yet
   enrich_dot_chart            This command over-aches commands for now:
-                                con_table, enrich_bar_chart and enrich_dot_chart
+                                enrich_bar_chart and enrich_dot_chart and makes
+                                both charts
   perc_lfc_per_pathway_chart  Makes a bar-chart showing ratio's average
                                 log-fold-change on differently expressed genes
                                 per pathway.
-  con_table                   No description yet
+  con_table                   Prints or stores to text file a continuity table
+                                of count data on 2 aspects of degs for every
+                                pathway: presence in pathway and presence of
+                                significance
 ```
 
 ## Support
@@ -58,7 +61,7 @@ We would like to inform that there are no outside contributions needed. You are 
 Made by:
 * Jort Gommers: j.r.gommers@st.hanze.nl
 * Willem Daniël Visser: wi.d.visser@st.hanze.nl \
-Data contribution: \
+Data contribution:
 * Marcel Kempenaar: m.kempenaar@pl.hanze.nl
 
 ## License
