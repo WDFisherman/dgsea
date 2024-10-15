@@ -1,8 +1,8 @@
+package nl.bioinf.dgsea.table_outputs;
 
 import nl.bioinf.dgsea.data_processing.Deg;
 import nl.bioinf.dgsea.data_processing.Pathway;
 import nl.bioinf.dgsea.data_processing.PathwayGene;
-import nl.bioinf.dgsea.table_outputs.Table;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -11,14 +11,14 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class TableTest extends Table {
+class TableTest {
+    Table table;
 
     @BeforeEach
     void setUp() {
-        // Clear any existing data
-        degs.clear();
-        pathways.clear();
-        pathwayGenes.clear();
+        List<Deg> degs = new ArrayList<>();
+        List<Pathway> pathways = new ArrayList<>();
+        List<PathwayGene> pathwayGenes = new ArrayList<>();
 
         // Set up some test data
         // Adding DEGs
@@ -35,45 +35,47 @@ class TableTest extends Table {
         pathwayGenes.add(new PathwayGene("Pathway1", 102, "GeneB", "ENSG000002"));
         pathwayGenes.add(new PathwayGene("Pathway1", 103, "GeneC", "ENSG000003"));
         pathwayGenes.add(new PathwayGene("Pathway2", 104, "GeneD", "ENSG000004"));
+
+        table = new Table(degs, pathways, pathwayGenes, 0.01);
     }
 
 
     @Test
     void testGetSumInPathway() {
-        int count = getSumInPathway("Pathway1");
+        int count = table.getSumInPathway("Pathway1");
         assertEquals(2, count, "Should count 2 DEGs in Pathway1");
     }
 
     @Test
     void testGetSumTotalPathway() {
-        int count = getSumTotalPathway("Pathway1");
+        int count = table.getSumTotalPathway("Pathway1");
         assertEquals(3, count, "Should count 3 genes in Pathway1");
     }
 
     @Test
     void testGetSumIsSignificantDeg() {
-        int count = getSumIsSignificantDeg();
+        int count = table.getSumIsSignificantDeg();
         assertEquals(2, count, "Should count 2 significant DEGs");
     }
 
     @Test
     void testGetSumTotalDeg() {
-        int count = getSumTotalDeg();
+        int count = table.getSumTotalDeg();
         assertEquals(3, count, "Should count total 3 DEGs");
     }
 
     @Test
     void testIsDeg() {
-        boolean result = isDeg("GeneA");
+        boolean result = table.isDeg("GeneA");
         assertTrue(result, "GeneA should be a DEG");
 
-        result = isDeg("GeneD");
+        result = table.isDeg("GeneD");
         assertFalse(result, "GeneD should not be a DEG");
     }
 
     @Test
     void testGetSumNonSignificantInPathway() {
-        int count = getSumNonSignificantInPathway("Pathway1");
+        int count = table.getSumNonSignificantInPathway("Pathway1");
         assertEquals(1, count, "Should count 1 non-significant DEG in Pathway1");
     }
 }

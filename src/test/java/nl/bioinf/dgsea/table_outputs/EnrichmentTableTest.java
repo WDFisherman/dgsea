@@ -1,10 +1,9 @@
-
+package nl.bioinf.dgsea.table_outputs;
 
 import nl.bioinf.dgsea.data_processing.Deg;
 import nl.bioinf.dgsea.data_processing.Pathway;
 import nl.bioinf.dgsea.data_processing.PathwayGene;
 import nl.bioinf.dgsea.data_processing.EnrichmentResult;
-import nl.bioinf.dgsea.table_outputs.EnrichmentTable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

@@ -28,14 +28,14 @@ class PercLogFChangePerPathwayTest {
 
     @BeforeAll
     public void setData() throws Exception {
-        File dataFolder = new File("../dgsea-java/test_data");
+        File dataFolder = new File("src/test/resources/");
         File pathwayFile = new File(dataFolder, "hsa_pathways.csv");
         File pathwayGenesFile = new File(dataFolder, "pathways.csv");
         File degsFile = new File(dataFolder, "degs.csv");
         FileParseUtils fileParseUtils = new FileParseUtils();
         degs = fileParseUtils.parseDegsFile(degsFile);
-        pathwayGenes = fileParseUtils.parsePathwayGeneFile(pathwayGenesFile);
         pathways = fileParseUtils.parsePathwayFile(pathwayFile);
+        pathwayGenes = fileParseUtils.parsePathwayGeneFile(pathwayGenesFile);
     }
 
     @BeforeEach

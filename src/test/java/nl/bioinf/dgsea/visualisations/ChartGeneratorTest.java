@@ -18,7 +18,7 @@ class ChartGeneratorTest {
 
     @BeforeAll
     public static void setData() throws Exception {
-        File dataFolder = new File("../dgsea-java/test_data");
+        File dataFolder = new File("src/test/resources/");
         File pathwayFile = new File(dataFolder, "hsa_pathways.csv");
         File pathwayGenesFile = new File(dataFolder, "pathways.csv");
         File degsFile = new File(dataFolder, "degs.csv");
@@ -33,9 +33,9 @@ class ChartGeneratorTest {
                 "Promising pathway combinations",
                 "pathways",
                 "perc share differential expression",
+                ChartGeneratorTest.degs,
                 ChartGeneratorTest.pathways,
                 ChartGeneratorTest.pathwayGenes,
-                ChartGeneratorTest.degs,
                 new File("output.png")
         );
         chartGeneratorsBuilder.dpi(0.5);
