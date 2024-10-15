@@ -2,7 +2,7 @@
 
 DGSEA-tools provide several tools to gain insights into gene-enrichment data as part of a differential gene set enrichment analysis.
 Using results of this analysis tool you will be able to:
-* Get count data on 2 aspects of degs for every pathway: in or not in pathway and presence of significance
+* Get count data on 2 aspects of degs for every pathway: presence in pathway and presence of significance
 * Compare enrichment scores between pathways in a bar-chart
 * Compare enrichment scores and its relationship with p- significance values between pathways in a dot-chart
 * Compare pathways average deg(differently expressed gene) log-fold-change with one another in a bar-chart
@@ -23,18 +23,14 @@ This tool requires JRE 22 to be installed on your computer.
 For just running the application we recommend downloading the pre-build jar in this repo. See: `builds/`.
 
 ## Usage
-Basic test usage, based on the test data in this repo under: `test_data/`:
+Basic test usage, based on the test data in this repo under: `src/test/resources/`:
 ```bash
-& java.exe -jar dgsea-1.0-SNAPSHOT-24w41b.jar perc_lfc_per_pathway_chart test_data/degs.csv test_data/hsa_pathways.csv test_data/pathways.csv outputPathImage.png
+& java.exe -jar dgsea-1.0-SNAPSHOT-24w42a.jar perc_lfc_per_pathway_chart src/test/resources/degs.csv src/test/resources/hsa_pathways.csv src/test/resources/pathways.csv outputPathlfc.png
 ```
 
-```shell
-java -jar dgsea-1.0-SNAPSHOT-24w41b.jar perc_lfc_per_pathway_chart test_data/degs.csv test_data/hsa_pathways.csv test_data/pathways.csv outputPathImage.png
-```
-
-You can also run any of the other commands:
+You can also run any of the other sub-commands:
 ```console
-foo@bar: java -jar help
+foo@bar: java -jar dgsea-1.0-SNAPSHOT-24w42a.jar help
 args = [help]
 Usage: main [-hV] [COMMAND]
   -h, --help      Show this help message and exit.
@@ -61,8 +57,8 @@ We would like to inform that there are no outside contributions needed. You are 
 ## Authors and acknowledgment
 Made by:
 * Jort Gommers: j.r.gommers@st.hanze.nl
-* Willem Daniël Visser: wi.d.visser@st.hanze.nl
-Data contribution:
+* Willem Daniël Visser: wi.d.visser@st.hanze.nl \
+Data contribution: \
 * Marcel Kempenaar: m.kempenaar@pl.hanze.nl
 
 ## License
