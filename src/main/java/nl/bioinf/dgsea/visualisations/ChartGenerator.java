@@ -41,7 +41,7 @@ public class ChartGenerator {
     private final String                 imageFormat;
     private final File                   outputFilePath;
     private final HashMap<String, Range> positionRanges; // data-selection >>
-    private final int                    maxNPathways;
+    private int                    maxNPathways;
     private Set<String>                  pathwayIds; //<<
     private final List<Pathway>          pathways; // data >>
     private final List<PathwayGene>      pathwayGenes;
@@ -88,7 +88,7 @@ public class ChartGenerator {
         private String                 imageFormat = "png";
         private HashMap<String, Range> positionRanges = null;
         private List<EnrichmentResult> enrichmentResults = null;
-        private int                    maxNPathways = -1;
+        private int                    maxNPathways = 20;
         private Set<String>            pathwayIds = null;
 
         public Builder(String title, String xAxis, String yAxis, List<Deg> degs, List<Pathway> pathways, List<PathwayGene> pathwayGenes, File outputFilePath) {
@@ -134,15 +134,6 @@ public class ChartGenerator {
     }
 
     /**
-     * Gets logFoldChange per deg per pathway,
-     *  then gets absolute total logFoldChange per pathway,
-     *  then gets average logFoldChange based on absolute total,
-     *  then gets total of average logFoldChanges of all pathways.
-     * Calculates percentage logFoldChange per pathway.
-     * percentage logFoldChange per pathway, based on absolute average logFoldChange of degs in pathway
-     */
-
-    /**
      * Gets calculated data then transforms it to bar-chart/categorical data.
      *  Then makes bar-chart and saves this to an image.
      */
@@ -179,15 +170,26 @@ public class ChartGenerator {
      */
     private DefaultCategoryDataset getDefaultCategoryDataset() {
         DefaultCategoryDataset objDataset = new DefaultCategoryDataset();
-        PercLogFChangePerPathway percLogFChangePerPathway = new PercLogFChangePerPathway(this.degs, this.pathwayGenes);
-        if (pathwayIds == null) { // not provided by end-user
-            this.pathwayIds = getPathwayAllAvIds();
+        PercLogFChangePerPathway percLogFChangePerPathway = new PercLogFChangePerPathway(this.degs, this.pathwayGenes, 0.05);
+        if (pathwayIds != null) {
+            this.maxNPathways = Integer.MAX_VALUE; // already caped by pathwayIds.size()
+        } else { // pathwayIds not provided by end-user
+            pathwayIds = getPathwayAllAvIds();
         }
-        Map<String, Double> percentageAllPathways = percLogFChangePerPathway.percAllPathways(pathwayIds);
+        Map<String, Double> percentageAllPathways = percLogFChangePerPathway.percAllPathways();
+        Map<String, Double> percentageSomePathways = percLogFChangePerPathway.filterMostInfluentialPathways(this.maxNPathways, percentageAllPathways);
 
-         for(Pathway pathway:pathways) {
-             if(pathwayIds == null || pathwayIds.contains(pathway.pathwayId())) {
-                 objDataset.setValue(percentageAllPathways.get(pathway.pathwayId()),"",pathway.description());
+        for(Map.Entry<String, Double> pathwayPercentage : percentageSomePathways.entrySet()) {
+            String pathwayId = pathwayPercentage.getKey();
+            double percentage = pathwayPercentage.getValue();
+             if(pathwayIds.contains(pathwayId)) {
+                 String pathwayDescription = "no description";
+                 for (Pathway pathway : this.pathways) {
+                     if (pathway.pathwayId().equals(pathwayId)) {
+                         pathwayDescription = pathway.description();
+                     }
+                 }
+                 objDataset.setValue(percentage,"",pathwayDescription);
              }
          }
         return objDataset;

@@ -6,6 +6,7 @@ import nl.bioinf.dgsea.data_processing.Pathway;
 import nl.bioinf.dgsea.data_processing.PathwayGene;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.config.Configurator;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
@@ -82,15 +83,15 @@ class CommonFileParams {
  * Has common chart cli- params/options. Common to all possible charts. (note: cannot be record because of picocli)
  */
 class CommonChartParams {
-    @Option(names = {"--title"}, description = "Title of chart, default = 'png'", defaultValue = "png")
+    @Option(names = {"--title"}, description = "Title of chart, default = dependent on chart type/given subcommand")
     String title;
-    @Option(names = {"--x-axis"}, description = "X-axis title of chart, default = 'png'", defaultValue = "png")
+    @Option(names = {"--x-axis"}, description = "X-axis title of chart, default = dependent on chart type/given subcommand")
     String xAxisTitle;
-    @Option(names = {"--y-axis"}, description = "Y-axis title of chart, default = 'png'", defaultValue = "png")
+    @Option(names = {"--y-axis"}, description = "Y-axis title of chart, default = dependent on chart type/given subcommand")
     String yAxisTitle;
-    @Option(names = {"--image-format"}, paramLabel = "[png|jpg ? png]", description = "Image format of output image, default = 'png'", defaultValue = "png")
+    @Option(names = {"--image-format"}, paramLabel = "[png|jpg]", description = "Image format of output image, default = ${DEFAULT-VALUE}", defaultValue = "png")
     String imageFormat;
-    @Option(names = {"--image-dpi"}, paramLabel = "[0.0-inf ? 1.0]", description = "Dpi of output image, default = 1.0", defaultValue="1.0")
+    @Option(names = {"--image-dpi"}, paramLabel = "[0.0-inf]", description = "Dpi of output image, default = ${DEFAULT-VALUE}", defaultValue="1.0")
     double imageDpi;
 
     @Option(
@@ -101,7 +102,7 @@ class CommonChartParams {
             completionCandidates = CommonChartParams.ColorSchemeCandidates.class) // Only a single implementation, because this doesn't work in all kinds of terminal-emulators.
     String colorScheme;
 
-    @Option(names = {"--color-manual"}, arity = "0..*", paramLabel = "[red|green|blue|purple|orange|gray|black|pink|yellow|magenta|cyan|brown 1...]", description = "One or more colors to apply to chart. Overrides '--color-scheme'. Cycles trough if too few colors were given.")
+    @Option(names = {"--color-manual"}, arity = "0..*", split = ",", paramLabel = "[red|green|blue|purple|orange|gray|black|pink|yellow|magenta|cyan|brown]", description = "One or more colors to apply to chart. Overrides '--color-scheme'. Cycles trough if too few colors were given.")
     String[] colorManual;
     @Parameters(index = "3+",paramLabel = "<outputPathImage.*>", description = "Output path of generated chart")
     File outputPath;

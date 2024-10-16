@@ -38,7 +38,7 @@ class ChartGeneratorTest {
                 ChartGeneratorTest.pathwayGenes,
                 new File("output.png")
         );
-        chartGeneratorsBuilder.dpi(0.5);
+        chartGeneratorsBuilder.dpi(0.5).maxNPathways(20);
         return chartGeneratorsBuilder;
     }
 

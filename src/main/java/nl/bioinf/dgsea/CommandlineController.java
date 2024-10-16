@@ -132,13 +132,14 @@ class PercLogFChangePerPathwayCmd implements Runnable {
     @Mixin
     private CommonChartParams commonChartParams;
 
-    @Option(names = {"--pathway-ids"}, paramLabel = "hsa(...)", arity = "0..*", split = ",", description = "Pathway ids of interest")
+    @Option(names = {"--pathway-ids"}, paramLabel = "hsa123", arity = "0..*", split = ",", description = "Pathway ids to display in chart")
     private Set<String> pathwayIds;
-    @Option(names = {"--max-n-pathways"}, paramLabel = "[1-inf]", description = "Max number of pathways to include in chart. '--pathway-ids' overrides this option.")
+    @Option(names = {"--max-n-pathways"}, paramLabel = "[1-inf]", description = "Max number of pathways to display in chart(pathways with high value come stay longest). selected '--pathway-ids' overrides this option. Default: ${DEFAULT-VALUE}", defaultValue = "20")
     private int maxNPathways;
 
     @Override
     public void run() {
+        if (maxNPathways <= 0) throw new IllegalArgumentException("maxNpathways needs to be at least 0");
         commonToAll.setLoggingScope();
         List<Deg> degs = commonFileParams.getDegs();
         List<Pathway> pathways = commonFileParams.getPathways();
@@ -175,7 +176,7 @@ class ContinuityTable implements Runnable {
     @Mixin
     private CommonFileParams commonFileParams;
 
-    @Option(names = {"--output"}, paramLabel = "[file|print]", description = "Option on how to return output table. (csv-file or print to terminal)", defaultValue = "file")
+    @Option(names = {"--output"}, paramLabel = "[file|print]", description = "Option on how to return output table. (csv-file or print to terminal). Default = ${DEFAULT-VALUE}", defaultValue = "file")
     private String output;
     @Option(names = {"--outputFilePath"}, description = "File to write table text to.")
     private File outputFilePath;

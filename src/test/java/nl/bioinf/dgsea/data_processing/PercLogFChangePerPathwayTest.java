@@ -15,130 +15,74 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class PercLogFChangePerPathwayTest {
-    private List<Deg> degs;
-    private List<Pathway> pathways;
-    private List<PathwayGene> pathwayGenes;
     private List<Deg> degs1;
-    private List<Deg> degs2;
-    private List<Pathway> pathways1;
-    private List<Pathway> pathways2;
     private List<PathwayGene> pathwayGenes1;
-    private List<PathwayGene> pathwaysGenes2;
     private Set<String> pathwayIds;
-
-    @BeforeAll
-    public void setData() throws Exception {
-        File dataFolder = new File("src/test/resources/");
-        File pathwayFile = new File(dataFolder, "hsa_pathways.csv");
-        File pathwayGenesFile = new File(dataFolder, "pathways.csv");
-        File degsFile = new File(dataFolder, "degs.csv");
-        FileParseUtils fileParseUtils = new FileParseUtils();
-        degs = fileParseUtils.parseDegsFile(degsFile);
-        pathways = fileParseUtils.parsePathwayFile(pathwayFile);
-        pathwayGenes = fileParseUtils.parsePathwayGeneFile(pathwayGenesFile);
-    }
+    private PercLogFChangePerPathway percLogFChangePerPathway;
 
     @BeforeEach
     public void setTestData() {
         degs1 = new ArrayList<>();
-        degs2 = new ArrayList<>();
-        pathways1 = new ArrayList<>();
-        pathways2 = new ArrayList<>();
         pathwayGenes1 = new ArrayList<>();
-        pathwaysGenes2 = new ArrayList<>();
-        pathwayIds = new LinkedHashSet<>();
-        pathwayIds.add("hsa00010");
-        pathwayIds.add("hsa00020");
-        pathwayIds.add("hsa00030");
-        pathwayIds.add("hsa00040");
+        pathwayIds = new LinkedHashSet<>(); // LinkedHashSet to keep order of added elements, assuming what pathwayGenes is also in order we can do nested iteratarion faster, see:PercLogFChangePerPathway.getTotalLfc
     }
 
-    private static Stream<Arguments> provideEmptyInputs() {
-        List<Deg> degsEmpty = new ArrayList<>();
-        List<PathwayGene> pathwaysGenesEmpty = new ArrayList<>();
-        List<Deg> degs1 = new ArrayList<>();
-        List<PathwayGene> pathwayGenes1 = new ArrayList<>();
-        degs1.add(new Deg("", 0.0, 0.0));
-        pathwayGenes1.add(new PathwayGene("", 1, "", ""));
-        return Stream.of(
-            Arguments.of(degsEmpty, pathwayGenes1, IllegalArgumentException.class),
-            Arguments.of(degs1, pathwaysGenesEmpty, IllegalArgumentException.class)
-        );
-    }
-
+    /**
+     * Check if exception when to little data was given to determine pathway-deg connections
+     */
     @Test
-    void percAllPathways_expectException() {
+    void percAllPathways_exceptionOnNoDataEntries() {
         List<Deg> degsEmpty = new ArrayList<>();
         List<PathwayGene> pathwaysGenesEmpty = new ArrayList<>();
         degs1.add(new Deg("", 0.0, 0.0));
         pathwayGenes1.add(new PathwayGene("", 1, "", ""));
-        assertThrows(IllegalArgumentException.class, () -> new PercLogFChangePerPathway(degsEmpty, pathwayGenes1));
-        assertThrows(IllegalArgumentException.class, () -> new PercLogFChangePerPathway(degs1, pathwaysGenesEmpty));
+        assertThrows(IllegalArgumentException.class, () -> new PercLogFChangePerPathway(degsEmpty, pathwayGenes1, 0.05));
+        assertThrows(IllegalArgumentException.class, () -> new PercLogFChangePerPathway(degs1, pathwaysGenesEmpty, 0.05));
     }
 
+    /**
+     * Check if hsa10 is not linked to gene1
+     */
     @Test
-    void percAllPathways_expectOnNoPathway() {
-        degs1.add(new Deg("gene1", 0.0, 0.0));
-        pathwayGenes1.add(new PathwayGene("hsa10", 1, "gene1", ""));
-        Set<String> pathwayIds = new HashSet<>();
-        PercLogFChangePerPathway percLogFChangePerPathway = new PercLogFChangePerPathway(degs1, pathwayGenes1);
-        assertThrows(IllegalArgumentException.class, () -> percLogFChangePerPathway.percAllPathways(pathwayIds));
-    }
-
-    @Test
-    void percAllPathways_expectMissingPathway() {
-        degs1.add(new Deg("gene1", 0.0, 0.0));
-        pathwayGenes1.add(new PathwayGene("hsa10", 1, "gene1", ""));
-        Set<String> pathwayIds = new HashSet<>();
-        Set<String> pathwayIds1 = new HashSet<>();
-        Set<String> pathwayIds2 = new HashSet<>();
-        Set<String> pathwayIds3 = new HashSet<>();
-        pathwayIds.add("hsa11");
-        pathwayIds1.add("hsa1"); // test exact match
-        pathwayIds2.add("hsa100");
-        pathwayIds3.add("10");
-        PercLogFChangePerPathway percLogFChangePerPathway = new PercLogFChangePerPathway(degs1, pathwayGenes1);
-        assertThrows(IllegalArgumentException.class, () -> percLogFChangePerPathway.percAllPathways(pathwayIds));
-        assertThrows(IllegalArgumentException.class, () -> percLogFChangePerPathway.percAllPathways(pathwayIds1));
-        assertThrows(IllegalArgumentException.class, () -> percLogFChangePerPathway.percAllPathways(pathwayIds2));
-        assertThrows(IllegalArgumentException.class, () -> percLogFChangePerPathway.percAllPathways(pathwayIds3));
-    }
-
-    @Test
-    void percAllPathways_expectMissingMatchingGeneSymbols() {
+    void percAllPathways_missingMatchingGeneSymbols() {
         degs1.add(new Deg("gene1", 2.4, 0.0));
         pathwayGenes1.add(new PathwayGene("hsa10", 1, "gene2", ""));
-        Set<String> pathwayIds = new HashSet<>();
         pathwayIds.add("hsa10");
-        PercLogFChangePerPathway percLogFChangePerPathway = new PercLogFChangePerPathway(degs1, pathwayGenes1);
-        assertEquals(0.0,percLogFChangePerPathway.percAllPathways(pathwayIds).get("hsa10"));
+        percLogFChangePerPathway = new PercLogFChangePerPathway(degs1, pathwayGenes1, 0.05);
+        assertEquals(0.0,percLogFChangePerPathway.percAllPathways().get("hsa10"));
     }
 
+    /**
+     * Check if hsa10 is 0.0% despite being the only pathway
+     */
     @Test
-    void percAllPathways_expectStillZero() {
+    void percAllPathways_noLfc() {
         degs1.add(new Deg("gene1", 0.0, 0.0));
         degs1.add(new Deg("gene2", 0.0, 0.0));
         pathwayGenes1.add(new PathwayGene("hsa10", 1, "gene1", ""));
         pathwayGenes1.add(new PathwayGene("hsa10", 1, "gene2", ""));
-        Set<String> pathwayIds = new HashSet<>();
         pathwayIds.add("hsa10");
-        PercLogFChangePerPathway percLogFChangePerPathway = new PercLogFChangePerPathway(degs1, pathwayGenes1);
-        assertEquals(0.0,percLogFChangePerPathway.percAllPathways(pathwayIds).get("hsa10"));
+        percLogFChangePerPathway = new PercLogFChangePerPathway(degs1, pathwayGenes1, 0.05);
+        assertEquals(0.0,percLogFChangePerPathway.percAllPathways().get("hsa10"));
     }
 
+    /**
+     * Check if hsa10 is 100.0%
+     */
     @Test
-    void percAllPathways_expectHundred() {
+    void percAllPathways_allLfc() {
         degs1.add(new Deg("gene1", 1.0, 0.0));
         pathwayGenes1.add(new PathwayGene("hsa10", 1, "gene1", ""));
-        Set<String> pathwayIds = new HashSet<>();
         pathwayIds.add("hsa10");
-        PercLogFChangePerPathway percLogFChangePerPathway = new PercLogFChangePerPathway(degs1, pathwayGenes1);
-        assertEquals(100.0,percLogFChangePerPathway.percAllPathways(pathwayIds).get("hsa10"));
+        percLogFChangePerPathway = new PercLogFChangePerPathway(degs1, pathwayGenes1, 0.05);
+        assertEquals(100.0,percLogFChangePerPathway.percAllPathways().get("hsa10"));
     }
 
+    /**
+     * Check if all 3 pathways are registered, even when percentage is 0.0.
+     */
     @Test
-    void percAllPathways_expectAllPossiblePathways() {
-        pathwayIds = new LinkedHashSet<>();
+    void percAllPathways_allPathwaysRegistered() {
         pathwayIds.add("hsa10");
         pathwayIds.add("hsa11");
         pathwayIds.add("hsa12");
@@ -148,13 +92,12 @@ class PercLogFChangePerPathwayTest {
         pathwayGenes1.add(new PathwayGene("hsa11", 1, "gene1", ""));
         pathwayGenes1.add(new PathwayGene("hsa12", 1, "gene1", ""));
         pathwayGenes1.add(new PathwayGene("hsa14", 1, "gene1", ""));
-        PercLogFChangePerPathway percLogFChangePerPathway = new PercLogFChangePerPathway(degs1, pathwayGenes1);
-        assertEquals(4,percLogFChangePerPathway.percAllPathways(pathwayIds).size());
+        percLogFChangePerPathway = new PercLogFChangePerPathway(degs1, pathwayGenes1, 0.05);
+        assertEquals(4,percLogFChangePerPathway.percAllPathways().size());
     }
 
     @Test
     void percAllPathways_idealEasyCase() {
-        pathwayIds = new LinkedHashSet<>();
         pathwayIds.add("hsa10");
         pathwayIds.add("hsa11");
         pathwayIds.add("hsa12");
@@ -167,21 +110,136 @@ class PercLogFChangePerPathwayTest {
         pathwayGenes1.add(new PathwayGene("hsa11", 1, "gene2", ""));
         pathwayGenes1.add(new PathwayGene("hsa12", 1, "gene3", ""));
         pathwayGenes1.add(new PathwayGene("hsa14", 1, "gene4", ""));
-        PercLogFChangePerPathway percLogFChangePerPathway = new PercLogFChangePerPathway(degs1, pathwayGenes1);
-        assertEquals(40.0,percLogFChangePerPathway.percAllPathways(pathwayIds).get("hsa14"));
+        percLogFChangePerPathway = new PercLogFChangePerPathway(degs1, pathwayGenes1, 0.05);
+        assertEquals(40.0,percLogFChangePerPathway.percAllPathways().get("hsa14"));
     }
 
     @Test
     void percAllPathways_idealCase() {
-        pathwayIds = new LinkedHashSet<>();
+        setIdealCase();
+        percLogFChangePerPathway = new PercLogFChangePerPathway(degs1, pathwayGenes1, 0.05);
+        Range awnserRange = new Range(36.36, 36.37);
+        Map<String, Double> percAllPathways = percLogFChangePerPathway.percAllPathways();
+        assertTrue(awnserRange.contains(percAllPathways.get("hsa14")));
+    }
+
+    /**
+     * Check if hsa10 has any deg remaining after pval filter
+     */
+    @Test
+    void percAllPathways_noSignificantDegs() {
+        setUpNonSignificantDegs();
+        percLogFChangePerPathway = new PercLogFChangePerPathway(degs1, pathwayGenes1, 0.05);
+        Map<String, Double> percAllPathways = percLogFChangePerPathway.percAllPathways();
+        assertEquals(0.0, percAllPathways.get("hsa10"));
+    }
+
+    /**
+     * Check if in-significant(adjustedPValue > pval) degs do not influence the percentage of hsa11
+     */
+    @Test
+    void percAllPathways_doNotCount_inSignificant() {
+        setUpNonSignificantDegs();
+        degs1.add(new Deg("gene4", 3.0, 0.0));
+        pathwayGenes1.add(new PathwayGene("hsa11", 1, "gene4", ""));
+        percLogFChangePerPathway = new PercLogFChangePerPathway(degs1, pathwayGenes1, 0.05);
+        Map<String, Double> percAllPathways = percLogFChangePerPathway.percAllPathways();
+        assertEquals(100.0, percAllPathways.get("hsa11"));
+    }
+
+    /**
+     * Check if ideal case yields correct results.
+     */
+    @Test
+    void filterMostInfluentialPathways_idealCase() {
+        setIdealCase();
+        percLogFChangePerPathway = new PercLogFChangePerPathway(degs1, pathwayGenes1, 0.05);
+        Map<String, Double> percAllPathways = percLogFChangePerPathway.percAllPathways();
+        Map<String, Double> percSomePathways = percLogFChangePerPathway.filterMostInfluentialPathways(3, percAllPathways);
+        Range awnserRange = new Range(27.27, 27.28);
+        assertEquals(3, percSomePathways.size());
+        assertTrue(awnserRange.contains(percSomePathways.get("hsa12"))); // just about included
+    }
+
+    /**
+     * Check if first value does not get filtered, just because it's the first.
+     */
+    @Test
+    void filterMostInfluentialPathways_doNotFilterFirst() {
+        pathwayIds.add("hsa10");
+        pathwayIds.add("hsa11");
+        degs1.add(new Deg("gene1", 4.5, 0.0));
+        degs1.add(new Deg("gene2", -0.5, 0.0));
+        pathwayGenes1.add(new PathwayGene("hsa10", 1, "gene1", ""));
+        pathwayGenes1.add(new PathwayGene("hsa11", 1, "gene2", ""));
+        percLogFChangePerPathway = new PercLogFChangePerPathway(degs1, pathwayGenes1, 0.05);
+        Map<String, Double> perAllPathways = percLogFChangePerPathway.percAllPathways();
+        Map<String, Double> percSomePathways = percLogFChangePerPathway.filterMostInfluentialPathways(1, perAllPathways);
+        assertEquals(1, percSomePathways.size());
+        assertEquals(90.0, percSomePathways.get("hsa10"));
+    }
+
+    /**
+     * Check if size is still 3 when maxNpathways is larger (5)
+     */
+    @Test
+    void filterMostInfluentialPathways_filterNone() {
         pathwayIds.add("hsa10");
         pathwayIds.add("hsa11");
         pathwayIds.add("hsa12");
-        pathwayIds.add("hsa14");
-        pathwayIds.add("hsa15");
+        degs1.add(new Deg("gene1", 4.5, 0.0));
+        pathwayGenes1.add(new PathwayGene("hsa10", 1, "gene1", ""));
+        pathwayGenes1.add(new PathwayGene("hsa11", 1, "gene1", ""));
+        pathwayGenes1.add(new PathwayGene("hsa12", 1, "gene1", ""));
+        percLogFChangePerPathway = new PercLogFChangePerPathway(degs1, pathwayGenes1, 0.05);
+        Map<String, Double> perAllPathways = percLogFChangePerPathway.percAllPathways();
+        Map<String, Double> percSomePathways = percLogFChangePerPathway.filterMostInfluentialPathways(5, perAllPathways);
+        assertEquals(3, percSomePathways.size());
+    }
+
+    /**
+     * Check if first pathway gets picked when percentage-values are equal.
+     */
+    @Test
+    void filterMostInfluentialPathways_pickFirstIfEqual() {
+        pathwayIds.add("hsa10");
+        pathwayIds.add("hsa11");
+        degs1.add(new Deg("gene1", 1.5, 0.0));
+        degs1.add(new Deg("gene2", 2.0, 0.0));
+        degs1.add(new Deg("gene3", 1.0, 0.0));
+        pathwayGenes1.add(new PathwayGene("hsa10", 1, "gene1", ""));
+        pathwayGenes1.add(new PathwayGene("hsa11", 1, "gene2", ""));
+        pathwayGenes1.add(new PathwayGene("hsa11", 1, "gene3", ""));
+        percLogFChangePerPathway = new PercLogFChangePerPathway(degs1, pathwayGenes1, 0.05);
+        Map<String, Double> perAllPathways = percLogFChangePerPathway.percAllPathways(); // hsa11 is in this case first
+        Map<String, Double> percSomePathways = percLogFChangePerPathway.filterMostInfluentialPathways(1, perAllPathways);
+        assertTrue(percSomePathways.containsKey("hsa11"));
+    }
+
+    /**
+     * Checks if maxNPathways is larger than 0.
+     */
+    @Test
+    void filterMostInfluentialPathways_noZeroPathways() {
+        pathwayIds.add("hsa10");
+        degs1.add(new Deg("gene1", 1.5, 0.0));
+        pathwayGenes1.add(new PathwayGene("hsa10", 1, "gene1", ""));
+        percLogFChangePerPathway = new PercLogFChangePerPathway(degs1, pathwayGenes1, 0.05);
+        Map<String, Double> perAllPathways = percLogFChangePerPathway.percAllPathways(); // hsa11 is in this case first
+        assertThrows(IllegalArgumentException.class, () ->percLogFChangePerPathway.filterMostInfluentialPathways(0, perAllPathways));
+        assertThrows(IllegalArgumentException.class, () ->percLogFChangePerPathway.filterMostInfluentialPathways(-13, perAllPathways));
+    }
+
+
+    void setIdealCase() {
+        pathwayIds.add("hsa10"); // average lfc: 2.0; perc lfc: 18.18
+        pathwayIds.add("hsa11"); // average lfc: 2.0; perc lfc: 18.18
+        pathwayIds.add("hsa12"); // average lfc: 3.0; perc lfc: 27.27
+        pathwayIds.add("hsa14"); // average lfc: 4.0; perc lfc: 36.36
+        pathwayIds.add("hsa15"); // average lfc: 0.0; perc lfc: 0.0
         degs1.add(new Deg("gene1", 1.0, 0.0));
         degs1.add(new Deg("gene2", 2.0, 0.0));
-        degs1.add(new Deg("gene3", 3.0, 0.0));
+        degs1.add(new Deg("gene3", -3.0, 0.0));
         degs1.add(new Deg("gene4", 4.0, 0.0));
         pathwayGenes1.add(new PathwayGene("hsa10", 1, "gene1", ""));
         pathwayGenes1.add(new PathwayGene("hsa10", 1, "gene3", ""));
@@ -189,17 +247,16 @@ class PercLogFChangePerPathwayTest {
         pathwayGenes1.add(new PathwayGene("hsa12", 1, "gene3", ""));
         pathwayGenes1.add(new PathwayGene("hsa14", 1, "gene4", ""));
         pathwayGenes1.add(new PathwayGene("hsa15", 1, "gene5", ""));
-        PercLogFChangePerPathway percLogFChangePerPathway = new PercLogFChangePerPathway(degs1, pathwayGenes1);
-        Range awnserRange = new Range(30.769, 30.770);
-        Map<String, Double> percAllPathways = percLogFChangePerPathway.percAllPathways(pathwayIds);
-        assertTrue(awnserRange.contains(percAllPathways.get("hsa14")));
     }
 
-    void noSignificantDegs() {
-        throw new UnsupportedOperationException("Not implemented yet.");
-    }
-
-    void doNotCountInSignificant() {
-        throw new UnsupportedOperationException("Not implemented yet.");
+    void setUpNonSignificantDegs() {
+        pathwayIds.add("hsa10");
+        pathwayIds.add("hsa11");
+        degs1.add(new Deg("gene1", 1.0, 1.0));
+        degs1.add(new Deg("gene2", 2.0, 1.0));
+        degs1.add(new Deg("gene3", 2.0, 0.05000000000001));
+        pathwayGenes1.add(new PathwayGene("hsa10", 1, "gene1", ""));
+        pathwayGenes1.add(new PathwayGene("hsa10", 1, "gene2", ""));
+        pathwayGenes1.add(new PathwayGene("hsa10", 1, "gene3", ""));
     }
 }
