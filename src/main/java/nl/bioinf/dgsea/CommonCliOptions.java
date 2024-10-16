@@ -21,20 +21,24 @@ public class CommonCliOptions {
 }
 
 class CommonToAll {
-    @Option(names = {"-v", "-verbosity"}, description = "Verbose logging", defaultValue = "true")
+    @Option(names = {"-v", "-verbosity"}, description = "Verbose logging")
     boolean[] verbose;
 
-    @Option(names = {"--pval"}, paramLabel = "[0.0-1.0 ? 0.05]", description = "P-value threshold. For counting significant degs in con_table. For filtering degs before making a plot in enrich_bar_chart, enrich_dot_chart and perc_lfc_per_pathway_chart, default = ${DEFAULT-VALUE}", defaultValue="0.05")
+    @Option(names = {"--pval"}, paramLabel = "[0.0-1.0]", description = "P-value threshold. For counting significant degs in con_table. For filtering degs before making a plot in enrich_bar_chart, enrich_dot_chart and perc_lfc_per_pathway_chart, default = ${DEFAULT-VALUE}", defaultValue="0.05")
     double pval;
 
     public void setLoggingScope() {
-        System.out.println("verbose = " + Arrays.toString(verbose));
+        if (verbose == null) {
+            verbose = new boolean[]{};
+        }
         if (verbose.length > 1) {
-            LogManager.getLogger().atLevel(Level.WARN).log(verbose);
-        } else if (verbose.length > 0) {
-            LogManager.getLogger().atLevel(Level.INFO).log(verbose);
+            Configurator.setRootLevel(Level.INFO);
+            System.out.println("verbose level = info");
+        } else if (verbose.length == 1) {
+            Configurator.setRootLevel(Level.WARN);
+            System.out.println("verbose level = warn");
         } else {
-            LogManager.getLogger().atLevel(Level.ERROR).log(verbose);
+            Configurator.setRootLevel(Level.ERROR);
         }
     }
 }
