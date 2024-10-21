@@ -2,6 +2,7 @@ package nl.bioinf.dgsea.visualisations;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.labels.ItemLabelPosition;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
@@ -9,12 +10,14 @@ import org.jfree.chart.ui.RectangleInsets;
 import org.jfree.chart.labels.XYItemLabelGenerator;
 import org.jfree.chart.ChartUtils;
 import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.ui.TextAnchor;
 import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import org.jfree.chart.labels.ItemLabelAnchor;
 
 import java.awt.*;
+import java.awt.geom.Ellipse2D;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -45,16 +48,35 @@ public class EnrichmentDotPlot {
         XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer(false, true); // Draw only shapes (dots), no lines
         plot.setRenderer(renderer);
 
+        // Set the shape for the dots (circle) and specify the size
+        Shape dotShape = new Ellipse2D.Double(-5, -5, 12, 12); // Size of the dots (10x10)
+        renderer.setSeriesShape(0, dotShape); // Apply the shape to the first series
+        renderer.setSeriesShapesFilled(0, true); // Fill the shapes
+        renderer.setSeriesShapesVisible(0, true); // Make sure the shapes are visible
+
+
+
+        // Set plot background color for better visibility
+        plot.setBackgroundPaint(Color.WHITE);
+
         // Customize the domain axis (X-axis)
         NumberAxis domainAxis = (NumberAxis) plot.getDomainAxis();
         domainAxis.setVerticalTickLabels(false);  // Don't rotate tick labels
-        domainAxis.setTickLabelFont(new Font("SansSerif", Font.PLAIN, 10));
+        domainAxis.setTickLabelFont(new Font("SansSerif", Font.PLAIN, 12));
         domainAxis.setTickLabelPaint(Color.BLACK);
         domainAxis.setTickLabelInsets(new RectangleInsets(5, 5, 5, 5));
 
-        // Add gridlines
-        plot.setDomainGridlinePaint(Color.LIGHT_GRAY);
-        plot.setRangeGridlinePaint(Color.LIGHT_GRAY);
+
+        // Customize the range axis (Y-axis)
+        NumberAxis rangeAxis = (NumberAxis) plot.getRangeAxis();
+        rangeAxis.setTickLabelFont(new Font("SansSerif", Font.PLAIN, 12));
+        rangeAxis.setTickLabelPaint(Color.BLACK);
+
+        // Add gridlines with more contrast
+        plot.setDomainGridlinePaint(Color.GRAY);
+        plot.setRangeGridlinePaint(Color.GRAY);
+        plot.setDomainGridlinesVisible(true);
+        plot.setRangeGridlinesVisible(true);
 
         // Set colors for points based on adjusted p-value
         for (int i = 0; i < enrichmentResults.size(); i++) {
@@ -63,19 +85,13 @@ public class EnrichmentDotPlot {
 
             // Choose a color based on the p-adjust value
             Color color;
-            if (adjustedPValue < 0.01) {
-                color = Color.RED;
-            } else if (adjustedPValue < 0.05) {
-                color = Color.ORANGE;
-            } else {
-                color = Color.GREEN;
-            }
+            color = Color.RED;
 
             // Set color for each point
             renderer.setSeriesPaint(i, color);
         }
 
-        // Add labels with pathway names to the points, avoiding overlap
+        // Add labels with pathway names to the points, positioned to the right of the dots
         XYItemLabelGenerator labelGenerator = new XYItemLabelGenerator() {
             @Override
             public String generateLabel(XYDataset dataset, int series, int item) {
@@ -88,17 +104,28 @@ public class EnrichmentDotPlot {
         // Set the item label generator and make labels visible
         renderer.setDefaultItemLabelGenerator(labelGenerator);
         renderer.setDefaultItemLabelsVisible(true);
-        renderer.setDefaultItemLabelFont(new Font("SansSerif", Font.PLAIN, 9));  // Adjusted label font size
-        renderer.setDefaultItemLabelPaint(Color.BLACK); // set label colour
+        renderer.setDefaultItemLabelFont(new Font("SansSerif", Font.PLAIN, 14));  // Adjusted label font size for better readability
+        renderer.setDefaultItemLabelPaint(Color.BLACK); // Set label color
 
-        // Set the item label position
-        renderer.setDefaultPositiveItemLabelPosition(new org.jfree.chart.labels.ItemLabelPosition(
-                ItemLabelAnchor.OUTSIDE12,  // Positioning doesnt work
-                org.jfree.chart.ui.TextAnchor.BOTTOM_CENTER));  // Align to bottom center of the point
+        // Adjust label positions to avoid overlap
+        renderer.setDefaultPositiveItemLabelPosition(new ItemLabelPosition(
+                ItemLabelAnchor.OUTSIDE12,  // Position label outside to the right of the point
+                TextAnchor.TOP_LEFT // Align to the top right of the label box
+        ));
+
+        // Custom position for label to be further away
+        renderer.setDefaultPositiveItemLabelPosition(new ItemLabelPosition(
+                ItemLabelAnchor.OUTSIDE12,
+                TextAnchor.BASELINE_LEFT // Align to baseline left of the label box
+        ));
+
+        // Improve label handling to avoid collisions by rotating if necessary
+        renderer.setSeriesItemLabelsVisible(0, true); // Enable item labels for the first series
+        renderer.setDefaultItemLabelsVisible(true); // Show all labels by default
 
         // Save the chart as a PNG file
-        int width = 1000;    // Increase width for better spacing
-        int height = 700;    // Adjust height for better visibility
+        int width = 1200;    // Increase width for better spacing
+        int height = 800;    // Adjust height for better visibility
         File file = new File(outputFilePath);
         ChartUtils.saveChartAsPNG(file, dotPlot, width, height);
     }
@@ -112,8 +139,8 @@ public class EnrichmentDotPlot {
             double adjustedPValue = result.adjustedPValue();
             double enrichmentScore = result.enrichmentScore();
 
-            // Add results only if the adjusted p-value is not NaN
-            if (!Double.isNaN(adjustedPValue)) {
+            // Add results only if the adjusted p-value is not NaN and below a threshold (e.g., 0.05)
+            if (!Double.isNaN(adjustedPValue) && adjustedPValue < 0.05) {
                 series.add(adjustedPValue, enrichmentScore);
             }
         }
