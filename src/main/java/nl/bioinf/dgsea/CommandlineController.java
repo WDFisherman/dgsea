@@ -8,7 +8,7 @@
 package nl.bioinf.dgsea;
 
 import nl.bioinf.dgsea.data_processing.*;
-import nl.bioinf.dgsea.table_outputs.Table;
+import nl.bioinf.dgsea.table_outputs.TwoByTwoContingencyTable;
 import nl.bioinf.dgsea.visualisations.ChartGenerator;
 import nl.bioinf.dgsea.table_outputs.EnrichmentTable;
 import nl.bioinf.dgsea.visualisations.EnrichmentBarChart;
@@ -183,13 +183,13 @@ class ContinuityTable implements Runnable {
     @Override
     public void run() {
         commonToAll.setLoggingScope();
-        Table table = new Table(
+        TwoByTwoContingencyTable twoByTwoContingencyTable = new TwoByTwoContingencyTable(
                 commonFileParams.getDegs(),
                 commonFileParams.getPathways(),
                 commonFileParams.getPathwayGenes(),
                 commonToAll.pval
         );
-        String output = table.getTwoByTwoContingencyTable();
+        String output = twoByTwoContingencyTable.getTable();
         System.out.println(output);
     }
 }
