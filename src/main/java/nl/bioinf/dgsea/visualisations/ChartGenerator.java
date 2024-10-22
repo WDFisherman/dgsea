@@ -1,8 +1,3 @@
-/**
- * Generates one of 3 charts based on present fields.
- * @Authors: Jort Gommers & Willem Daniël Visser
- */
-
 package nl.bioinf.dgsea.visualisations;
 
 import nl.bioinf.dgsea.data_processing.*;
@@ -13,8 +8,8 @@ import org.jfree.chart.ChartUtils;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.data.Range;
 import org.jfree.data.category.DefaultCategoryDataset;
-import org.w3c.dom.ranges.Range;
 
 import java.awt.*;
 import java.io.File;
@@ -29,7 +24,7 @@ import java.util.stream.Collectors;
  * Builder ChartGenerator.Builder is available for selective field assignation.
  */
 public class ChartGenerator {
-    private final String                 title; // chart-styling >>
+    private final String                 title;
     private final String                 xAxis;
     private final String                 yAxis;
     private final double                 dpi;
@@ -37,16 +32,16 @@ public class ChartGenerator {
     private final String[]               colorManual;
     private final Color                  singleColor;
     private final double                 dotSize;
-    private final float                  dotTransparency; //<<
+    private final float                  dotTransparency;
     private final String                 imageFormat;
     private final File                   outputFilePath;
-    private final HashMap<String, Range> positionRanges; // data-selection >>
+    private final HashMap<String, Range> positionRanges;
     private final int                    maxNPathways;
-    private Set<String>                  pathwayIds; //<<
-    private final List<Pathway>          pathways; // data >>
+    private Set<String>                  pathwayIds;
+    private final List<Pathway>          pathways;
     private final List<PathwayGene>      pathwayGenes;
     private final List<Deg>              degs;
-    private final List<EnrichmentResult> enrichmentResults; //<<
+    private final List<EnrichmentResult> enrichmentResults;
     private final Logger logger = LogManager.getLogger(ChartGenerator.class.getName());
 
     public ChartGenerator(Builder builder) {
@@ -140,7 +135,7 @@ public class ChartGenerator {
         );
 
         CategoryPlot cplot = (CategoryPlot)objChart.getPlot();
-        applyColors(cplot); // Apply user-defined colors to the chart
+        applyColors(cplot, objDataset); // Apply user-defined colors to the chart
         try {
             if (imageFormat.equals("png")) {
                 ChartUtils.saveChartAsPNG(outputFilePath, objChart, 1000, 1000);
@@ -156,18 +151,36 @@ public class ChartGenerator {
     /**
      * Applies colors to the chart based on user input or defaults.
      */
-    private void applyColors(CategoryPlot cplot) {
+    private void applyColors(CategoryPlot cplot, DefaultCategoryDataset dataset) {
+        int seriesCount = dataset.getRowCount();  // Aantal series (categorieën)
+
         if (colorManual != null && colorManual.length > 0) {
-            for (int i = 0; i < colorManual.length; i++) {
+            for (int i = 0; i < seriesCount; i++) {
                 try {
-                    cplot.getRenderer().setSeriesPaint(i, Color.decode(colorManual[i])); // Decode hex color
+                    cplot.getRenderer().setSeriesPaint(i, Color.decode(colorManual[i % colorManual.length])); // Gebruik mod om kleuren te herhalen
                 } catch (Exception e) {
-                    logger.warn("Invalid color code for series {}: {}", i, colorManual[i]);
-                    cplot.getRenderer().setSeriesPaint(i, singleColor); // Fallback to single color
+                    logger.warn("Invalid color code for series {}: {}", i, colorManual[i % colorManual.length]);
+                    cplot.getRenderer().setSeriesPaint(i, singleColor); // Fallback naar enkele kleur
                 }
             }
         } else {
-            cplot.getRenderer().setSeriesPaint(0, singleColor); // Default to single color if no manual colors are specified
+            for (int i = 0; i < seriesCount; i++) {
+                cplot.getRenderer().setSeriesPaint(i, getDefaultColor(i)); // Standaardkleur toepassen
+            }
+        }
+    }
+
+    /**
+     * Provides default color for the chart when no manual color is provided.
+     */
+    private Color getDefaultColor(int index) {
+        switch (index % 5) {
+            case 0: return Color.RED;
+            case 1: return Color.BLUE;
+            case 2: return Color.GREEN;
+            case 3: return Color.ORANGE;
+            case 4: return Color.MAGENTA;
+            default: return Color.BLACK; // Fallback color
         }
     }
 

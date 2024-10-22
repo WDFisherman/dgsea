@@ -30,7 +30,7 @@ public class EnrichmentDotPlot {
     private List<Pathway> pathways;
     private String outputFilePath;
     private String[] colorManual; // User-defined colors
-    private String colorScheme; // Color scheme if no manual colors are given
+    private String colorScheme;   // Color scheme if no manual colors are given
 
     // Constructor to create the dot plot and save it as a PNG
     public EnrichmentDotPlot(String title, List<EnrichmentResult> enrichmentResults, List<Pathway> pathways, String outputFilePath, String[] colorManual, String colorScheme) throws IOException {
@@ -63,9 +63,9 @@ public class EnrichmentDotPlot {
 
         // Set the shape for the dots (circle) and specify the size
         Shape dotShape = new Ellipse2D.Double(-5, -5, 12, 12); // Size of the dots (12x12)
-        renderer.setSeriesShape(0, dotShape); // Apply the shape to the first series
-        renderer.setSeriesShapesFilled(0, true); // Fill the shapes
-        renderer.setSeriesShapesVisible(0, true); // Make sure the shapes are visible
+        renderer.setDefaultShape(dotShape); // Apply the shape to all series
+        renderer.setDefaultShapesFilled(true); // Fill the shapes
+        renderer.setDefaultShapesVisible(true); // Make sure the shapes are visible
 
         // Set plot background color for better visibility
         plot.setBackgroundPaint(Color.WHITE);
@@ -96,7 +96,7 @@ public class EnrichmentDotPlot {
             @Override
             public String generateLabel(XYDataset dataset, int series, int item) {
                 // Retrieve the pathway name corresponding to this point
-                Pathway pathway = pathways.get(item);
+                Pathway pathway = pathways.get(series);
                 return pathway.description();
             }
         };
@@ -110,12 +110,8 @@ public class EnrichmentDotPlot {
         // Adjust label positions to avoid overlap
         renderer.setDefaultPositiveItemLabelPosition(new ItemLabelPosition(
                 ItemLabelAnchor.OUTSIDE12,  // Position label outside to the right of the point
-                TextAnchor.TOP_LEFT // Align to the top right of the label box
+                TextAnchor.TOP_LEFT // Align to the top left of the label box
         ));
-
-        // Improve label handling to avoid collisions by rotating if necessary
-        renderer.setSeriesItemLabelsVisible(0, true); // Enable item labels for the first series
-        renderer.setDefaultItemLabelsVisible(true); // Show all labels by default
 
         // Save the chart as a PNG file
         int width = 1200;    // Increase width for better spacing
@@ -124,23 +120,22 @@ public class EnrichmentDotPlot {
         ChartUtils.saveChartAsPNG(file, dotPlot, width, height);
     }
 
+    // Apply colors to each series or point in the chart
     private void applyColors(XYLineAndShapeRenderer renderer) {
-        // Apply user-defined colors
-        if (colorManual != null && colorManual.length > 0) {
-            for (int i = 0; i < enrichmentResults.size(); i++) {
-                String color = colorManual[i % colorManual.length];
-                renderer.setSeriesPaint(i, Color.decode(color)); // Decode hex color
+        for (int i = 0; i < enrichmentResults.size(); i++) {
+            Color color;
+            if (colorManual != null && colorManual.length > 0) {
+                color = Color.decode(colorManual[i % colorManual.length]); // Use manual colors
+            } else {
+                color = getDefaultColor(i); // Use default colors
             }
-        } else {
-            // Apply a default color scheme if no manual colors are provided
-            for (int i = 0; i < enrichmentResults.size(); i++) {
-                renderer.setSeriesPaint(i, getDefaultColor(i)); // Use a default color
-            }
+            renderer.setSeriesPaint(i, color); // Set color for each series
         }
     }
 
+
+    // Return a default color based on index if no manual colors are provided
     private Color getDefaultColor(int index) {
-        // Geef een standaardkleur terug op basis van de index
         switch (index % 5) {
             case 0: return Color.RED;
             case 1: return Color.BLUE;
@@ -151,24 +146,24 @@ public class EnrichmentDotPlot {
         }
     }
 
-    // Method to create the dataset, adding enrichment score and adjusted p-value
+    // Method to create the dataset, creating one series per data point for unique coloring
     private XYSeriesCollection createDataset(List<EnrichmentResult> enrichmentResults, List<Pathway> pathways) {
-        XYSeries series = new XYSeries("Enrichment Results");
+        XYSeriesCollection dataset = new XYSeriesCollection();
 
-        // Loop through enrichmentResults and add them to the XYSeries
-        for (EnrichmentResult result : enrichmentResults) {
+        for (int i = 0; i < enrichmentResults.size(); i++) {
+            EnrichmentResult result = enrichmentResults.get(i);
             double adjustedPValue = result.adjustedPValue();
             double enrichmentScore = result.enrichmentScore();
 
-            // Add results only if the adjusted p-value is not NaN and below a threshold (e.g., 0.05)
             if (!Double.isNaN(adjustedPValue) && adjustedPValue < 0.05) {
+                XYSeries series = new XYSeries(pathways.get(i).description()); // Ensure each series has a unique name
                 series.add(adjustedPValue, enrichmentScore);
+                dataset.addSeries(series); // Add each series to the dataset
             }
         }
 
-        XYSeriesCollection dataset = new XYSeriesCollection();
-        dataset.addSeries(series);
-
         return dataset;
     }
+
+
 }

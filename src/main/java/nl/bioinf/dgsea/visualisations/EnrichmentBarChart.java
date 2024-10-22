@@ -68,21 +68,28 @@ public class EnrichmentBarChart {
         CategoryPlot plot = barChart.getCategoryPlot();
         BarRenderer renderer = (BarRenderer) plot.getRenderer();
 
-        // Apply user-defined colors
-        if (colorManual != null && colorManual.length > 0) {
-            for (int i = 0; i < enrichmentResults.size(); i++) {
-                String color = colorManual[i % colorManual.length];
-                renderer.setSeriesPaint(i, Color.decode(color)); // Decode hex color
+        // Kleurtoewijzing met validatie
+        for (int i = 0; i < enrichmentResults.size(); i++) {
+            Color color;
+            if (colorManual != null && colorManual.length > 0) {
+                color = getColorFromString(colorManual[i % colorManual.length]);
+            } else {
+                color = getDefaultColor(i);
             }
-        } else {
-            // Apply a default color scheme if no manual colors are provided
-            for (int i = 0; i < enrichmentResults.size(); i++) {
-                // In deze sectie kun je een standaard kleurenschema toepassen op basis van de `colorScheme` parameter
-                // Dit kan verder worden uitgebreid om verschillende kleurenschema's te ondersteunen
-                renderer.setSeriesPaint(i, getDefaultColor(i)); // Gebruik een standaardkleur
-            }
+            renderer.setSeriesPaint(i, color);
         }
     }
+
+    private Color getColorFromString(String colorStr) {
+        try {
+            return Color.decode(colorStr);
+        } catch (NumberFormatException e) {
+            // Terugvallen op een standaardkleur als de kleur ongeldig is
+            return Color.GRAY; // Of een andere fallback kleur
+        }
+    }
+
+
 
     private Color getDefaultColor(int index) {
         // Geef een standaardkleur terug op basis van de index
@@ -99,7 +106,8 @@ public class EnrichmentBarChart {
     private DefaultCategoryDataset createDataset(List<EnrichmentResult> enrichmentResults, List<Pathway> pathways) {
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
 
-        for (EnrichmentResult result : enrichmentResults) {
+        for (int i = 0; i < enrichmentResults.size(); i++) {
+            EnrichmentResult result = enrichmentResults.get(i);
             Pathway matchingPathway = pathways.stream()
                     .filter(pathway -> pathway.pathwayId().equals(result.pathwayId()))
                     .findFirst()
@@ -107,10 +115,13 @@ public class EnrichmentBarChart {
 
             if (matchingPathway != null) {
                 String description = matchingPathway.description();
-                dataset.addValue(result.enrichmentScore(), "", matchingPathway.description());  // "" for no label on X-axis
+                // Elke bar wordt in een eigen serie geplaatst, gebruikmakend van 'description' als seriesnaam.
+                dataset.addValue(result.enrichmentScore(), description, description);  // Gebruik description als serie- en categorie naam
             }
         }
 
         return dataset;
     }
+
+
 }
