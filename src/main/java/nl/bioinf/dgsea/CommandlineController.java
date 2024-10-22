@@ -102,12 +102,12 @@ class EnrichDotChart implements Runnable {
 
             // Maak de bar chart en sla op als PNG
             String barChartOutputFilePath = "pathway_enrichment_chart.png";  // Pad voor het opslaan van de PNG
-            EnrichmentBarChart barChart = new EnrichmentBarChart("Top 20 Pathway Enrichment met significante padjust value", top20Results, pathways, barChartOutputFilePath);
+            EnrichmentBarChart barChart = new EnrichmentBarChart("Top 20 Pathway Enrichment met significante padjust value", top20Results, pathways, barChartOutputFilePath, commonChartParams.colorManual, commonChartParams.colorScheme);
             System.out.println("Bar chart opgeslagen als PNG op: " + barChartOutputFilePath);
 
             // Maak de dot plot en sla op als PNG
             String dotPlotOutputFilePath = "pathway_enrichment_dot_plot.png";  // Pad voor het opslaan van de PNG
-            EnrichmentDotPlot dotPlot = new EnrichmentDotPlot("Pathway Enrichment Dot Plot", top20Results, pathways, dotPlotOutputFilePath);
+            EnrichmentDotPlot dotPlot = new EnrichmentDotPlot("Pathway Enrichment Dot Plot", top20Results, pathways, dotPlotOutputFilePath, commonChartParams.colorManual, commonChartParams.colorScheme);
             System.out.println("Dot plot opgeslagen als PNG op: " + dotPlotOutputFilePath);
 
         } catch (IOException e) {

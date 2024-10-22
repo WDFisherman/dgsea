@@ -80,7 +80,7 @@ public class ChartGenerator {
         private final File outputFilePath;
 
         private double                 dpi = 0;
-        private String                 colorScheme = "virdiris";
+        private String                 colorScheme = "viridis";
         private String[]               colorManual = null;
         private Color                  singleColor = Color.BLACK;
         private double                 dotSize = 1.0;
@@ -118,19 +118,6 @@ public class ChartGenerator {
         public ChartGenerator build() {
             return new ChartGenerator(this);
         }
-
-    }
-
-    void outputEnrichmentBarChart() {
-        throw new UnsupportedOperationException("Not implemented yet.");
-    }
-
-    void outputEnrichmentDotChart() {
-        throw new UnsupportedOperationException("Not implemented yet.");
-    }
-
-    void outputRunningSumPlot() {
-        throw new UnsupportedOperationException("Not implemented yet.");
     }
 
     /**
@@ -144,14 +131,15 @@ public class ChartGenerator {
                 title,
                 xAxis,
                 yAxis,
-                objDataset, //Chart Data
+                objDataset, // Chart Data
                 PlotOrientation.VERTICAL,
                 true,
                 true,
                 false
         );
+
         CategoryPlot cplot = (CategoryPlot)objChart.getPlot();
-        cplot.getRenderer().setSeriesPaint(0, singleColor);
+        applyColors(cplot); // Apply user-defined colors to the chart
         try {
             if (imageFormat.equals("png")) {
                 ChartUtils.saveChartAsPNG(outputFilePath, objChart, 1000, 1000);
@@ -161,6 +149,24 @@ public class ChartGenerator {
             logger.info("Chart was saved to file: {}", outputFilePath);
         } catch(IOException e) {
             logger.error("Failed to save chart to image file, error: {}", String.valueOf(e));
+        }
+    }
+
+    /**
+     * Applies colors to the chart based on user input or defaults.
+     */
+    private void applyColors(CategoryPlot cplot) {
+        if (colorManual != null && colorManual.length > 0) {
+            for (int i = 0; i < colorManual.length; i++) {
+                try {
+                    cplot.getRenderer().setSeriesPaint(i, Color.decode(colorManual[i])); // Decode hex color
+                } catch (Exception e) {
+                    logger.warn("Invalid color code for series {}: {}", i, colorManual[i]);
+                    cplot.getRenderer().setSeriesPaint(i, singleColor); // Fallback to single color
+                }
+            }
+        } else {
+            cplot.getRenderer().setSeriesPaint(0, singleColor); // Default to single color if no manual colors are specified
         }
     }
 
@@ -202,5 +208,4 @@ public class ChartGenerator {
     private Set<String> getPathwayAllAvIds() {
         return pathways.stream().map(Pathway::pathwayId).collect(Collectors.toSet());
     }
-
 }
