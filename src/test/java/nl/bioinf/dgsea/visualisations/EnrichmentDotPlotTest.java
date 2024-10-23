@@ -14,13 +14,17 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for the EnrichmentDotPlot class.
+ */
 public class EnrichmentDotPlotTest {
+    private static final String OUTPUT_FILE_PATH = "test_dot_plot.png";
+    private static final String[] COLOR_MANUAL = new String[]{"red", "green", "blue"};
+    private static final double DOT_SIZE = 10.0;
+    private static final float DOT_TRANSPARENCY = 0.5f;
+
     private List<EnrichmentResult> enrichmentResults;
     private List<Pathway> pathways;
-    private String outputFilePath;
-    private String[] colorManual;
-    private double dotSize;
-    private float dotTransparency;
 
     @BeforeEach
     public void setUp() {
@@ -38,11 +42,6 @@ public class EnrichmentDotPlotTest {
                 new Pathway("pathway3", "Fatty Acid Biosynthesis"),
                 new Pathway("pathway4", "Pathway with NaN") // To test the NaN case
         );
-
-        outputFilePath = "test_dot_plot.png";
-        colorManual = new String[]{"red", "green", "blue"};
-        dotSize = 10.0;
-        dotTransparency = 0.5f;
     }
 
     @Test
@@ -52,15 +51,15 @@ public class EnrichmentDotPlotTest {
                     "Enrichment Dot Plot",
                     enrichmentResults,
                     pathways,
-                    outputFilePath,
-                    colorManual,
+                    OUTPUT_FILE_PATH,
+                    COLOR_MANUAL,
                     null,
-                    dotSize,
-                    dotTransparency
+                    DOT_SIZE,
+                    DOT_TRANSPARENCY
             );
 
             // Check if the dot plot was created successfully
-            File outputFile = new File(outputFilePath);
+            File outputFile = new File(OUTPUT_FILE_PATH);
             assertTrue(outputFile.exists(), "Output file should be created.");
         });
     }
@@ -71,11 +70,11 @@ public class EnrichmentDotPlotTest {
                 "Enrichment Dot Plot",
                 enrichmentResults,
                 pathways,
-                outputFilePath,
+                OUTPUT_FILE_PATH,
                 null,
                 null,
-                dotSize,
-                dotTransparency
+                DOT_SIZE,
+                DOT_TRANSPARENCY
         );
 
         XYSeriesCollection dataset = dotPlot.createDataset(enrichmentResults, pathways);
@@ -86,12 +85,15 @@ public class EnrichmentDotPlotTest {
         // Validate the values in the dataset
         for (int i = 0; i < enrichmentResults.size(); i++) {
             if (!Double.isNaN(enrichmentResults.get(i).adjustedPValue()) && enrichmentResults.get(i).adjustedPValue() < 0.05) {
-                assertEquals(enrichmentResults.get(i).adjustedPValue(), dataset.getSeries(pathways.get(i).description()).getX(0));
-                assertEquals(enrichmentResults.get(i).enrichmentScore(), dataset.getSeries(pathways.get(i).description()).getY(0));
+                assertEquals(enrichmentResults.get(i).adjustedPValue(),
+                        dataset.getSeries(pathways.get(i).description()).getX(0),
+                        "Adjusted p-value does not match for pathway: " + pathways.get(i).description());
+                assertEquals(enrichmentResults.get(i).enrichmentScore(),
+                        dataset.getSeries(pathways.get(i).description()).getY(0),
+                        "Enrichment score does not match for pathway: " + pathways.get(i).description());
             }
         }
     }
-
 
     @Test
     public void testGetColorFromString() throws IOException {
@@ -99,13 +101,14 @@ public class EnrichmentDotPlotTest {
                 "Enrichment Dot Plot",
                 enrichmentResults,
                 pathways,
-                outputFilePath,
+                OUTPUT_FILE_PATH,
                 null,
                 null,
-                dotSize,
-                dotTransparency
+                DOT_SIZE,
+                DOT_TRANSPARENCY
         );
 
+        // Test color name to Color mapping
         Color redColor = dotPlot.getColorFromString("red");
         assertEquals(Color.RED, redColor, "Should return Color.RED for 'red' string.");
 
@@ -122,13 +125,14 @@ public class EnrichmentDotPlotTest {
                 "Enrichment Dot Plot",
                 enrichmentResults,
                 pathways,
-                outputFilePath,
+                OUTPUT_FILE_PATH,
                 null,
                 null,
-                dotSize,
-                dotTransparency
+                DOT_SIZE,
+                DOT_TRANSPARENCY
         );
 
+        // Test default color retrieval
         assertEquals(Color.RED, dotPlot.getDefaultColor(0), "Index 0 should return Color.RED.");
         assertEquals(Color.BLUE, dotPlot.getDefaultColor(1), "Index 1 should return Color.BLUE.");
         assertEquals(Color.GREEN, dotPlot.getDefaultColor(2), "Index 2 should return Color.GREEN.");

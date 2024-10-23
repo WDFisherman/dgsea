@@ -22,7 +22,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -39,7 +38,7 @@ public class CommandlineController implements Runnable {
         throw new CommandLine.ParameterException(spec.commandLine(), "Missing required subcommand");
     }
 }
-// enrich_bar_chart /homes/jrgommers/Downloads/dgsea/src/test/resources/degs.csv /homes/jrgommers/Downloads/dgsea/src/test/resources/hsa_pathways.csv /homes/jrgommers/Downloads/dgsea/src/test/resources/pathways.csv /homes/jrgommers/Downloads/dgsea/src/test/resources/enrichment_bar_chart.png --color-manual blue
+
 @Command(name = "enrich_bar_chart", version = "Enrichment bar-chart 1.0", mixinStandardHelpOptions = true, description = "Generates and saves an enrichment bar chart showing top enriched pathways.")
 class EnrichBarChart implements Runnable {
     @Mixin

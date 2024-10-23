@@ -14,11 +14,15 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for the EnrichmentBarChart class.
+ */
 public class EnrichmentBarChartTest {
+    private static final String OUTPUT_FILE_PATH = "test_chart.png";
+    private static final String[] COLOR_MANUAL = new String[]{"red", "green", "blue"};
+
     private List<EnrichmentResult> enrichmentResults;
     private List<Pathway> pathways;
-    private String outputFilePath;
-    private String[] colorManual;
 
     @BeforeEach
     public void setUp() {
@@ -34,9 +38,6 @@ public class EnrichmentBarChartTest {
                 new Pathway("pathway2", "Citrate Cycle"),
                 new Pathway("pathway3", "Fatty Acid Biosynthesis")
         );
-
-        outputFilePath = "test_chart.png";
-        colorManual = new String[]{"red", "green", "blue"};
     }
 
     @Test
@@ -46,17 +47,16 @@ public class EnrichmentBarChartTest {
                     "Enrichment Bar Chart",
                     enrichmentResults,
                     pathways,
-                    outputFilePath,
-                    colorManual,
+                    OUTPUT_FILE_PATH,
+                    COLOR_MANUAL,
                     null
             );
 
             // Check if the chart was created successfully
-            File outputFile = new File(outputFilePath);
+            File outputFile = new File(OUTPUT_FILE_PATH);
             assertTrue(outputFile.exists(), "Output file should be created.");
         });
     }
-
 
     @Test
     public void testCreateDataset() throws IOException {
@@ -64,7 +64,7 @@ public class EnrichmentBarChartTest {
                 "Enrichment Bar Chart",
                 enrichmentResults,
                 pathways,
-                outputFilePath,
+                OUTPUT_FILE_PATH,
                 null,
                 null
         );
@@ -78,7 +78,8 @@ public class EnrichmentBarChartTest {
         for (int i = 0; i < enrichmentResults.size(); i++) {
             EnrichmentResult result = enrichmentResults.get(i);
             Pathway pathway = pathways.get(i);
-            assertEquals(result.enrichmentScore(), dataset.getValue(pathway.description(), pathway.description()));
+            assertEquals(result.enrichmentScore(), dataset.getValue(pathway.description(), pathway.description()),
+                    "Enrichment score does not match for pathway: " + pathway.description());
         }
     }
 
@@ -88,11 +89,12 @@ public class EnrichmentBarChartTest {
                 "Enrichment Bar Chart",
                 enrichmentResults,
                 pathways,
-                outputFilePath,
+                OUTPUT_FILE_PATH,
                 null,
                 null
         );
 
+        // Test color name to Color mapping
         Color redColor = chart.getColorFromString("red");
         assertEquals(Color.RED, redColor, "Should return Color.RED for 'red' string.");
 
@@ -109,11 +111,12 @@ public class EnrichmentBarChartTest {
                 "Enrichment Bar Chart",
                 enrichmentResults,
                 pathways,
-                outputFilePath,
+                OUTPUT_FILE_PATH,
                 null,
                 null
         );
 
+        // Test default color retrieval
         assertEquals(Color.RED, chart.getDefaultColor(0), "Index 0 should return Color.RED.");
         assertEquals(Color.BLUE, chart.getDefaultColor(1), "Index 1 should return Color.BLUE.");
         assertEquals(Color.GREEN, chart.getDefaultColor(2), "Index 2 should return Color.GREEN.");
