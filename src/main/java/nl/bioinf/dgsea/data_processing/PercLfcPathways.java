@@ -1,21 +1,28 @@
+/**
+ * Responsible for calculating data for LfcBarChart.
+ * @Authur Willem Daniël Visser
+ */
 package nl.bioinf.dgsea.data_processing;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
- * Calculates the percentage of average expression change, for every differently expressed gene(deg), by 1 or more pathways.
+ * Calculates data for LfcBarChart. <br></br>
+ * Explanation algorithm/formula: Calculates the percentage of average expression change, for every differently expressed gene(deg), by 1 or more pathways.
  * The result should indicate a rough estimate of the size of the differential expression overarching a pathway.
  * Which is determent by taking the average log-fold-change for every pathway, using absolute values.
  * Followed by scaling this into a percentage of average change.
  * A high value associated with a pathway, means the genes contribute a lot of change on average. A low value does the opposite.
  */
-public class PercLogFChangePerPathway {
+public class PercLfcPathways {
     private final List<Deg> degs;
     private final List<PathwayGene> pathwayGenes;
-    Logger logger = LogManager.getLogger(PercLogFChangePerPathway.class.getName());
+    Logger logger = LogManager.getLogger(PercLfcPathways.class.getName());
 
     /**
      * Constructs a PercLogFChangePerPathway
@@ -23,7 +30,7 @@ public class PercLogFChangePerPathway {
      * @param pathwayGenes pathway-gene combinations/associations with at least one item and matching gene-symbols between pathwayGenes and degs
      * @throws IllegalArgumentException if less than 1 item is present in either parameters
      */
-    public PercLogFChangePerPathway(List<Deg> degs, List<PathwayGene> pathwayGenes) {
+    public PercLfcPathways(List<Deg> degs, List<PathwayGene> pathwayGenes) {
         if (degs.isEmpty()) throw new IllegalArgumentException("degs cannot be empty");
         if (pathwayGenes.isEmpty()) throw new IllegalArgumentException("pathwayGenes cannot be empty");
         this.degs = degs;
@@ -36,18 +43,18 @@ public class PercLogFChangePerPathway {
      * @throws IllegalArgumentException if pathwayIds is empty/not set
      * @return pathway-id, percentage-value pairs
      */
-    public Map<String, Double> percAllPathways(String[] pathwayIds) {
+    public double[] percAllPathways(String[] pathwayIds) {
         if (pathwayIds == null || pathwayIds.length == 0) throw new IllegalArgumentException("pathwayIds cannot be empty or null");
-        Map<String, Double> pathwayPercentages = new HashMap<>(); // could receive averages and then be modified to percentages
-        final double[]  avgLfcAllPathways =new double[pathwayIds.length];
+        double[] pathwayPercentages = new double[pathwayIds.length]; // could receive averages and then be modified to percentages
+        final double[]  avgLfcAllPathways = new double[pathwayIds.length];
         double totalLfc = getTotalLfc(pathwayIds, avgLfcAllPathways);
         int pathwayIndex = 0;
         for (String pathwayId : pathwayIds) {
             double avgLfcPathway = avgLfcAllPathways[pathwayIndex];
             if(avgLfcPathway == 0.0) {
-                pathwayPercentages.put(pathwayId, 0.0);
+                pathwayPercentages[pathwayIndex] = 0.0;
             } else {
-                pathwayPercentages.put(pathwayId, avgLfcPathway / totalLfc * 100);
+                pathwayPercentages[pathwayIndex] = avgLfcPathway / totalLfc * 100;
             }
             pathwayIndex++;
         }
@@ -88,6 +95,10 @@ public class PercLogFChangePerPathway {
         return totalLfcAllPathways;
     }
 
+    /**
+     * Make map for each deg in degs, with geneSymbol as key.
+     * @return degs map containing gene-symbol, deg-entry pairs
+     */
     private Map<String, Deg> getDegMap() {
         final Map<String, Deg> degMap = new HashMap<>();
         for (Deg deg : degs) {
@@ -96,6 +107,10 @@ public class PercLogFChangePerPathway {
         return degMap;
     }
 
+    /**
+     * Makes map for each pathway in pathwayGenes, with pathway-id as key
+     * @return pathways map containing pahtway-id, pathwayGene-entry pairs
+     */
     private Map<String, List<PathwayGene>> getPathwayGeneMap() {
         final Map<String, List<PathwayGene>> pathwayGeneMap = new HashMap<>();
         for (PathwayGene gene : pathwayGenes) {
@@ -105,5 +120,23 @@ public class PercLogFChangePerPathway {
         }
         return pathwayGeneMap;
     }
+
+    /**
+     * Filter maxNPathwys highest percentages in pathwayPercentages. Connects pathwayIds to percentages.
+     * @param maxNPathways top this many highest percentage-amounts
+     * @param pathwayPercentages percentage-amounts
+     * @param pathwayIds keeps sorted and filtered values connected to their pathways
+     * @return map containing pathway-id, percentage pairs.
+     */
+    public Map<String, Double> filterMostInfluentialPathways(int maxNPathways, double[] pathwayPercentages, String[] pathwayIds) {
+        if (maxNPathways <= 0) throw new IllegalArgumentException("maxNPathways needs to be at least 0");
+        Map<String, Double> lfcAllPathways = IntStream.range(0, pathwayPercentages.length).boxed()
+                .collect(Collectors.toMap(i -> pathwayIds[i], i -> pathwayPercentages[i]));
+        return lfcAllPathways.entrySet().stream()
+            .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+            .limit(maxNPathways)
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, _) -> e1, HashMap::new));
+    }
+
 
 }

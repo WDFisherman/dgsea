@@ -9,7 +9,7 @@ package nl.bioinf.dgsea;
 
 import nl.bioinf.dgsea.data_processing.*;
 import nl.bioinf.dgsea.table_outputs.TwoByTwoContingencyTable;
-import nl.bioinf.dgsea.visualisations.ChartGenerator;
+import nl.bioinf.dgsea.visualisations.PercLfcBarChart;
 import nl.bioinf.dgsea.table_outputs.EnrichmentTable;
 import nl.bioinf.dgsea.visualisations.EnrichmentBarChart;
 import nl.bioinf.dgsea.visualisations.EnrichmentDotPlot;
@@ -22,7 +22,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -39,6 +38,7 @@ public class CommandlineController implements Runnable {
         throw new CommandLine.ParameterException(spec.commandLine(), "Missing required subcommand");
     }
 }
+
 // enrich_bar_chart /homes/jrgommers/Downloads/dgsea/src/test/resources/degs.csv /homes/jrgommers/Downloads/dgsea/src/test/resources/hsa_pathways.csv /homes/jrgommers/Downloads/dgsea/src/test/resources/pathways.csv /homes/jrgommers/Downloads/dgsea/src/test/resources/enrichment_bar_chart.png --color-manual blue
 @Command(name = "enrich_bar_chart", version = "Enrichment bar-chart 1.0", mixinStandardHelpOptions = true, description = "Generates and saves an enrichment bar chart showing top enriched pathways.")
 class EnrichBarChart implements Runnable {
@@ -213,21 +213,19 @@ class PercLogFChangePerPathwayCmd implements Runnable {
         List<Deg> degs = commonFileParams.getDegs();
         List<Pathway> pathways = commonFileParams.getPathways();
         List<PathwayGene> pathwayGenes = commonFileParams.getPathwayGenes();
-        ChartGenerator chartGenerator = new ChartGenerator(getChartGeneratorsBuilder(degs, pathways, pathwayGenes));
-        chartGenerator.saveChartPercLogFChangePerPathway();
+        PercLfcBarChart percLfcBarChart = new PercLfcBarChart(getChartGeneratorsBuilder(degs, pathways, pathwayGenes));
+        percLfcBarChart.saveChart();
     }
-    private ChartGenerator.Builder getChartGeneratorsBuilder(List<Deg> degs, List<Pathway> pathways, List<PathwayGene> pathwayGenes) {
-        return new ChartGenerator.Builder(
+    private PercLfcBarChart.Builder getChartGeneratorsBuilder(List<Deg> degs, List<Pathway> pathways, List<PathwayGene> pathwayGenes) {
+        return new PercLfcBarChart.Builder(
                 commonChartParams.title,
                 commonChartParams.xAxisTitle,
                 commonChartParams.yAxisTitle,
                 degs,
                 pathways,
                 pathwayGenes,
-                commonChartParams.outputPath
-        ).colorScheme(commonChartParams.colorScheme)
+                commonChartParams.outputPath)
         .colorManual(commonChartParams.colorManual)
-        .dpi(commonChartParams.imageDpi)
         .maxNPathways(maxNPathways)
         .imageFormat(commonChartParams.imageFormat)
         .pathwayIds(pathwayIds);
