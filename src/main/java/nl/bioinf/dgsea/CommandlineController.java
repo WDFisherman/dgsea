@@ -8,7 +8,7 @@
 package nl.bioinf.dgsea;
 
 import nl.bioinf.dgsea.data_processing.*;
-import nl.bioinf.dgsea.table_outputs.Table;
+import nl.bioinf.dgsea.table_outputs.TwoByTwoContingencyTable;
 import nl.bioinf.dgsea.visualisations.ChartGenerator;
 import nl.bioinf.dgsea.table_outputs.EnrichmentTable;
 import nl.bioinf.dgsea.visualisations.EnrichmentBarChart;
@@ -203,7 +203,7 @@ class PercLogFChangePerPathwayCmd implements Runnable {
     private CommonChartParams commonChartParams;
 
     @Option(names = {"--pathway-ids"}, paramLabel = "hsa(...)", arity = "0..*", split = ",", description = "Pathway ids of interest")
-    private Set<String> pathwayIds;
+    private String[] pathwayIds;
     @Option(names = {"--max-n-pathways"}, paramLabel = "[1-inf]", description = "Max number of pathways to include in chart. '--pathway-ids' overrides this option.")
     private int maxNPathways;
 
@@ -253,13 +253,13 @@ class ContinuityTable implements Runnable {
     @Override
     public void run() {
         commonToAll.setLoggingScope();
-        Table table = new Table(
+        TwoByTwoContingencyTable twoByTwoContingencyTable = new TwoByTwoContingencyTable(
                 commonFileParams.getDegs(),
                 commonFileParams.getPathways(),
                 commonFileParams.getPathwayGenes(),
                 commonToAll.pval
         );
-        String output = table.getTwoByTwoContingencyTable();
+        String output = twoByTwoContingencyTable.getTable();
         System.out.println(output);
     }
 }
