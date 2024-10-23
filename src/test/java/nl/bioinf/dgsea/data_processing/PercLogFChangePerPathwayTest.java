@@ -15,42 +15,15 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class PercLogFChangePerPathwayTest {
-    private List<Deg> degs;
-    private List<Pathway> pathways;
-    private List<PathwayGene> pathwayGenes;
     private List<Deg> degs1;
-    private List<Deg> degs2;
-    private List<Pathway> pathways1;
-    private List<Pathway> pathways2;
     private List<PathwayGene> pathwayGenes1;
-    private List<PathwayGene> pathwaysGenes2;
-    private Set<String> pathwayIds;
-
-    @BeforeAll
-    public void setData() throws Exception {
-        File dataFolder = new File("src/test/resources/");
-        File pathwayFile = new File(dataFolder, "hsa_pathways.csv");
-        File pathwayGenesFile = new File(dataFolder, "pathways.csv");
-        File degsFile = new File(dataFolder, "degs.csv");
-        FileParseUtils fileParseUtils = new FileParseUtils();
-        degs = fileParseUtils.parseDegsFile(degsFile);
-        pathways = fileParseUtils.parsePathwayFile(pathwayFile);
-        pathwayGenes = fileParseUtils.parsePathwayGeneFile(pathwayGenesFile);
-    }
+    private String[] pathwayIds;
 
     @BeforeEach
     public void setTestData() {
         degs1 = new ArrayList<>();
-        degs2 = new ArrayList<>();
-        pathways1 = new ArrayList<>();
-        pathways2 = new ArrayList<>();
         pathwayGenes1 = new ArrayList<>();
-        pathwaysGenes2 = new ArrayList<>();
-        pathwayIds = new LinkedHashSet<>();
-        pathwayIds.add("hsa00010");
-        pathwayIds.add("hsa00020");
-        pathwayIds.add("hsa00030");
-        pathwayIds.add("hsa00040");
+        pathwayIds = new String[] {"hsa00010", "hsa00020", "hsa00030", "hsa00040"};
     }
 
     private static Stream<Arguments> provideEmptyInputs() {
@@ -80,7 +53,7 @@ class PercLogFChangePerPathwayTest {
     void percAllPathways_expectOnNoPathway() {
         degs1.add(new Deg("gene1", 0.0, 0.0));
         pathwayGenes1.add(new PathwayGene("hsa10", 1, "gene1", ""));
-        Set<String> pathwayIds = new HashSet<>();
+        String[] pathwayIds = new String[] {};
         PercLogFChangePerPathway percLogFChangePerPathway = new PercLogFChangePerPathway(degs1, pathwayGenes1);
         assertThrows(IllegalArgumentException.class, () -> percLogFChangePerPathway.percAllPathways(pathwayIds));
     }
@@ -89,14 +62,10 @@ class PercLogFChangePerPathwayTest {
     void percAllPathways_expectMissingPathway() {
         degs1.add(new Deg("gene1", 0.0, 0.0));
         pathwayGenes1.add(new PathwayGene("hsa10", 1, "gene1", ""));
-        Set<String> pathwayIds = new HashSet<>();
-        Set<String> pathwayIds1 = new HashSet<>();
-        Set<String> pathwayIds2 = new HashSet<>();
-        Set<String> pathwayIds3 = new HashSet<>();
-        pathwayIds.add("hsa11");
-        pathwayIds1.add("hsa1"); // test exact match
-        pathwayIds2.add("hsa100");
-        pathwayIds3.add("10");
+        String[] pathwayIds = new String[] {"hsa11"};
+        String[] pathwayIds1 = new String[] {"hsa1"};
+        String[] pathwayIds2 = new String[] {"hsa100"};
+        String[] pathwayIds3 = new String[] {"10"};
         PercLogFChangePerPathway percLogFChangePerPathway = new PercLogFChangePerPathway(degs1, pathwayGenes1);
         assertThrows(IllegalArgumentException.class, () -> percLogFChangePerPathway.percAllPathways(pathwayIds));
         assertThrows(IllegalArgumentException.class, () -> percLogFChangePerPathway.percAllPathways(pathwayIds1));
@@ -108,8 +77,7 @@ class PercLogFChangePerPathwayTest {
     void percAllPathways_expectMissingMatchingGeneSymbols() {
         degs1.add(new Deg("gene1", 2.4, 0.0));
         pathwayGenes1.add(new PathwayGene("hsa10", 1, "gene2", ""));
-        Set<String> pathwayIds = new HashSet<>();
-        pathwayIds.add("hsa10");
+        String[] pathwayIds = new String[] {"hsa10"};
         PercLogFChangePerPathway percLogFChangePerPathway = new PercLogFChangePerPathway(degs1, pathwayGenes1);
         assertEquals(0.0,percLogFChangePerPathway.percAllPathways(pathwayIds).get("hsa10"));
     }
@@ -120,8 +88,7 @@ class PercLogFChangePerPathwayTest {
         degs1.add(new Deg("gene2", 0.0, 0.0));
         pathwayGenes1.add(new PathwayGene("hsa10", 1, "gene1", ""));
         pathwayGenes1.add(new PathwayGene("hsa10", 1, "gene2", ""));
-        Set<String> pathwayIds = new HashSet<>();
-        pathwayIds.add("hsa10");
+        String[] pathwayIds = new String[] {"hsa10"};
         PercLogFChangePerPathway percLogFChangePerPathway = new PercLogFChangePerPathway(degs1, pathwayGenes1);
         assertEquals(0.0,percLogFChangePerPathway.percAllPathways(pathwayIds).get("hsa10"));
     }
@@ -130,19 +97,14 @@ class PercLogFChangePerPathwayTest {
     void percAllPathways_expectHundred() {
         degs1.add(new Deg("gene1", 1.0, 0.0));
         pathwayGenes1.add(new PathwayGene("hsa10", 1, "gene1", ""));
-        Set<String> pathwayIds = new HashSet<>();
-        pathwayIds.add("hsa10");
+        String[] pathwayIds = new String[] {"hsa10"};
         PercLogFChangePerPathway percLogFChangePerPathway = new PercLogFChangePerPathway(degs1, pathwayGenes1);
         assertEquals(100.0,percLogFChangePerPathway.percAllPathways(pathwayIds).get("hsa10"));
     }
 
     @Test
     void percAllPathways_expectAllPossiblePathways() {
-        pathwayIds = new LinkedHashSet<>();
-        pathwayIds.add("hsa10");
-        pathwayIds.add("hsa11");
-        pathwayIds.add("hsa12");
-        pathwayIds.add("hsa14");
+        pathwayIds = new String[] {"hsa10", "hsa11", "hsa12", "hsa14"};
         degs1.add(new Deg("gene1", 1.0, 0.0));
         pathwayGenes1.add(new PathwayGene("hsa10", 1, "gene1", ""));
         pathwayGenes1.add(new PathwayGene("hsa11", 1, "gene1", ""));
@@ -154,11 +116,7 @@ class PercLogFChangePerPathwayTest {
 
     @Test
     void percAllPathways_idealEasyCase() {
-        pathwayIds = new LinkedHashSet<>();
-        pathwayIds.add("hsa10");
-        pathwayIds.add("hsa11");
-        pathwayIds.add("hsa12");
-        pathwayIds.add("hsa14");
+        pathwayIds = new String[] {"hsa10", "hsa11", "hsa12", "hsa14"};
         degs1.add(new Deg("gene1", 1.0, 0.0));
         degs1.add(new Deg("gene2", 2.0, 0.0));
         degs1.add(new Deg("gene3", 3.0, 0.0));
@@ -173,12 +131,7 @@ class PercLogFChangePerPathwayTest {
 
     @Test
     void percAllPathways_idealCase() {
-        pathwayIds = new LinkedHashSet<>();
-        pathwayIds.add("hsa10");
-        pathwayIds.add("hsa11");
-        pathwayIds.add("hsa12");
-        pathwayIds.add("hsa14");
-        pathwayIds.add("hsa15");
+        pathwayIds = new String[] {"hsa10", "hsa11", "hsa12", "hsa14", "hsa15"};
         degs1.add(new Deg("gene1", 1.0, 0.0));
         degs1.add(new Deg("gene2", 2.0, 0.0));
         degs1.add(new Deg("gene3", 3.0, 0.0));

@@ -42,7 +42,7 @@ public class ChartGenerator {
     private final File                   outputFilePath;
     private final HashMap<String, Range> positionRanges; // data-selection >>
     private final int                    maxNPathways;
-    private Set<String>                  pathwayIds; //<<
+    private String[]                     pathwayIds; //<<
     private final List<Pathway>          pathways; // data >>
     private final List<PathwayGene>      pathwayGenes;
     private final List<Deg>              degs;
@@ -89,7 +89,7 @@ public class ChartGenerator {
         private HashMap<String, Range> positionRanges = null;
         private List<EnrichmentResult> enrichmentResults = null;
         private int                    maxNPathways = -1;
-        private Set<String>            pathwayIds = null;
+        private String[]               pathwayIds = null;
 
         public Builder(String title, String xAxis, String yAxis, List<Deg> degs, List<Pathway> pathways, List<PathwayGene> pathwayGenes, File outputFilePath) {
             this.title          = title;
@@ -113,7 +113,7 @@ public class ChartGenerator {
         public Builder dotTransparency(float val) { dotTransparency = val; return this;}
         public Builder imageFormat(String val) {    imageFormat = val; return this;}
         public Builder maxNPathways(int val) {      maxNPathways = val; return this;}
-        public Builder pathwayIds(Set<String> val) { pathwayIds = val; return this;}
+        public Builder pathwayIds(String[] val) { pathwayIds = val; return this;}
 
         public ChartGenerator build() {
             return new ChartGenerator(this);
@@ -186,7 +186,7 @@ public class ChartGenerator {
         Map<String, Double> percentageAllPathways = percLogFChangePerPathway.percAllPathways(pathwayIds);
 
          for(Pathway pathway:pathways) {
-             if(pathwayIds == null || pathwayIds.contains(pathway.pathwayId())) {
+             if(Arrays.stream(pathwayIds).noneMatch(pathwayId->pathwayId.equals(pathway.pathwayId()))) {
                  objDataset.setValue(percentageAllPathways.get(pathway.pathwayId()),"",pathway.description());
              }
          }
@@ -197,8 +197,8 @@ public class ChartGenerator {
      * Give all available pathway ids, based on the pathwayGenes field/dataset.
      * @return pathway ids
      */
-    private Set<String> getPathwayAllAvIds() {
-        return pathways.stream().map(Pathway::pathwayId).collect(Collectors.toSet());
+    private String[] getPathwayAllAvIds() {
+        return pathways.stream().map(Pathway::pathwayId).distinct().toArray(String[]::new);
     }
 
 }

@@ -133,7 +133,7 @@ class PercLogFChangePerPathwayCmd implements Runnable {
     private CommonChartParams commonChartParams;
 
     @Option(names = {"--pathway-ids"}, paramLabel = "hsa(...)", arity = "0..*", split = ",", description = "Pathway ids of interest")
-    private Set<String> pathwayIds;
+    private String[] pathwayIds;
     @Option(names = {"--max-n-pathways"}, paramLabel = "[1-inf]", description = "Max number of pathways to include in chart. '--pathway-ids' overrides this option.")
     private int maxNPathways;
 
