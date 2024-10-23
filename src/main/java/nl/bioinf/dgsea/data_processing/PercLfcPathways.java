@@ -4,9 +4,6 @@
  */
 package nl.bioinf.dgsea.data_processing;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -22,7 +19,6 @@ import java.util.stream.IntStream;
 public class PercLfcPathways {
     private final List<Deg> degs;
     private final List<PathwayGene> pathwayGenes;
-    Logger logger = LogManager.getLogger(PercLfcPathways.class.getName());
 
     /**
      * Constructs a PercLogFChangePerPathway
@@ -49,7 +45,7 @@ public class PercLfcPathways {
         final double[]  avgLfcAllPathways = new double[pathwayIds.length];
         double totalLfc = getTotalLfc(pathwayIds, avgLfcAllPathways);
         int pathwayIndex = 0;
-        for (String pathwayId : pathwayIds) {
+        for (String _ : pathwayIds) {
             double avgLfcPathway = avgLfcAllPathways[pathwayIndex];
             if(avgLfcPathway == 0.0) {
                 pathwayPercentages[pathwayIndex] = 0.0;

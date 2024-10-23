@@ -4,10 +4,8 @@ import org.jfree.data.Range;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.params.provider.*;
 
 import java.util.*;
-import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -25,18 +23,6 @@ class PercLfcPathwaysTest {
         pathwayIds = new String[] {"hsa00010", "hsa00020", "hsa00030", "hsa00040"};
     }
 
-    private static Stream<Arguments> provideEmptyInputs() {
-        List<Deg> degsEmpty = new ArrayList<>();
-        List<PathwayGene> pathwaysGenesEmpty = new ArrayList<>();
-        List<Deg> degs1 = new ArrayList<>();
-        List<PathwayGene> pathwayGenes1 = new ArrayList<>();
-        degs1.add(new Deg("", 0.0, 0.0));
-        pathwayGenes1.add(new PathwayGene("", 1, "", ""));
-        return Stream.of(
-            Arguments.of(degsEmpty, pathwayGenes1, IllegalArgumentException.class),
-            Arguments.of(degs1, pathwaysGenesEmpty, IllegalArgumentException.class)
-        );
-    }
 
     /**
      * Does it throw IllegalArgumentException on empty data input?
@@ -59,10 +45,9 @@ class PercLfcPathwaysTest {
         degs1.add(new Deg("gene1", 0.0, 0.0));
         pathwayGenes1.add(new PathwayGene("hsa10", 1, "gene1", ""));
         String[] pathwayIds = new String[] {};
-        String[] pathwayIds1 = null;
         PercLfcPathways percLfcPathways = new PercLfcPathways(degs1, pathwayGenes1);
         assertThrows(IllegalArgumentException.class, () -> percLfcPathways.percAllPathways(pathwayIds));
-        assertThrows(IllegalArgumentException.class, () -> percLfcPathways.percAllPathways(pathwayIds1));
+        assertThrows(IllegalArgumentException.class, () -> percLfcPathways.percAllPathways(null));
     }
 
     /**
@@ -226,8 +211,7 @@ class PercLfcPathwaysTest {
         pathwayGenes1.add(new PathwayGene("hsa12", 1, "gene3", ""));
         pathwayGenes1.add(new PathwayGene("hsa14", 1, "gene4", ""));
         pathwayGenes1.add(new PathwayGene("hsa15", 1, "gene5", ""));
-        PercLfcPathways percLfcPathways = new PercLfcPathways(degs1, pathwayGenes1);
-        return percLfcPathways;
+        return new PercLfcPathways(degs1, pathwayGenes1);
     }
 
     private PercLfcPathways getIdealEasyCaseData() {
@@ -239,8 +223,7 @@ class PercLfcPathwaysTest {
         pathwayGenes1.add(new PathwayGene("hsa11", 1, "gene2", ""));
         pathwayGenes1.add(new PathwayGene("hsa12", 1, "gene3", ""));
         pathwayGenes1.add(new PathwayGene("hsa14", 1, "gene4", ""));
-        PercLfcPathways percLfcPathways = new PercLfcPathways(degs1, pathwayGenes1);
-        return percLfcPathways;
+        return new PercLfcPathways(degs1, pathwayGenes1);
     }
 
 }

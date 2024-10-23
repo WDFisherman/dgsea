@@ -176,14 +176,14 @@ public class PercLfcBarChart {
                         color = (Color)field.get(null);
                     } catch (Exception e2) {
                         color = getDefaultColor(i);
-                        logger.warn("Given color was neither decimal, octal, or hexidecimal, nor a valid Java color string. Given color: " + colorManual[i % colorManual.length]);
+                        logger.warn("Given color was neither decimal, octal, or hexidecimal, nor a valid Java color string. Given color: {}", colorManual[i % colorManual.length]);
                     }
                 }
                 cplot.getRenderer().setSeriesPaint(i, color);
             }
         } else {
             for (int i = 0; i < pathwayIds.length; i++) {
-                cplot.getRenderer().setSeriesPaint(i, getDefaultColor(i)); // Standaardkleur toepassen
+                cplot.getRenderer().setSeriesPaint(i, getDefaultColor(i));
             }
         }
     }
