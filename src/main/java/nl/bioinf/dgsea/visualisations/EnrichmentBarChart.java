@@ -12,7 +12,11 @@ import org.jfree.chart.ChartUtils;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+
 import nl.bioinf.dgsea.data_processing.Pathway;
 import nl.bioinf.dgsea.data_processing.EnrichmentResult;
 
@@ -59,7 +63,8 @@ public class EnrichmentBarChart {
         domainAxis.setTickLabelFont(new Font("Arial", Font.PLAIN, 12)); // Reduce font size or remove
 
         // Increase the thickness of the bars
-        renderer.setMaximumBarWidth(0.1);  // Adjust the value for thicker bars
+        renderer.setMaximumBarWidth(0.4);  // Adjust the value for thicker bars
+
 
         return barChart;
     }
@@ -81,11 +86,31 @@ public class EnrichmentBarChart {
     }
 
     private Color getColorFromString(String colorStr) {
+        // A mapping of common color names to their corresponding Color objects
+        Map<String, Color> colorNameMap = new HashMap<>();
+        colorNameMap.put("red", Color.RED);
+        colorNameMap.put("blue", Color.BLUE);
+        colorNameMap.put("green", Color.GREEN);
+        colorNameMap.put("orange", Color.ORANGE);
+        colorNameMap.put("yellow", Color.YELLOW);
+        colorNameMap.put("pink", Color.PINK);
+        colorNameMap.put("magenta", Color.MAGENTA);
+        colorNameMap.put("cyan", Color.CYAN);
+        colorNameMap.put("gray", Color.GRAY);
+        colorNameMap.put("black", Color.BLACK);
+        colorNameMap.put("white", Color.WHITE);
+
+        // First, check if the colorStr is a named color
+        if (colorNameMap.containsKey(colorStr.toLowerCase())) {
+            return colorNameMap.get(colorStr.toLowerCase());
+        }
+
+        // Otherwise, try interpreting it as a hex color code
         try {
             return Color.decode(colorStr);
         } catch (NumberFormatException e) {
-            // Terugvallen op een standaardkleur als de kleur ongeldig is
-            return Color.GRAY; // Of een andere fallback kleur
+            // Fallback to gray if the input is invalid
+            return Color.GRAY;
         }
     }
 
@@ -105,6 +130,7 @@ public class EnrichmentBarChart {
 
     private DefaultCategoryDataset createDataset(List<EnrichmentResult> enrichmentResults, List<Pathway> pathways) {
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+        HashSet<String> addedSeriesNames = new HashSet<>(); // Set voor unieke series
 
         for (int i = 0; i < enrichmentResults.size(); i++) {
             EnrichmentResult result = enrichmentResults.get(i);
@@ -115,13 +141,21 @@ public class EnrichmentBarChart {
 
             if (matchingPathway != null) {
                 String description = matchingPathway.description();
-                // Elke bar wordt in een eigen serie geplaatst, gebruikmakend van 'description' als seriesnaam.
-                dataset.addValue(result.enrichmentScore(), description, description);  // Gebruik description als serie- en categorie naam
+
+                // Controleer of de beschrijving al is toegevoegd
+                if (!addedSeriesNames.contains(description)) {
+                    dataset.addValue(result.enrichmentScore(), description, description);  // Gebruik description als serie- en categorie naam
+                    addedSeriesNames.add(description); // Voeg beschrijving toe aan de set
+                } else {
+                    // Optioneel: logica om te reageren op een duplicaat
+                    System.out.println("Beschrijving '" + description + "' bestaat al. Overslaan.");
+                }
             }
         }
 
         return dataset;
     }
-
-
 }
+
+
+
