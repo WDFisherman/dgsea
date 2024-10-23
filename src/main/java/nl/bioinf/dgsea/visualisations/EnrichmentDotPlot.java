@@ -11,7 +11,6 @@ import org.jfree.chart.labels.XYItemLabelGenerator;
 import org.jfree.chart.ChartUtils;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.ui.TextAnchor;
-import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import org.jfree.chart.labels.ItemLabelAnchor;
@@ -26,6 +25,9 @@ import java.util.List;
 import nl.bioinf.dgsea.data_processing.Pathway;
 import nl.bioinf.dgsea.data_processing.EnrichmentResult;
 
+/**
+ * Class to create a dot plot for enrichment results using JFreeChart.
+ */
 public class EnrichmentDotPlot {
     private String title;
     private List<EnrichmentResult> enrichmentResults;
@@ -36,15 +38,31 @@ public class EnrichmentDotPlot {
     private double dotSize;       // Size of the dots
     private float dotTransparency; // Transparency of the dots
 
-    public EnrichmentDotPlot(String title, List<EnrichmentResult> enrichmentResults, List<Pathway> pathways, String outputFilePath, String[] colorManual, String colorScheme, double dotSize, float dotTransparency) throws IOException {
+    /**
+     * Constructor for EnrichmentDotPlot.
+     *
+     * @param title              The title of the plot.
+     * @param enrichmentResults  The list of enrichment results.
+     * @param pathways           The list of pathways.
+     * @param outputFilePath     The file path to save the plot.
+     * @param colorManual        User-defined colors for the dots.
+     * @param colorScheme        Default color scheme.
+     * @param dotSize            Size of the dots.
+     * @param dotTransparency    Transparency of the dots.
+     * @throws IOException If an error occurs while saving the chart.
+     */
+    public EnrichmentDotPlot(String title, List<EnrichmentResult> enrichmentResults,
+                             List<Pathway> pathways, String outputFilePath,
+                             String[] colorManual, String colorScheme,
+                             double dotSize, float dotTransparency) throws IOException {
         this.title = title;
         this.enrichmentResults = enrichmentResults;
         this.pathways = pathways;
         this.outputFilePath = outputFilePath;
         this.colorManual = colorManual;
         this.colorScheme = colorScheme;
-        this.dotSize = dotSize;
-        this.dotTransparency = dotTransparency;
+        setDotSize(dotSize);
+        setDotTransparency(dotTransparency);
 
         XYSeriesCollection dataset = createDataset(enrichmentResults, pathways);
         JFreeChart dotPlot = createChart(dataset);
@@ -54,6 +72,20 @@ public class EnrichmentDotPlot {
         int height = 800;
         File file = new File(outputFilePath);
         ChartUtils.saveChartAsPNG(file, dotPlot, width, height);
+    }
+
+    private void setDotSize(double dotSize) {
+        if (dotSize <= 0) {
+            throw new IllegalArgumentException("Dot size must be positive.");
+        }
+        this.dotSize = dotSize;
+    }
+
+    private void setDotTransparency(float dotTransparency) {
+        if (dotTransparency < 0 || dotTransparency > 1) {
+            throw new IllegalArgumentException("Transparency must be between 0 and 1.");
+        }
+        this.dotTransparency = dotTransparency;
     }
 
     private JFreeChart createChart(XYSeriesCollection dataset) {
@@ -79,7 +111,7 @@ public class EnrichmentDotPlot {
         renderer.setDefaultShapesVisible(true);
 
         // Set dot transparency
-        renderer.setDefaultOutlinePaint(new Color(0, 0, 0, (int)(dotTransparency * 255))); // Setting outline transparency
+        renderer.setDefaultOutlinePaint(new Color(0, 0, 0, (int)(dotTransparency * 255)));
 
         // Customize plot background
         plot.setBackgroundPaint(Color.WHITE);
@@ -92,7 +124,6 @@ public class EnrichmentDotPlot {
 
         // Add labels to points
         addItemLabels(renderer);
-
 
         return dotPlot;
     }
@@ -122,14 +153,13 @@ public class EnrichmentDotPlot {
                 color = getDefaultColor(i);
             }
 
-            // Pas de transparantie toe op de kleur
+            // Apply transparency to the color
             color = new Color(color.getRed(), color.getGreen(), color.getBlue(), (int) (dotTransparency * 255));
             renderer.setSeriesPaint(i, color);
         }
     }
 
-
-    private Color getColorFromString(String colorStr) {
+    Color getColorFromString(String colorStr) {
         // Mapping of common color names to Color objects
         Map<String, Color> colorNameMap = new HashMap<>();
         colorNameMap.put("red", Color.RED);
@@ -157,7 +187,7 @@ public class EnrichmentDotPlot {
         }
     }
 
-    private Color getDefaultColor(int index) {
+    Color getDefaultColor(int index) {
         switch (index % 5) {
             case 0: return Color.RED;
             case 1: return Color.BLUE;
@@ -168,9 +198,9 @@ public class EnrichmentDotPlot {
         }
     }
 
-    private XYSeriesCollection createDataset(List<EnrichmentResult> enrichmentResults, List<Pathway> pathways) {
+    XYSeriesCollection createDataset(List<EnrichmentResult> enrichmentResults, List<Pathway> pathways) {
         XYSeriesCollection dataset = new XYSeriesCollection();
-        Set<String> addedSeriesNames = new HashSet<>(); // Set voor unieke serie-namen
+        Set<String> addedSeriesNames = new HashSet<>(); // Set for unique series names
 
         for (int i = 0; i < enrichmentResults.size(); i++) {
             EnrichmentResult result = enrichmentResults.get(i);
@@ -180,15 +210,15 @@ public class EnrichmentDotPlot {
             if (!Double.isNaN(adjustedPValue) && adjustedPValue < 0.05) {
                 String seriesName = pathways.get(i).description();
 
-                // Controleer of de serie al is toegevoegd
+                // Check if the series has already been added
                 if (!addedSeriesNames.contains(seriesName)) {
                     XYSeries series = new XYSeries(seriesName);
                     series.add(adjustedPValue, enrichmentScore);
                     dataset.addSeries(series);
-                    addedSeriesNames.add(seriesName); // Voeg naam toe aan de set
+                    addedSeriesNames.add(seriesName); // Add name to the set
                 } else {
-                    // Optioneel: logica om te reageren op een duplicaat
-                    System.out.println("Serie met de naam '" + seriesName + "' bestaat al. Overslaan.");
+                    // Optional: log the duplicate series name
+                    logDuplicateSeries(seriesName);
                 }
             }
         }
@@ -196,6 +226,10 @@ public class EnrichmentDotPlot {
         return dataset;
     }
 
+    private void logDuplicateSeries(String seriesName) {
+        // Placeholder for logging duplicates, can be enhanced with a logging framework
+        System.err.println("Series with the name '" + seriesName + "' already exists. Skipping.");
+    }
 
     private void addItemLabels(XYLineAndShapeRenderer renderer) {
         XYItemLabelGenerator labelGenerator = (dataset, series, item) -> pathways.get(series).description();

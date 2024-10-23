@@ -7,6 +7,7 @@ import nl.bioinf.dgsea.data_processing.EnrichmentResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -93,5 +94,37 @@ public class EnrichmentTableTest {
 
         assertEquals(3, results.size()); // We hebben 3 pathways
         assertEquals("pathway1", results.get(0).pathwayId()); // Controleer de eerste pathway
+    }
+    @Test
+    public void testEmptyInputLists() {
+        enrichmentTable = new EnrichmentTable(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+        enrichmentTable.calculateEnrichment();
+        List<EnrichmentResult> results = enrichmentTable.getEnrichmentResults();
+
+        assertTrue(results.isEmpty()); // Geen resultaten als er geen pathways of DEGs zijn
+    }
+    @Test
+    public void testNoObservedDegs() {
+        List<Deg> noDegs = Arrays.asList();
+        enrichmentTable = new EnrichmentTable(pathways, noDegs, pathwayGenes);
+        enrichmentTable.calculateEnrichment();
+
+        List<EnrichmentResult> results = enrichmentTable.getEnrichmentResults();
+        for (EnrichmentResult result : results) {
+            assertEquals(0.0, result.enrichmentScore(), 0.01); // Geen DEGs betekent een enrichment score van 0
+            assertEquals(1.0, result.pValue(), 0.01); // P-waarde zou 1 moeten zijn (niet significant)
+        }
+    }
+    @Test
+    public void testOverlappingPathwayGenes() {
+        pathwayGenes = Arrays.asList(
+                new PathwayGene("pathway1", 1, "GENE1", "ENSG00000123456"),
+                new PathwayGene("pathway2", 2, "GENE1", "ENSG00000123456") // GENE1 zit in beide pathways
+        );
+        enrichmentTable = new EnrichmentTable(pathways, degs, pathwayGenes);
+        enrichmentTable.calculateEnrichment();
+
+        List<EnrichmentResult> results = enrichmentTable.getEnrichmentResults();
+        assertFalse(results.isEmpty()); // Resultaten moeten nog steeds berekend worden
     }
 }
