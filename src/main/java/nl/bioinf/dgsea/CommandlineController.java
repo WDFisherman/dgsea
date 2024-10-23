@@ -39,12 +39,8 @@ public class CommandlineController implements Runnable {
         throw new CommandLine.ParameterException(spec.commandLine(), "Missing required subcommand");
     }
 }
-
-/**
- * First-layer (CLI-) sub-command |
- * Calculates enrichment scores for each pathway, generates and saves enrichment bar chart to file.
- */
-@Command(name = "enrich_bar_chart", version = "Enrichment bar-chart 1.0", mixinStandardHelpOptions = true, description = "No description yet")
+// enrich_bar_chart /homes/jrgommers/Downloads/dgsea/src/test/resources/degs.csv /homes/jrgommers/Downloads/dgsea/src/test/resources/hsa_pathways.csv /homes/jrgommers/Downloads/dgsea/src/test/resources/pathways.csv /homes/jrgommers/Downloads/dgsea/src/test/resources/enrichment_bar_chart.png --color-manual blue
+@Command(name = "enrich_bar_chart", version = "Enrichment bar-chart 1.0", mixinStandardHelpOptions = true, description = "Generates and saves an enrichment bar chart showing top enriched pathways.")
 class EnrichBarChart implements Runnable {
     @Mixin
     private CommonToAll commonToAll;
@@ -53,17 +49,72 @@ class EnrichBarChart implements Runnable {
     @Mixin
     private CommonChartParams commonChartParams;
 
+    @Option(names = {"--output-file"}, paramLabel = "FILE", description = "Output file path for the bar chart (e.g., ./output/enrichment_bar_chart.png)")
+    private String outputFilePath;
+
+    @Option(names = {"--max-n-pathways"}, paramLabel = "[1-inf]", description = "Max number of pathways to include in chart. '--pathway-ids' overrides this option.")
+    private int maxNPathways;
+
     @Override
     public void run() {
         commonToAll.setLoggingScope();
+
+        // Fetch input data
+        List<Deg> degs = commonFileParams.getDegs();
+        List<Pathway> pathways = commonFileParams.getPathways();
+        List<PathwayGene> pathwayGenes = commonFileParams.getPathwayGenes();
+
+        try {
+            EnrichmentTable enrichmentTable = new EnrichmentTable(pathways, degs, pathwayGenes);
+            enrichmentTable.calculateEnrichment();
+            List<EnrichmentResult> results = enrichmentTable.getEnrichmentResults();
+
+            List<EnrichmentResult> significantResults = results.stream()
+                    .filter(result -> !Double.isNaN(result.adjustedPValue()) && result.adjustedPValue() < 0.05)
+                    .toList();
+
+            // Use the limit option here
+            List<EnrichmentResult> topResults = significantResults.stream()
+                    .sorted(Comparator.comparingDouble(EnrichmentResult::enrichmentScore).reversed())
+                    .limit(maxNPathways) // Apply the limit from the command line
+                    .collect(Collectors.toList());
+
+            // Check if output file path is provided
+            String outputFile = (outputFilePath != null && !outputFilePath.isEmpty()) ? outputFilePath : "pathway_enrichment_bar_chart.png";
+
+            // Process the color input, if provided
+            String[] colorArray = null;
+            if (commonChartParams.colorManual != null && commonChartParams.colorManual.length != 0) {
+                colorArray = commonChartParams.colorManual;
+            }
+
+            // Generate the bar chart with color input
+            EnrichmentBarChart barChart = new EnrichmentBarChart(
+                    "Top " + maxNPathways + " Pathway Enrichment", // Update title with limit
+                    topResults,
+                    pathways,
+                    outputFile,
+                    colorArray, // Pass the color array to the constructor
+                    commonChartParams.colorScheme
+            );
+
+            System.out.println("Bar chart saved as PNG at: " + outputFile);
+
+        } catch (IOException e) {
+            System.err.println("Error reading input data or saving PNG: " + e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
+
+
 
 /**
  * First-layer (CLI-) sub-command |
  * Calculates enrichment scores for each pathway, generates and saves enrichment dot chart to file.
  */
-@Command(name = "enrich_dot_chart", version = "Enrichment dot-chart 1.0", mixinStandardHelpOptions = true, description = "This command over-aches commands for now: enrich_bar_chart and enrich_dot_chart and makes both charts")
+@Command(name = "enrich_dot_chart", version = "Enrichment dot-chart 1.0", mixinStandardHelpOptions = true, description = "This command generates an enrichment dot chart using given data.")
 class EnrichDotChart implements Runnable {
     @Mixin
     private CommonToAll commonToAll;
@@ -72,10 +123,17 @@ class EnrichDotChart implements Runnable {
     @Mixin
     private CommonChartParams commonChartParams;
 
-    @Option(names = {"--dot-size"}, paramLabel = "[0.0-inf]", description = "Dot size, default = ${DEFAULT-VALUE}", defaultValue = "1.0")
+    @Option(names = {"--dot-size"}, paramLabel = "[0.0-inf]", description = "Dot size, default = ${DEFAULT-VALUE}", defaultValue = "30.0")
     private double dotSize;
+
     @Option(names = {"--dot-transparency"}, paramLabel = "[0.0-1.0]", description = "Dot transparency, default = ${DEFAULT-VALUE}", defaultValue = "1.0")
-    private double dotTransparency;
+    private float dotTransparency;
+
+    @Option(names = {"--color"}, paramLabel = "COLORS", description = "Manual colors for the dots, provide as a comma-separated list (e.g., red,blue,green).")
+    private String[] colorManual;
+
+    @Option(names = {"--max-n-pathways"}, paramLabel = "[1-inf]", description = "Max number of pathways to include in chart. '--pathway-ids' overrides this option.")
+    private int maxNPathways;
 
     @Override
     public void run() {
@@ -83,41 +141,53 @@ class EnrichDotChart implements Runnable {
         List<Deg> degs = commonFileParams.getDegs();
         List<Pathway> pathways = commonFileParams.getPathways();
         List<PathwayGene> pathwayGenes = commonFileParams.getPathwayGenes();
+
         try {
-            // Bereken de enrichment en haal de resultaten op
+            // Calculate enrichment and fetch results
             EnrichmentTable enrichmentTable = new EnrichmentTable(pathways, degs, pathwayGenes);
             enrichmentTable.calculateEnrichment();
             List<EnrichmentResult> results = enrichmentTable.getEnrichmentResults();
 
-            // Selecteer de pathways met een significante adjusted p-value
+            // Select significant results
             List<EnrichmentResult> significantResults = results.stream()
-                    .filter(result -> !Double.isNaN(result.adjustedPValue()) && result.adjustedPValue() < 0.05) // Filter uit op NaN waarden en significante p-waarden
+                    .filter(result -> !Double.isNaN(result.adjustedPValue()) && result.adjustedPValue() < 0.05)
                     .toList();
 
-            // Sorteer op enrichment score (hoogste eerst) en neem de top 20
-            List<EnrichmentResult> top20Results = significantResults.stream()
-                    .sorted(Comparator.comparingDouble(EnrichmentResult::enrichmentScore).reversed()) // Sorteer op enrichment score
-                    .limit(20) // Neem de top 20
+            // Sort by enrichment score and apply limit
+            List<EnrichmentResult> topResults = significantResults.stream()
+                    .sorted(Comparator.comparingDouble(EnrichmentResult::enrichmentScore).reversed())
+                    .limit(maxNPathways) // Apply the limit from the command line
                     .collect(Collectors.toList());
 
-            // Maak de bar chart en sla op als PNG
-            String barChartOutputFilePath = "pathway_enrichment_chart.png";  // Pad voor het opslaan van de PNG
-            EnrichmentBarChart barChart = new EnrichmentBarChart("Top 20 Pathway Enrichment met significante padjust value", top20Results, pathways, barChartOutputFilePath);
-            System.out.println("Bar chart opgeslagen als PNG op: " + barChartOutputFilePath);
+            // Use specified colors or default manual colors
+            String[] colorArray = (colorManual != null && colorManual.length != 0) ? colorManual : commonChartParams.colorManual;
 
-            // Maak de dot plot en sla op als PNG
-            String dotPlotOutputFilePath = "pathway_enrichment_dot_plot.png";  // Pad voor het opslaan van de PNG
-            EnrichmentDotPlot dotPlot = new EnrichmentDotPlot("Pathway Enrichment Dot Plot", top20Results, pathways, dotPlotOutputFilePath);
-            System.out.println("Dot plot opgeslagen als PNG op: " + dotPlotOutputFilePath);
+            // Create and save the dot plot
+            String dotPlotOutputFilePath = "pathway_enrichment_dot_plot.png";
+            EnrichmentDotPlot dotPlot = new EnrichmentDotPlot(
+                    "Pathway Enrichment Dot Plot (Top " + maxNPathways + ")", // Update title with limit
+                    topResults,
+                    pathways,
+                    dotPlotOutputFilePath,
+                    colorArray,  // Pass specified colors
+                    commonChartParams.colorScheme,
+                    dotSize,     // Pass dot size
+                    dotTransparency // Pass dot transparency
+            );
+
+            System.out.println("Dot plot saved as PNG at: " + dotPlotOutputFilePath);
+            System.out.println("Dot Size: " + dotSize);
 
         } catch (IOException e) {
-            System.err.println("Fout bij het lezen van de invoer data of het opslaan van de PNG: " + e.getMessage());
+            System.err.println("Error reading input data or saving PNG: " + e.getMessage());
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 }
+
+
+
 
 /**
  * First-layer (CLI-) sub-command |

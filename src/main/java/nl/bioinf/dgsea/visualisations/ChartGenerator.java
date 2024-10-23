@@ -1,8 +1,3 @@
-/**
- * Generates one of 3 charts based on present fields.
- * @Authors: Jort Gommers & Willem Daniël Visser
- */
-
 package nl.bioinf.dgsea.visualisations;
 
 import nl.bioinf.dgsea.data_processing.*;
@@ -13,8 +8,8 @@ import org.jfree.chart.ChartUtils;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.data.Range;
 import org.jfree.data.category.DefaultCategoryDataset;
-import org.w3c.dom.ranges.Range;
 
 import java.awt.*;
 import java.io.File;
@@ -29,7 +24,7 @@ import java.util.stream.Collectors;
  * Builder ChartGenerator.Builder is available for selective field assignation.
  */
 public class ChartGenerator {
-    private final String                 title; // chart-styling >>
+    private final String                 title;
     private final String                 xAxis;
     private final String                 yAxis;
     private final double                 dpi;
@@ -37,16 +32,16 @@ public class ChartGenerator {
     private final String[]               colorManual;
     private final Color                  singleColor;
     private final double                 dotSize;
-    private final float                  dotTransparency; //<<
+    private final float                  dotTransparency;
     private final String                 imageFormat;
     private final File                   outputFilePath;
-    private final HashMap<String, Range> positionRanges; // data-selection >>
+    private final HashMap<String, Range> positionRanges;
     private final int                    maxNPathways;
-    private String[]                     pathwayIds; //<<
-    private final List<Pathway>          pathways; // data >>
+    private String[]                     pathwayIds;
+    private final List<Pathway>          pathways;
     private final List<PathwayGene>      pathwayGenes;
     private final List<Deg>              degs;
-    private final List<EnrichmentResult> enrichmentResults; //<<
+    private final List<EnrichmentResult> enrichmentResults;
     private final Logger logger = LogManager.getLogger(ChartGenerator.class.getName());
 
     public ChartGenerator(Builder builder) {
@@ -80,7 +75,7 @@ public class ChartGenerator {
         private final File outputFilePath;
 
         private double                 dpi = 0;
-        private String                 colorScheme = "virdiris";
+        private String                 colorScheme = "viridis";
         private String[]               colorManual = null;
         private Color                  singleColor = Color.BLACK;
         private double                 dotSize = 1.0;
@@ -118,33 +113,10 @@ public class ChartGenerator {
         public ChartGenerator build() {
             return new ChartGenerator(this);
         }
-
-    }
-
-    void outputEnrichmentBarChart() {
-        throw new UnsupportedOperationException("Not implemented yet.");
-    }
-
-    void outputEnrichmentDotChart() {
-        throw new UnsupportedOperationException("Not implemented yet.");
-    }
-
-    void outputRunningSumPlot() {
-        throw new UnsupportedOperationException("Not implemented yet.");
     }
 
     /**
-     * Gets logFoldChange per deg per pathway,
-     *  then gets absolute total logFoldChange per pathway,
-     *  then gets average logFoldChange based on absolute total,
-     *  then gets total of average logFoldChanges of all pathways.
-     * Calculates percentage logFoldChange per pathway.
-     * percentage logFoldChange per pathway, based on absolute average logFoldChange of degs in pathway
-     */
-
-    /**
-     * Gets calculated data then transforms it to bar-chart/categorical data.
-     *  Then makes bar-chart and saves this to an image.
+     * Generates a bar chart based on percentage log fold change per pathway.
      */
     public void saveChartPercLogFChangePerPathway() {
         DefaultCategoryDataset objDataset = getDefaultCategoryDataset();
@@ -153,14 +125,15 @@ public class ChartGenerator {
                 title,
                 xAxis,
                 yAxis,
-                objDataset, //Chart Data
+                objDataset, // Chart Data
                 PlotOrientation.VERTICAL,
                 true,
                 true,
                 false
         );
+
         CategoryPlot cplot = (CategoryPlot)objChart.getPlot();
-        cplot.getRenderer().setSeriesPaint(0, singleColor);
+        applyColors(cplot, objDataset); // Apply user-defined colors to the chart
         try {
             if (imageFormat.equals("png")) {
                 ChartUtils.saveChartAsPNG(outputFilePath, objChart, 1000, 1000);
@@ -170,6 +143,42 @@ public class ChartGenerator {
             logger.info("Chart was saved to file: {}", outputFilePath);
         } catch(IOException e) {
             logger.error("Failed to save chart to image file, error: {}", String.valueOf(e));
+        }
+    }
+
+    /**
+     * Applies colors to the chart based on user input or defaults.
+     */
+    private void applyColors(CategoryPlot cplot, DefaultCategoryDataset dataset) {
+        int seriesCount = dataset.getRowCount();  // Aantal series (categorieën)
+
+        if (colorManual != null && colorManual.length > 0) {
+            for (int i = 0; i < seriesCount; i++) {
+                try {
+                    cplot.getRenderer().setSeriesPaint(i, Color.decode(colorManual[i % colorManual.length])); // Gebruik mod om kleuren te herhalen
+                } catch (Exception e) {
+                    logger.warn("Invalid color code for series {}: {}", i, colorManual[i % colorManual.length]);
+                    cplot.getRenderer().setSeriesPaint(i, singleColor); // Fallback naar enkele kleur
+                }
+            }
+        } else {
+            for (int i = 0; i < seriesCount; i++) {
+                cplot.getRenderer().setSeriesPaint(i, getDefaultColor(i)); // Standaardkleur toepassen
+            }
+        }
+    }
+
+    /**
+     * Provides default color for the chart when no manual color is provided.
+     */
+    private Color getDefaultColor(int index) {
+        switch (index % 5) {
+            case 0: return Color.RED;
+            case 1: return Color.BLUE;
+            case 2: return Color.GREEN;
+            case 3: return Color.ORANGE;
+            case 4: return Color.MAGENTA;
+            default: return Color.BLACK; // Fallback color
         }
     }
 
@@ -184,6 +193,7 @@ public class ChartGenerator {
             this.pathwayIds = getPathwayAllAvIds();
         }
         Map<String, Double> percentageAllPathways = percLogFChangePerPathway.percAllPathways(pathwayIds);
+
 
          for(Pathway pathway:pathways) {
              if(Arrays.stream(pathwayIds).noneMatch(pathwayId->pathwayId.equals(pathway.pathwayId()))) {
@@ -200,5 +210,4 @@ public class ChartGenerator {
     private String[] getPathwayAllAvIds() {
         return pathways.stream().map(Pathway::pathwayId).distinct().toArray(String[]::new);
     }
-
 }
