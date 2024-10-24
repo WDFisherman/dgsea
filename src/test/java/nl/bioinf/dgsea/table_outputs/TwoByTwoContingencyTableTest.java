@@ -11,7 +11,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class TwoByTwoContingenecyTableTest {
+class TwoByTwoContingencyTableTest {
     TwoByTwoContingencyTable twoByTwoContingencyTable;
     List<Deg> degs;
     List<Pathway> pathways;
@@ -42,6 +42,20 @@ class TwoByTwoContingenecyTableTest {
         twoByTwoContingencyTable = new TwoByTwoContingencyTable(degs, pathways, pathwayGenes, 0.01);
     }
 
+
+    /**
+     * Does the constructor throw IllegalStateException when 1 of the input data is null?
+     */
+    @Test
+    void constructor_nullInputs() {
+        assertThrows(IllegalStateException.class, () -> new TwoByTwoContingencyTable(null, pathways, pathwayGenes, 0.01));
+        assertThrows(IllegalStateException.class, () -> new TwoByTwoContingencyTable(degs, null, pathwayGenes, 0.01));
+        assertThrows(IllegalStateException.class, () -> new TwoByTwoContingencyTable(degs, pathways, null, 0.01));
+    }
+
+    /**
+     * Does table have the correct numbers and layout?
+     */
     @Test
     void getTable_idealCase() {
         degs.add(new Deg("GeneD", 2.5, 0.005));
@@ -67,6 +81,9 @@ class TwoByTwoContingenecyTableTest {
         assertEquals(expected, input);
     }
 
+    /**
+     * Does the table have all degs in just one pathway?
+     */
     @Test
     void getTable_allDegsInOnePathway() {
         String input = twoByTwoContingencyTable.getTable();
@@ -90,21 +107,12 @@ class TwoByTwoContingenecyTableTest {
         assertEquals(expected, input);
     }
 
+    /**
+     * Does the table show there are no matching degs counted for Pathway1?
+     */
     @Test
     void getTable_noDegs() {
-        List<Deg> degs1 = new ArrayList<>();
-        List<Pathway> pathways1 = new ArrayList<>();
-        List<PathwayGene> pathwayGenes1 = new ArrayList<>();
-        degs1.add(new Deg("GeneA", 2.5, 0.005));
-        pathways1.add(new Pathway("Pathway1", "Test Pathway 1"));
-        pathwayGenes1.add(new PathwayGene("", 0,"", ""));
-        TwoByTwoContingencyTable twoByTwoContingencyTable = new TwoByTwoContingencyTable(
-                degs1,
-                pathways1,
-                pathwayGenes1,
-                0.05
-        );
-        String output = twoByTwoContingencyTable.getTable();
+        String output = getOutput();
         String expected = """
 
                 Test Pathway 1 (Pathway1)
@@ -117,18 +125,42 @@ class TwoByTwoContingenecyTableTest {
                 D=is.. D*=is not.., Significant deg C=in.. C*=not in.., ..pathway.""";
         assertEquals(expected, output);
     }
-    //Test case for null inputs
+
+    private static String getOutput() {
+        List<Deg> degs1 = new ArrayList<>();
+        List<Pathway> pathways1 = new ArrayList<>();
+        List<PathwayGene> pathwayGenes1 = new ArrayList<>();
+        degs1.add(new Deg("GeneA", 2.5, 0.005));
+        pathways1.add(new Pathway("Pathway1", "Test Pathway 1"));
+        pathwayGenes1.add(new PathwayGene("Pathway1", 0,"", ""));
+        TwoByTwoContingencyTable twoByTwoContingencyTable = new TwoByTwoContingencyTable(
+                degs1,
+                pathways1,
+                pathwayGenes1,
+                0.05
+        );
+        return twoByTwoContingencyTable.getTable();
+    }
+
+    /**
+     * Does the function throw a null pointer when encountering a complete lack of Pathway1 in pathwayGenes?
+     */
     @Test
-    void constructor_nullInputs() {
-        assertThrows(IllegalStateException.class, () -> {
-            new TwoByTwoContingencyTable(null, pathways, pathwayGenes, 0.01);
-        });
-        assertThrows(IllegalStateException.class, () -> {
-            new TwoByTwoContingencyTable(degs, null, pathwayGenes, 0.01);
-        });
-        assertThrows(IllegalStateException.class, () -> {
-            new TwoByTwoContingencyTable(degs, pathways, null, 0.01);
-        });
+    void getTable_nullPointerException() {
+        List<Deg> degs1 = new ArrayList<>();
+        List<Pathway> pathways1 = new ArrayList<>();
+        List<PathwayGene> pathwayGenes1 = new ArrayList<>();
+        degs1.add(new Deg("GeneA", 2.5, 0.005));
+        pathways1.add(new Pathway("Pathway1", "Test Pathway 1"));
+        pathwayGenes1.add(new PathwayGene("", 0,"", ""));
+        TwoByTwoContingencyTable twoByTwoContingencyTable = new TwoByTwoContingencyTable(
+                degs1,
+                pathways1,
+                pathwayGenes1,
+                0.05
+        );
+        assertThrows(NullPointerException.class, twoByTwoContingencyTable::getTable);
+
     }
 
     // Test for degs with missing genes in pathways

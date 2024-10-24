@@ -10,6 +10,8 @@ package nl.bioinf.dgsea;
 import nl.bioinf.dgsea.data_processing.*;
 import nl.bioinf.dgsea.table_outputs.TwoByTwoContingencyTable;
 import nl.bioinf.dgsea.visualisations.PercLfcBarChart;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -120,7 +122,7 @@ class EnrichDotChart implements Runnable {
         List<Pathway> pathways = commonFileParams.getPathways();
         List<PathwayGene> pathwayGenes = commonFileParams.getPathwayGenes();
 
-        String[] colorArray = (commonChartParams.colorManual != null && commonChartParams.colorManual.length != 0) ? commonChartParams.colorManual : commonChartParams.colorManual;
+        String[] colorArray = commonChartParams.colorManual;
 
         EnrichmentAnalysisService enrichmentService = new EnrichmentAnalysisService();
         try {
@@ -193,6 +195,9 @@ class PercLogFChangePerPathwayCmd implements Runnable {
 @Command(name = "con_table", version = "Continuity table 1.0", mixinStandardHelpOptions = true,
         description = "Prints or stores to text file a continuity table of count data on 2 aspects of DEGs for every pathway: presence in pathway and presence of significance")
 class ContinuityTable implements Runnable {
+    @CommandLine.Spec
+    CommandLine.Model.CommandSpec spec;
+    Logger logger = LogManager.getLogger(ContinuityTable.class);
     @Mixin
     private CommonToAll commonToAll;
 
@@ -214,10 +219,13 @@ class ContinuityTable implements Runnable {
                 commonFileParams.getPathwayGenes(),
                 commonToAll.pval
         );
+        try {
+            String outputTable = twoByTwoContingencyTable.getTable();
+            handleOutput(outputTable);
+        } catch (NullPointerException _) {
+            logger.error("Make sure that at least one pathway-id in your pathway-descriptions file matches a pathway-id in your pathway-gene entries file.");
+        }
 
-        String outputTable = twoByTwoContingencyTable.getTable();
-
-        handleOutput(outputTable);
     }
 
     private void handleOutput(String outputTable) {
@@ -225,17 +233,17 @@ class ContinuityTable implements Runnable {
             if (outputFilePath != null) {
                 try {
                     java.nio.file.Files.write(outputFilePath.toPath(), outputTable.getBytes());
-                    System.out.println("Continuity table written to: " + outputFilePath.getPath());
+                    logger.info("Continuity table written to: {}", outputFilePath.getPath());
                 } catch (IOException e) {
-                    System.err.println("Error writing continuity table to file: " + e.getMessage());
+                    logger.error("Error writing continuity table to file: {}", e.getMessage());
                 }
             } else {
-                System.err.println("No output file path provided. Use '--outputFilePath' to specify the file.");
+                logger.error("No output file path provided. Use '--outputFilePath' to specify the file.");
             }
         } else if ("print".equalsIgnoreCase(output)) {
             System.out.println(outputTable);
         } else {
-            System.err.println("Invalid output option. Use '--output [file|print]'.");
+            throw new CommandLine.ParameterException(spec.commandLine(), "Invalid output option. Use '--output [file|print]'.");
         }
     }
 }
