@@ -11,6 +11,9 @@ import nl.bioinf.dgsea.data_processing.*;
 import nl.bioinf.dgsea.services.EnrichmentAnalysisService;
 import nl.bioinf.dgsea.table_outputs.TwoByTwoContingencyTable;
 import nl.bioinf.dgsea.visualisations.PercLfcBarChart;
+import nl.bioinf.dgsea.table_outputs.EnrichmentTable;
+import nl.bioinf.dgsea.visualisations.EnrichmentBarChart;
+import nl.bioinf.dgsea.visualisations.EnrichmentDotPlot;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -19,6 +22,7 @@ import picocli.CommandLine.Mixin;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 /**
@@ -35,6 +39,7 @@ public class CommandlineController implements Runnable {
         throw new CommandLine.ParameterException(spec.commandLine(), "Missing required subcommand");
     }
 }
+
 
 @Command(name = "enrich_bar_chart", version = "Enrichment bar-chart 1.0", mixinStandardHelpOptions = true, description = "Generates and saves an enrichment bar chart showing top enriched pathways.")
 class EnrichBarChart implements Runnable {
@@ -155,10 +160,11 @@ class PercLogFChangePerPathwayCmd implements Runnable {
                 pathways,
                 pathwayGenes,
                 commonChartParams.outputPath)
-                .colorManual(commonChartParams.colorManual)
-                .maxNPathways(maxNPathways)
-                .imageFormat(commonChartParams.imageFormat)
-                .pathwayIds(pathwayIds);
+
+        .colorManual(commonChartParams.colorManual)
+        .maxNPathways(maxNPathways)
+        .imageFormat(commonChartParams.imageFormat)
+        .pathwayIds(pathwayIds);
     }
 }
 
