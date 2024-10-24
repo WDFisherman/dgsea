@@ -10,7 +10,7 @@ package nl.bioinf.dgsea;
 import nl.bioinf.dgsea.data_processing.*;
 import nl.bioinf.dgsea.services.EnrichmentAnalysisService;
 import nl.bioinf.dgsea.table_outputs.TwoByTwoContingencyTable;
-import nl.bioinf.dgsea.visualisations.ChartGenerator;
+import nl.bioinf.dgsea.visualisations.PercLfcBarChart;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -143,24 +143,22 @@ class PercLogFChangePerPathwayCmd implements Runnable {
         List<Deg> degs = commonFileParams.getDegs();
         List<Pathway> pathways = commonFileParams.getPathways();
         List<PathwayGene> pathwayGenes = commonFileParams.getPathwayGenes();
-        ChartGenerator chartGenerator = new ChartGenerator(getChartGeneratorsBuilder(degs, pathways, pathwayGenes));
-        chartGenerator.saveChartPercLogFChangePerPathway();
+        PercLfcBarChart percLfcBarChart = new PercLfcBarChart(getChartGeneratorsBuilder(degs, pathways, pathwayGenes));
+        percLfcBarChart.saveChart();
     }
-    private ChartGenerator.Builder getChartGeneratorsBuilder(List<Deg> degs, List<Pathway> pathways, List<PathwayGene> pathwayGenes) {
-        return new ChartGenerator.Builder(
+    private PercLfcBarChart.Builder getChartGeneratorsBuilder(List<Deg> degs, List<Pathway> pathways, List<PathwayGene> pathwayGenes) {
+        return new PercLfcBarChart.Builder(
                 commonChartParams.title,
                 commonChartParams.xAxisTitle,
                 commonChartParams.yAxisTitle,
                 degs,
                 pathways,
                 pathwayGenes,
-                commonChartParams.outputPath
-        ).colorScheme(commonChartParams.colorScheme)
-        .colorManual(commonChartParams.colorManual)
-        .dpi(commonChartParams.imageDpi)
-        .maxNPathways(maxNPathways)
-        .imageFormat(commonChartParams.imageFormat)
-        .pathwayIds(pathwayIds);
+                commonChartParams.outputPath)
+                .colorManual(commonChartParams.colorManual)
+                .maxNPathways(maxNPathways)
+                .imageFormat(commonChartParams.imageFormat)
+                .pathwayIds(pathwayIds);
     }
 }
 
