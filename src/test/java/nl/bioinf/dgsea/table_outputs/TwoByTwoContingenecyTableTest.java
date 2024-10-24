@@ -117,4 +117,46 @@ class TwoByTwoContingenecyTableTest {
                 D=is.. D*=is not.., Significant deg C=in.. C*=not in.., ..pathway.""";
         assertEquals(expected, output);
     }
+    //Test case for null inputs
+    @Test
+    void constructor_nullInputs() {
+        assertThrows(IllegalStateException.class, () -> {
+            new TwoByTwoContingencyTable(null, pathways, pathwayGenes, 0.01);
+        });
+        assertThrows(IllegalStateException.class, () -> {
+            new TwoByTwoContingencyTable(degs, null, pathwayGenes, 0.01);
+        });
+        assertThrows(IllegalStateException.class, () -> {
+            new TwoByTwoContingencyTable(degs, pathways, null, 0.01);
+        });
+    }
+
+    // Test for degs with missing genes in pathways
+    @Test
+    void getTable_degsWithoutPathwayGenes() {
+        // Add DEG that does not match any gene in pathways
+        degs.add(new Deg("GeneE", 1.5, 0.007));
+        String result = twoByTwoContingencyTable.getTable();
+
+        String expected = """
+
+                Test Pathway 1 (Pathway1)
+                \t | D\t | D*\t | Sum
+                ----------------------
+                C\t | 2\t | 1\t | 3
+                C*\t | 1\t | 0\t | 1
+                Sum\t | 3\t | 1\t | 4
+                
+                Test Pathway 2 (Pathway2)
+                \t | D\t | D*\t | Sum
+                ----------------------
+                C\t | 0\t | 0\t | 0
+                C*\t | 3\t | 1\t | 4
+                Sum\t | 3\t | 1\t | 4
+                
+                D=is.. D*=is not.., Significant deg C=in.. C*=not in.., ..pathway.""";
+
+        assertEquals(expected, result);
+    }
 }
+

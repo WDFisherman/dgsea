@@ -1,6 +1,5 @@
 package nl.bioinf.dgsea.data_processing;
 
-// Import necessary Java classes for file handling and data structures
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -8,90 +7,108 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-// Utility class for parsing various data files related to Differentially Expressed Genes (DEGs), pathways, and pathway genes.
+/**
+ * Utility class for parsing various data files related to Differentially Expressed Genes (DEGs),
+ * pathways, and pathway genes.
+ */
 public class FileParseUtils {
 
-    // Parses a file containing DEGs and returns a list of Deg objects.
-    public List<Deg> parseDegsFile(File file) throws Exception {
+    private static final String DEG_FORMAT_ERROR = "Invalid DEG file format. Expected at least 3 columns.";
+    private static final String PATHWAY_FORMAT_ERROR = "Invalid Pathway file format. Expected at least 2 columns.";
+    private static final String PATHWAY_GENE_FORMAT_ERROR = "Invalid PathwayGene file format. Expected at least 4 columns.";
+
+    /**
+     * Parses a file containing DEGs and returns a list of Deg objects.
+     *
+     * @param file the DEG file to parse
+     * @return a list of Deg objects
+     * @throws IOException if an I/O error occurs
+     * @throws NumberFormatException if a number cannot be parsed
+     */
+    public List<Deg> parseDegsFile(File file) throws IOException, NumberFormatException {
+        validateFile(file);
         List<Deg> degs = new ArrayList<>(); // List to store DEGs
-        try (BufferedReader br = new BufferedReader(new FileReader(file))) { // Use try-with-resources to ensure the BufferedReader is closed
+
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
             String line;
-            // Read each line from the file
             while ((line = br.readLine()) != null) {
                 String[] values = line.split(","); // Split line by comma (CSV format)
-                // Check for a minimum number of columns
                 if (values.length < 3) {
-                    throw new Exception("Invalid DEG file format. Expected at least 3 columns.");
+                    throw new IOException(DEG_FORMAT_ERROR);
                 }
-                // Parse values from the line
-                String geneSymbol = values[0].trim(); // Gene symbol
-                double logFoldChange = Double.parseDouble(values[1].trim()); // Log fold change
-                double adjustedPValue = Double.parseDouble(values[2].trim()); // Adjusted p-value
-                // Create a new Deg object and add it to the list
+                String geneSymbol = values[0].trim();
+                double logFoldChange = Double.parseDouble(values[1].trim());
+                double adjustedPValue = Double.parseDouble(values[2].trim());
                 degs.add(new Deg(geneSymbol, logFoldChange, adjustedPValue));
             }
-        } catch (IOException e) {
-            // Handle IOException when reading the file
-            throw new IOException("Error reading DEG file: " + e.getMessage());
-        } catch (NumberFormatException e) {
-            // Handle parsing errors for numeric values
-            throw new NumberFormatException("Error parsing numeric values in DEG file: " + e.getMessage());
         }
-        return degs; // Return the list of DEGs
+        return degs;
     }
 
-    // Parses a file containing pathways and returns a list of Pathway objects.
-    public List<Pathway> parsePathwayFile(File file) throws Exception {
-        List<Pathway> pathways = new ArrayList<>(); // List to store pathways
-        try (BufferedReader br = new BufferedReader(new FileReader(file))) { // Use try-with-resources for BufferedReader
+    /**
+     * Parses a file containing pathways and returns a list of Pathway objects.
+     *
+     * @param file the Pathway file to parse
+     * @return a list of Pathway objects
+     * @throws IOException if an I/O error occurs
+     */
+    public List<Pathway> parsePathwayFile(File file) throws IOException {
+        validateFile(file);
+        List<Pathway> pathways = new ArrayList<>();
+
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
             String line;
-            // Read each line from the file
             while ((line = br.readLine()) != null) {
-                String[] values = line.split(","); // Split line by comma (CSV format)
-                // Check for a minimum number of columns
+                String[] values = line.split(",");
                 if (values.length < 2) {
-                    throw new Exception("Invalid Pathway file format. Expected at least 2 columns.");
+                    throw new IOException(PATHWAY_FORMAT_ERROR);
                 }
-                // Parse values from the line
-                String pathwayId = values[0].trim(); // Pathway ID
-                String description = values[1].trim(); // Pathway description
-                // Create a new Pathway object and add it to the list
+                String pathwayId = values[0].trim();
+                String description = values[1].trim();
                 pathways.add(new Pathway(pathwayId, description));
             }
-        } catch (IOException e) {
-            // Handle IOException when reading the file
-            throw new IOException("Error reading Pathway file: " + e.getMessage());
         }
-        return pathways; // Return the list of Pathways
+        return pathways;
     }
 
-    // Parses a file containing pathway-gene relationships and returns a list of PathwayGene objects.
-    public List<PathwayGene> parsePathwayGeneFile(File file) throws Exception {
-        List<PathwayGene> pathwayGenes = new ArrayList<>(); // List to store pathway-gene relationships
-        try (BufferedReader br = new BufferedReader(new FileReader(file))) { // Use try-with-resources for BufferedReader
+    /**
+     * Parses a file containing pathway-gene relationships and returns a list of PathwayGene objects.
+     *
+     * @param file the PathwayGene file to parse
+     * @return a list of PathwayGene objects
+     * @throws IOException if an I/O error occurs
+     * @throws NumberFormatException if a number cannot be parsed
+     */
+    public List<PathwayGene> parsePathwayGeneFile(File file) throws IOException, NumberFormatException {
+        validateFile(file);
+        List<PathwayGene> pathwayGenes = new ArrayList<>();
+
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
             String line;
-            // Read each line from the file
             while ((line = br.readLine()) != null) {
-                String[] values = line.split(","); // Split line by comma (CSV format)
-                // Check for a minimum number of columns
+                String[] values = line.split(",");
                 if (values.length < 4) {
-                    throw new Exception("Invalid PathwayGene file format. Expected at least 4 columns.");
+                    throw new IOException(PATHWAY_GENE_FORMAT_ERROR);
                 }
-                // Parse values from the line
-                String pathwayId = values[0].trim(); // Pathway ID
-                int entrezGeneId = Integer.parseInt(values[1].trim()); // Entrez Gene ID
-                String geneSymbol = values[2].trim(); // Gene symbol
-                String ensemblGeneId = values[3].trim(); // Ensembl Gene ID
-                // Create a new PathwayGene object and add it to the list
+                String pathwayId = values[0].trim();
+                int entrezGeneId = Integer.parseInt(values[1].trim());
+                String geneSymbol = values[2].trim();
+                String ensemblGeneId = values[3].trim();
                 pathwayGenes.add(new PathwayGene(pathwayId, entrezGeneId, geneSymbol, ensemblGeneId));
             }
-        } catch (IOException e) {
-            // Handle IOException when reading the file
-            throw new IOException("Error reading PathwayGene file: " + e.getMessage());
-        } catch (NumberFormatException e) {
-            // Handle parsing errors for numeric values
-            throw new NumberFormatException("Error parsing numeric values in PathwayGene file: " + e.getMessage());
         }
-        return pathwayGenes; // Return the list of PathwayGene relationships
+        return pathwayGenes;
+    }
+
+    /**
+     * Validates the given file.
+     *
+     * @param file the file to validate
+     * @throws IOException if the file is not readable
+     */
+    private void validateFile(File file) throws IOException {
+        if (file == null || !file.exists() || !file.canRead()) {
+            throw new IOException("File is not readable: " + file);
+        }
     }
 }

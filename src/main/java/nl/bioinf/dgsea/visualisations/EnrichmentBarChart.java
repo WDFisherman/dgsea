@@ -16,10 +16,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import nl.bioinf.dgsea.data_processing.Pathway;
 import nl.bioinf.dgsea.data_processing.EnrichmentResult;
 
+/**
+ * Class for creating and saving an enrichment bar chart using JFreeChart.
+ */
 public class EnrichmentBarChart {
     private String title;
     private List<EnrichmentResult> enrichmentResults;
@@ -28,7 +32,19 @@ public class EnrichmentBarChart {
     private String[] colorManual; // User-defined colors
     private String colorScheme; // Color scheme if no manual colors are given
 
-    public EnrichmentBarChart(String title, List<EnrichmentResult> enrichmentResults, List<Pathway> pathways, String outputFilePath, String[] colorManual, String colorScheme) throws IOException {
+    /**
+     * Constructor for EnrichmentBarChart.
+     *
+     * @param title            The title of the chart.
+     * @param enrichmentResults The enrichment results to be displayed.
+     * @param pathways         The pathways corresponding to the enrichment results.
+     * @param outputFilePath   The path where the chart image will be saved.
+     * @param colorManual      User-defined colors for the bars.
+     * @param colorScheme      Default color scheme if no manual colors are provided.
+     * @throws IOException if an error occurs while saving the chart.
+     */
+    public EnrichmentBarChart(String title, List<EnrichmentResult> enrichmentResults, List<Pathway> pathways,
+                              String outputFilePath, String[] colorManual, String colorScheme) throws IOException {
         this.title = title;
         this.enrichmentResults = enrichmentResults;
         this.pathways = pathways;
@@ -65,7 +81,6 @@ public class EnrichmentBarChart {
         // Increase the thickness of the bars
         renderer.setMaximumBarWidth(0.4);  // Adjust the value for thicker bars
 
-
         return barChart;
     }
 
@@ -85,7 +100,13 @@ public class EnrichmentBarChart {
         }
     }
 
-    private Color getColorFromString(String colorStr) {
+    /**
+     * Converts a color name or hex code to a Color object.
+     *
+     * @param colorStr The name or hex code of the color.
+     * @return The corresponding Color object, or gray if invalid.
+     */
+    Color getColorFromString(String colorStr) {
         // A mapping of common color names to their corresponding Color objects
         Map<String, Color> colorNameMap = new HashMap<>();
         colorNameMap.put("red", Color.RED);
@@ -109,14 +130,18 @@ public class EnrichmentBarChart {
         try {
             return Color.decode(colorStr);
         } catch (NumberFormatException e) {
-            // Fallback to gray if the input is invalid
-            return Color.GRAY;
+            System.err.println("Invalid color format: " + colorStr); // Log the error
+            return Color.GRAY; // Fallback color
         }
     }
 
-
-
-    private Color getDefaultColor(int index) {
+    /**
+     * Provides a default color based on the index.
+     *
+     * @param index The index of the series.
+     * @return The default Color object.
+     */
+    Color getDefaultColor(int index) {
         // Geef een standaardkleur terug op basis van de index
         switch (index % 5) {
             case 0: return Color.RED;
@@ -128,9 +153,16 @@ public class EnrichmentBarChart {
         }
     }
 
-    private DefaultCategoryDataset createDataset(List<EnrichmentResult> enrichmentResults, List<Pathway> pathways) {
+    /**
+     * Creates a dataset for the bar chart from the enrichment results and pathways.
+     *
+     * @param enrichmentResults The enrichment results.
+     * @param pathways         The pathways corresponding to the enrichment results.
+     * @return The dataset for the bar chart.
+     */
+    DefaultCategoryDataset createDataset(List<EnrichmentResult> enrichmentResults, List<Pathway> pathways) {
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        HashSet<String> addedSeriesNames = new HashSet<>(); // Set voor unieke series
+        Set<String> addedSeriesNames = new HashSet<>(); // Set voor unieke series
 
         for (int i = 0; i < enrichmentResults.size(); i++) {
             EnrichmentResult result = enrichmentResults.get(i);
@@ -156,6 +188,3 @@ public class EnrichmentBarChart {
         return dataset;
     }
 }
-
-
-
