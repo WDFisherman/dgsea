@@ -1,206 +1,161 @@
-/**
- * Responsible for building, generating and saving the log-fold-change chart
- * @Authors: Jort Gommers & Willem Daniël Visser
- */
-
 package nl.bioinf.dgsea.visualisations;
 
-import nl.bioinf.dgsea.data_processing.*;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.jfree.chart.ChartFactory;
-import org.jfree.chart.ChartUtils;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.CategoryAxis;
+import org.jfree.chart.axis.CategoryLabelPositions;
 import org.jfree.chart.plot.CategoryPlot;
-import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.renderer.category.BarRenderer;
 import org.jfree.data.category.DefaultCategoryDataset;
+import org.jfree.chart.ChartUtils;
 
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
-/**
- * Percentage log-fold-change(lfc) bar-chart,
- *      that makes chart-data,
- *      using results from PercLogFChangePerPathway and then forms the chart,
- *      followed by saving this to an image file. <br>
- * The resulting chart displays 1 bar for each pathway with height indicative to how high the absolute average lfc is.
- * Builder ChartGenerator.Builder is available for selective field assignation.
- */
-public class PercLfcBarChart {
-    private final String                 title; // chart-styling >>
-    private final String                 xAxis;
-    private final String                 yAxis;
-    private final String[]               colorManual; //<<
-    private final String                 imageFormat;
-    private final File                   outputFilePath; // data-selection >>
-    private final int                    maxNPathways;
-    private String[]                     pathwayIds; //<<
-    private final List<Pathway>          pathways; // data >>
-    private final List<PathwayGene>      pathwayGenes;
-    private final List<Deg>              degs;//<<
-    private final Logger logger = LogManager.getLogger(PercLfcBarChart.class.getName());
+import nl.bioinf.dgsea.data_processing.Pathway;
+import nl.bioinf.dgsea.data_processing.EnrichmentResult;
 
-    public PercLfcBarChart(Builder builder) {
-        title             = builder.title;
-        xAxis             = builder.xAxis;
-        yAxis             = builder.yAxis;
-        colorManual       = builder.colorManual;
-        imageFormat       = builder.imageFormat;
-        outputFilePath    = builder.outputFilePath;
-        maxNPathways      = builder.maxNPathways;
-        pathways          = builder.pathways;
-        pathwayGenes      = builder.pathwayGenes;
-        degs              = builder.degs;
-        pathwayIds        = builder.pathwayIds;
+public class EnrichmentBarChart {
+    private String title;
+    private List<EnrichmentResult> enrichmentResults;
+    private List<Pathway> pathways;
+    private String outputFilePath;
+    private String[] colorManual; // User-defined colors
+    private String colorScheme; // Color scheme if no manual colors are given
+
+    public EnrichmentBarChart(String title, List<EnrichmentResult> enrichmentResults, List<Pathway> pathways, String outputFilePath, String[] colorManual, String colorScheme) throws IOException {
+        this.title = title;
+        this.enrichmentResults = enrichmentResults;
+        this.pathways = pathways;
+        this.outputFilePath = outputFilePath;
+        this.colorManual = colorManual;
+        this.colorScheme = colorScheme;
+
+        DefaultCategoryDataset dataset = createDataset(enrichmentResults, pathways);
+        JFreeChart barChart = createChart(dataset);
+        applyColors(barChart);
+
+        int width = 800;
+        int height = 600;
+        File file = new File(outputFilePath);
+        ChartUtils.saveChartAsPNG(file, barChart, width, height);
     }
 
-    public static class Builder {
-        private final String title;
-        private final String xAxis;
-        private final String yAxis;
-        private final List<Pathway> pathways;
-        private final List<PathwayGene> pathwayGenes;
-        private final List<Deg> degs;
-        private final File outputFilePath;
-
-        private String[]               colorManual = null;
-        private String                 imageFormat = "png";
-        private int                    maxNPathways = 20;
-        private String[]               pathwayIds = null;
-
-        public Builder(String title, String xAxis, String yAxis, List<Deg> degs, List<Pathway> pathways, List<PathwayGene> pathwayGenes, File outputFilePath) {
-            this.title          = title;
-            this.xAxis          = xAxis;
-            this.yAxis          = yAxis;
-            this.degs           = degs;
-            this.pathways       = pathways;
-            this.pathwayGenes   = pathwayGenes;
-            this.outputFilePath = outputFilePath;
-        }
-
-        public Builder colorManual(String[] val) {  colorManual = val; return this;}
-        public Builder imageFormat(String val) {    imageFormat = val; return this;}
-        public Builder maxNPathways(int val) {      maxNPathways = val; return this;}
-        public Builder pathwayIds(String[] val) { pathwayIds = val; return this;}
-
-
-    }
-
-    /**
-     * Gets calculated data then transforms it to bar-chart/categorical data.
-     *  Then makes bar-chart and saves this to an image.
-     */
-    public void saveChart() {
-        DefaultCategoryDataset objDataset = getDefaultCategoryDataset();
-
-        JFreeChart objChart = ChartFactory.createBarChart(
-                title,
-                xAxis,
-                yAxis,
-                objDataset, //Chart Data
-                PlotOrientation.VERTICAL,
-                true,
-                true,
-                false
+    private JFreeChart createChart(DefaultCategoryDataset dataset) {
+        JFreeChart barChart = ChartFactory.createBarChart(
+                title,                    // Title of the chart
+                "",                       // X-Axis label (empty to remove labels)
+                "Enrichment Score",      // Y-Axis label
+                dataset
         );
-        CategoryPlot cplot = (CategoryPlot)objChart.getPlot();
-        applyColors(cplot); // Apply user-defined colors to the chart
-        try {
-            if (imageFormat.equals("png")) {
-                ChartUtils.saveChartAsPNG(outputFilePath, objChart, 1000, 1000);
+
+        CategoryPlot plot = barChart.getCategoryPlot();
+        CategoryAxis domainAxis = plot.getDomainAxis();
+        BarRenderer renderer = (BarRenderer) plot.getRenderer();
+
+        // Rotate labels 90 degrees if needed (set to NONE if you don't want any labels)
+        domainAxis.setCategoryLabelPositions(CategoryLabelPositions.UP_90);
+        domainAxis.setTickLabelFont(new Font("Arial", Font.PLAIN, 12)); // Reduce font size or remove
+
+        // Increase the thickness of the bars
+        renderer.setMaximumBarWidth(0.4);  // Adjust the value for thicker bars
+
+
+        return barChart;
+    }
+
+    private void applyColors(JFreeChart barChart) {
+        CategoryPlot plot = barChart.getCategoryPlot();
+        BarRenderer renderer = (BarRenderer) plot.getRenderer();
+
+        // Kleurtoewijzing met validatie
+        for (int i = 0; i < enrichmentResults.size(); i++) {
+            Color color;
+            if (colorManual != null && colorManual.length > 0) {
+                color = getColorFromString(colorManual[i % colorManual.length]);
             } else {
-                ChartUtils.saveChartAsJPEG(outputFilePath, 1.0f, objChart, 1000, 1000);
+                color = getDefaultColor(i);
             }
-            logger.info("Chart was saved to file: {}", outputFilePath);
-        } catch(IOException e) {
-            throw new RuntimeException("Failed to save chart to image file, given file path: %s".formatted(outputFilePath));
+            renderer.setSeriesPaint(i, color);
         }
     }
 
-    /**
-     * Gets calculated data then transforms it into bar-chart/categorical data.
-     * @return bar-chart/categorical data
-     */
-    private DefaultCategoryDataset getDefaultCategoryDataset() {
-        DefaultCategoryDataset objDataset = new DefaultCategoryDataset();
-        PercLfcPathways percLfcPathways = new PercLfcPathways(this.degs, this.pathwayGenes);
-        if (pathwayIds == null) { // not provided by end-user
-            this.pathwayIds = getPathwayAllAvIds();
+    private Color getColorFromString(String colorStr) {
+        // A mapping of common color names to their corresponding Color objects
+        Map<String, Color> colorNameMap = new HashMap<>();
+        colorNameMap.put("red", Color.RED);
+        colorNameMap.put("blue", Color.BLUE);
+        colorNameMap.put("green", Color.GREEN);
+        colorNameMap.put("orange", Color.ORANGE);
+        colorNameMap.put("yellow", Color.YELLOW);
+        colorNameMap.put("pink", Color.PINK);
+        colorNameMap.put("magenta", Color.MAGENTA);
+        colorNameMap.put("cyan", Color.CYAN);
+        colorNameMap.put("gray", Color.GRAY);
+        colorNameMap.put("black", Color.BLACK);
+        colorNameMap.put("white", Color.WHITE);
+
+        // First, check if the colorStr is a named color
+        if (colorNameMap.containsKey(colorStr.toLowerCase())) {
+            return colorNameMap.get(colorStr.toLowerCase());
         }
-        double[] percentageAllPathways = percLfcPathways.percAllPathways(pathwayIds);
 
-        Map<String, Double> percentageSomePathways = percLfcPathways.filterMostInfluentialPathways(maxNPathways, percentageAllPathways, pathwayIds);
-        for(Pathway pathway:pathways) {
-            if(isInSelectedPathways(pathway.pathwayId(), percentageSomePathways.keySet().stream().toList())) {
-                objDataset.setValue(percentageSomePathways.get(pathway.pathwayId()),pathway.description(),"");
-            }
-        }
-        return objDataset;
-    }
-
-    /**
-     * Check if given pathway id is in list of selected ids
-     * @param curPathwayId given pathway id
-     * @param pathwayIdList list of selected ids
-     * @return true if it is in, false otherwise
-     */
-    private boolean isInSelectedPathways(String curPathwayId, Collection<String> pathwayIdList) {
-        return pathwayIdList.contains(curPathwayId);
-    }
-
-    /**
-     * Give all available pathway ids, based on the pathwayGenes field/dataset.
-     * @return pathway ids
-     */
-    private String[] getPathwayAllAvIds() {
-        return pathways.stream().map(Pathway::pathwayId).distinct().toArray(String[]::new);
-    }
-
-    /**
-     * Applies colors to the chart based on user input or defaults.
-     * @param cplot plot to set series paint for
-     */
-    private void applyColors(CategoryPlot cplot) {
-        if (colorManual != null && colorManual.length > 0) {
-            for (int i = 0; i < pathwayIds.length; i++) {
-                Color color;
-                try {
-                    color = Color.decode(colorManual[i % colorManual.length]);
-                } catch (NumberFormatException e) {
-                    try {
-                        Field field = Class.forName("java.awt.Color").getField(colorManual[i % colorManual.length]);
-                        color = (Color)field.get(null);
-                    } catch (Exception e2) {
-                        color = getDefaultColor(i);
-                        logger.warn("Given color was neither decimal, octal, or hexidecimal, nor a valid Java color string. Given color: {}", colorManual[i % colorManual.length]);
-                    }
-                }
-                cplot.getRenderer().setSeriesPaint(i, color);
-            }
-        } else {
-            for (int i = 0; i < pathwayIds.length; i++) {
-                cplot.getRenderer().setSeriesPaint(i, getDefaultColor(i));
-            }
+        // Otherwise, try interpreting it as a hex color code
+        try {
+            return Color.decode(colorStr);
+        } catch (NumberFormatException e) {
+            // Fallback to gray if the input is invalid
+            return Color.GRAY;
         }
     }
 
-    /**
-     * Provides default color for the chart when no manual color is provided.
-     * @param index used to choose one of 5 colors
-     * @return Color red,blue,green,orange, or black
-     */
+
+
     private Color getDefaultColor(int index) {
-        return switch (index % 5) {
-            case 0 -> Color.RED;
-            case 1 -> Color.BLUE;
-            case 2 -> Color.GREEN;
-            case 3 -> Color.ORANGE;
-            default -> Color.BLACK;
-        };
+        // Geef een standaardkleur terug op basis van de index
+        switch (index % 5) {
+            case 0: return Color.RED;
+            case 1: return Color.BLUE;
+            case 2: return Color.GREEN;
+            case 3: return Color.ORANGE;
+            case 4: return Color.MAGENTA;
+            default: return Color.BLACK; // Fallback color
+        }
     }
 
+    private DefaultCategoryDataset createDataset(List<EnrichmentResult> enrichmentResults, List<Pathway> pathways) {
+        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+        HashSet<String> addedSeriesNames = new HashSet<>(); // Set voor unieke series
+
+        for (int i = 0; i < enrichmentResults.size(); i++) {
+            EnrichmentResult result = enrichmentResults.get(i);
+            Pathway matchingPathway = pathways.stream()
+                    .filter(pathway -> pathway.pathwayId().equals(result.pathwayId()))
+                    .findFirst()
+                    .orElse(null);
+
+            if (matchingPathway != null) {
+                String description = matchingPathway.description();
+
+                // Controleer of de beschrijving al is toegevoegd
+                if (!addedSeriesNames.contains(description)) {
+                    dataset.addValue(result.enrichmentScore(), description, description);  // Gebruik description als serie- en categorie naam
+                    addedSeriesNames.add(description); // Voeg beschrijving toe aan de set
+                } else {
+                    // Optioneel: logica om te reageren op een duplicaat
+                    System.out.println("Beschrijving '" + description + "' bestaat al. Overslaan.");
+                }
+            }
+        }
+
+        return dataset;
+    }
 }
+
+
+
