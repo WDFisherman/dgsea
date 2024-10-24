@@ -34,7 +34,10 @@ public class CommandlineController implements Runnable {
         throw new CommandLine.ParameterException(spec.commandLine(), "Missing required subcommand");
     }
 }
-
+/**
+ * First-layer (CLI-) sub-command |
+ * Calculates enrichment scores for each pathway, generates and saves enrichment dot chart to file.
+ */
 @Command(name = "enrich_bar_chart", version = "Enrichment bar-chart 1.0", mixinStandardHelpOptions = true, description = "Generates and saves an enrichment bar chart showing top enriched pathways.")
 class EnrichBarChart implements Runnable {
     @Mixin
