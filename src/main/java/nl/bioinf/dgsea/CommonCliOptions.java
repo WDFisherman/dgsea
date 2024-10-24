@@ -23,7 +23,7 @@ class CommonToAll {
     @Option(names = {"-v", "-verbosity"}, description = "Verbose logging", defaultValue = "true")
     boolean[] verbose;
 
-    @Option(names = {"--pval"}, paramLabel = "[0.0-1.0 ? 0.05]", description = "P-value threshold. For counting significant degs in con_table. For filtering degs before making a plot in enrich_bar_chart, enrich_dot_chart and perc_lfc_per_pathway_chart, default = ${DEFAULT-VALUE}", defaultValue="0.05")
+    @Option(names = {"--pval"}, paramLabel = "[0.0-1.0 ? 0.05]", description = "P-value threshold. For counting significant degs in con_table. For filtering degs before making a plot in enrich_bar_chart, enrich_dot_chart and perc_lfc_per_pathway_chart, default = ${DEFAULT-VALUE}", defaultValue="0.01")
     double pval;
 
     public void setLoggingScope() {

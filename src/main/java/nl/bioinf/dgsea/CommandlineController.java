@@ -8,12 +8,8 @@
 package nl.bioinf.dgsea;
 
 import nl.bioinf.dgsea.data_processing.*;
-import nl.bioinf.dgsea.services.EnrichmentAnalysisService;
 import nl.bioinf.dgsea.table_outputs.TwoByTwoContingencyTable;
 import nl.bioinf.dgsea.visualisations.PercLfcBarChart;
-import nl.bioinf.dgsea.table_outputs.EnrichmentTable;
-import nl.bioinf.dgsea.visualisations.EnrichmentBarChart;
-import nl.bioinf.dgsea.visualisations.EnrichmentDotPlot;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -22,7 +18,6 @@ import picocli.CommandLine.Mixin;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import java.util.stream.Collectors;
 
 
 /**
@@ -40,7 +35,6 @@ public class CommandlineController implements Runnable {
     }
 }
 
-
 @Command(name = "enrich_bar_chart", version = "Enrichment bar-chart 1.0", mixinStandardHelpOptions = true, description = "Generates and saves an enrichment bar chart showing top enriched pathways.")
 class EnrichBarChart implements Runnable {
     @Mixin
@@ -56,7 +50,6 @@ class EnrichBarChart implements Runnable {
     @Option(names = {"--max-n-pathways"}, paramLabel = "[1-inf]", description = "Max number of pathways to include in chart. '--pathway-ids' overrides this option.", defaultValue = "20")
     private int maxNPathways;
 
-
     @Override
     public void run() {
         commonToAll.setLoggingScope();
@@ -69,12 +62,24 @@ class EnrichBarChart implements Runnable {
 
         EnrichmentAnalysisService enrichmentService = new EnrichmentAnalysisService();
         try {
-            enrichmentService.generateEnrichmentBarChart(degs, pathways, pathwayGenes, maxNPathways, outputFilePath, colorArray, commonChartParams.colorScheme);
+            enrichmentService.generateEnrichmentChart(
+                    degs,
+                    pathways,
+                    pathwayGenes,
+                    maxNPathways,
+                    outputFilePath,
+                    colorArray,
+                    commonChartParams.colorScheme,
+                    EnrichmentAnalysisService.ChartType.BAR_CHART, // Bar chart
+                    null,  // dotSize niet nodig
+                    null   // dotTransparency niet nodig
+            );
         } catch (IOException e) {
             System.err.println("Error reading input data or saving PNG: " + e.getMessage());
         }
     }
 }
+
 
 
 
@@ -98,7 +103,6 @@ class EnrichDotChart implements Runnable {
     @Option(names = {"--dot-transparency"}, paramLabel = "[0.0-1.0]", description = "Dot transparency, default = ${DEFAULT-VALUE}", defaultValue = "1.0")
     private float dotTransparency;
 
-
     @Option(names = {"--max-n-pathways"}, paramLabel = "[1-inf]", description = "Max number of pathways to include in chart. '--pathway-ids' overrides this option.", defaultValue = "20")
     private int maxNPathways;
 
@@ -117,12 +121,24 @@ class EnrichDotChart implements Runnable {
 
         EnrichmentAnalysisService enrichmentService = new EnrichmentAnalysisService();
         try {
-            enrichmentService.generateEnrichmentDotChart(degs, pathways, pathwayGenes, maxNPathways, dotSize, dotTransparency, outputFilePath, colorArray, commonChartParams.colorScheme);
+            enrichmentService.generateEnrichmentChart(
+                    degs,
+                    pathways,
+                    pathwayGenes,
+                    maxNPathways,
+                    outputFilePath,
+                    colorArray,
+                    commonChartParams.colorScheme,
+                    EnrichmentAnalysisService.ChartType.DOT_CHART, // Dot chart
+                    dotSize,
+                    dotTransparency
+            );
         } catch (IOException e) {
             System.err.println("Error reading input data or saving PNG: " + e.getMessage());
         }
     }
 }
+
 
 /**
  * First-layer (CLI-) sub-command |
@@ -160,11 +176,10 @@ class PercLogFChangePerPathwayCmd implements Runnable {
                 pathways,
                 pathwayGenes,
                 commonChartParams.outputPath)
-
-        .colorManual(commonChartParams.colorManual)
-        .maxNPathways(maxNPathways)
-        .imageFormat(commonChartParams.imageFormat)
-        .pathwayIds(pathwayIds);
+                .colorManual(commonChartParams.colorManual)
+                .maxNPathways(maxNPathways)
+                .imageFormat(commonChartParams.imageFormat)
+                .pathwayIds(pathwayIds);
     }
 }
 
@@ -172,15 +187,18 @@ class PercLogFChangePerPathwayCmd implements Runnable {
  * First-layer (CLI-) sub-command |
  * Prints or stores to text file a continuity table of count data on 2 aspects of degs for every pathway: presence in pathway and presence of significance
  */
-@Command(name = "con_table", version = "Continuity table 1.0", mixinStandardHelpOptions = true, description = "Prints or stores to text file a continuity table of count data on 2 aspects of degs for every pathway: presence in pathway and presence of significance")
+@Command(name = "con_table", version = "Continuity table 1.0", mixinStandardHelpOptions = true,
+        description = "Prints or stores to text file a continuity table of count data on 2 aspects of DEGs for every pathway: presence in pathway and presence of significance")
 class ContinuityTable implements Runnable {
     @Mixin
     private CommonToAll commonToAll;
+
     @Mixin
     private CommonFileParams commonFileParams;
 
     @Option(names = {"--output"}, paramLabel = "[file|print]", description = "Option on how to return output table. (csv-file or print to terminal)", defaultValue = "file")
     private String output;
+
     @Option(names = {"--outputFilePath"}, description = "File to write table text to.")
     private File outputFilePath;
 
@@ -193,8 +211,28 @@ class ContinuityTable implements Runnable {
                 commonFileParams.getPathwayGenes(),
                 commonToAll.pval
         );
-        String output = twoByTwoContingencyTable.getTable();
-        System.out.println(output);
+
+        String outputTable = twoByTwoContingencyTable.getTable();
+
+        handleOutput(outputTable);
+    }
+
+    private void handleOutput(String outputTable) {
+        if ("file".equalsIgnoreCase(output)) {
+            if (outputFilePath != null) {
+                try {
+                    java.nio.file.Files.write(outputFilePath.toPath(), outputTable.getBytes());
+                    System.out.println("Continuity table written to: " + outputFilePath.getPath());
+                } catch (IOException e) {
+                    System.err.println("Error writing continuity table to file: " + e.getMessage());
+                }
+            } else {
+                System.err.println("No output file path provided. Use '--outputFilePath' to specify the file.");
+            }
+        } else if ("print".equalsIgnoreCase(output)) {
+            System.out.println(outputTable);
+        } else {
+            System.err.println("Invalid output option. Use '--output [file|print]'.");
+        }
     }
 }
-
