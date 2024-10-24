@@ -1,72 +1,30 @@
+/**
+ * Manages the commandline interface of this application, using Picocli.
+ *  This app is split in 4 custom subcommands starting from main.
+ *  Class from CommonCliOptions.java is used for inheritance of multiple options common in 2 or more sub-commands.
+ * @Authors Jort Gommers & Willem Daniël Visser
+ */
+
 package nl.bioinf.dgsea;
 
-
+import nl.bioinf.dgsea.data_processing.*;
+import nl.bioinf.dgsea.table_outputs.TwoByTwoContingencyTable;
+import nl.bioinf.dgsea.visualisations.PercLfcBarChart;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Parameters;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Mixin;
 
 import java.io.File;
-import java.util.Arrays;
+import java.io.IOException;
+import java.util.List;
 
-@Command
-class CommonToAll {
-    @Option(names = {"-v", "-verbosity"}, description = "Verbose logging")
-    boolean[] verbose;
 
-    @Option(names = {"--pval"}, paramLabel = "[0.0-1.0 ? 0.05]", description = "P-value threshold, default = ${DEFAULT-VALUE}", defaultValue="0.05")
-    double pval;
-}
-
-@Command
-class CommonFileParams {
-    @Parameters(
-            index = "0", paramLabel = "<inputDEGS.csv|tsv>",
-            description = "Input degs file in csv or tsv format, columns: gene-symbol, log-fold change and adjusted p-value."
-    )
-    File inputFileDegs;
-
-    @Parameters(
-            index = "1", paramLabel = "<inputPathwayDescriptions.csv|tsv>", description = "Input pathway descriptions file, columns: pathway-id and description of pathway."
-    )
-    File inputFilePathwayDescriptions;
-
-    @Parameters(index = "2", paramLabel = "<inputPathwayGenes.csv|tsv>", description = "Input pathway + genes file, columns: pathway-id, entrez gene-id, gene-symbol and ensembl gene-id")
-    File inputFilePathwayGenes;
-}
-
-@Command
-class CommonChartParams {
-    @Option(names = {"--image-format"}, paramLabel = "[png|jpg ? png]", description = "Image format of output image, default = 'png'", defaultValue = "png")
-    String imageFormat;
-
-    @Option(names = {"--image-dpi"}, paramLabel = "[0.0-inf ? 1.0]", description = "Dpi of output image, default = 1.0", defaultValue="1.0")
-    double imageDpi;
-
-    @Option(
-            names = {"--color-scheme"},
-            paramLabel = "[viridis|plasma|inferno|magma|cividis|grays|purples|blues|greens|oranges|reds]",
-            description = "Color scheme to apply to chart, default = '${DEFAULT-VALUE}'. 'color-manual' overrides this option.",
-            defaultValue="viridis",
-            completionCandidates = CommonChartParams.ColorSchemeCandidates.class) // Only a single implementation, because this doesn't work in all kinds of terminal-emulators.
-    String colorScheme;
-
-    @Option(names = {"--color-manual"}, arity = "0..*", paramLabel = "[red|green|blue|purple|orange|gray|black|pink|yellow|magenta|cyan|brown 1...]", description = "One or more colors to apply to chart. Overrides '--color-scheme'. Cycles trough if too few colors were given.")
-    String[] colorManual;
-
-    @Parameters(index = "3+",paramLabel = "<outputPathImage.*>", description = "Output path of generated chart")
-    File outputPath;
-
-    static class ColorSchemeCandidates implements Iterable<String> {
-        @Override
-        public java.util.Iterator<String> iterator() {
-            return Arrays.asList("viridis","plasma","inferno","magma","cividis","grays","purples","blues","greens","oranges","reds").iterator();
-        }
-    }
-}
-
-@Command(name="main", version="main 1.0", mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class, EnrichBarChart.class, EnrichDotChart.class, CumulativeExprVarChart.class, ContinuityTable.class})
+/**
+ * Primary command |
+ * Calls sub-command, if not sub-command is given, it will throw this issue and provide global help.
+ */
+@Command(name="main", version="main 1.0", mixinStandardHelpOptions = true, subcommands = {CommandLine.HelpCommand.class, EnrichBarChart.class, EnrichDotChart.class, PercLogFChangePerPathwayCmd.class, ContinuityTable.class})
 public class CommandlineController implements Runnable {
     @CommandLine.Spec
     CommandLine.Model.CommandSpec spec;
@@ -76,75 +34,172 @@ public class CommandlineController implements Runnable {
         throw new CommandLine.ParameterException(spec.commandLine(), "Missing required subcommand");
     }
 }
-
-@Command(name = "enrich_bar_chart", version = "Enrichment bar-chart 1.0", mixinStandardHelpOptions = true)
+/**
+ * First-layer (CLI-) sub-command |
+ * Calculates enrichment scores for each pathway, generates and saves enrichment dot chart to file.
+ */
+@Command(name = "enrich_bar_chart", version = "Enrichment bar-chart 1.0", mixinStandardHelpOptions = true, description = "Generates and saves an enrichment bar chart showing top enriched pathways.")
 class EnrichBarChart implements Runnable {
     @Mixin
-    CommonToAll commonToAll = new CommonToAll();
+    private CommonToAll commonToAll;
     @Mixin
-    CommonFileParams commonFileParams = new CommonFileParams();
+    private CommonFileParams commonFileParams;
     @Mixin
-    CommonChartParams commonChartParams = new CommonChartParams();
+    private CommonChartParams commonChartParams;
 
+    @Option(names = {"--output-file"}, paramLabel = "FILE", description = "Output file path for the bar chart (e.g., ./output/enrichment_bar_chart.png)")
+    private String outputFilePath;
+
+    @Option(names = {"--max-n-pathways"}, paramLabel = "[1-inf]", description = "Max number of pathways to include in chart. '--pathway-ids' overrides this option.", defaultValue = "20")
+    private int maxNPathways;
 
     @Override
     public void run() {
-        System.out.println("commonToAll.pval = " + commonToAll.pval);
-        System.out.println("commonToAll.verbose = " + Arrays.toString(commonToAll.verbose));
+        commonToAll.setLoggingScope();
+
+        List<Deg> degs = commonFileParams.getDegs();
+        List<Pathway> pathways = commonFileParams.getPathways();
+        List<PathwayGene> pathwayGenes = commonFileParams.getPathwayGenes();
+
+        String[] colorArray = commonChartParams.colorManual != null && commonChartParams.colorManual.length != 0 ? commonChartParams.colorManual : null;
+
+        EnrichmentAnalysisService enrichmentService = new EnrichmentAnalysisService();
+        try {
+            enrichmentService.generateEnrichmentChart(
+                    degs,
+                    pathways,
+                    pathwayGenes,
+                    maxNPathways,
+                    outputFilePath,
+                    colorArray,
+                    commonChartParams.colorScheme,
+                    EnrichmentAnalysisService.ChartType.BAR_CHART, // Bar chart
+                    null,  // dotSize niet nodig
+                    null   // dotTransparency niet nodig
+            );
+        } catch (IOException e) {
+            System.err.println("Error reading input data or saving PNG: " + e.getMessage());
+        }
     }
 }
 
-@Command(name = "enrich_dot_chart", version = "Enrichment dot-chart 1.0", mixinStandardHelpOptions = true)
+
+
+
+/**
+ * First-layer (CLI-) sub-command |
+ * Calculates enrichment scores for each pathway, generates and saves enrichment dot chart to file.
+ */
+
+@Command(name = "enrich_dot_chart", version = "Enrichment dot-chart 1.0", mixinStandardHelpOptions = true, description = "This command generates an enrichment dot chart using given data.")
 class EnrichDotChart implements Runnable {
     @Mixin
-    CommonToAll commonToAll = new CommonToAll();
+    private CommonToAll commonToAll;
     @Mixin
-    CommonFileParams commonFileParams = new CommonFileParams();
+    private CommonFileParams commonFileParams;
     @Mixin
-    CommonChartParams commonChartParams = new CommonChartParams();
+    private CommonChartParams commonChartParams;
 
-    @Option(names = {"--dot-size"}, paramLabel = "[0.0-inf]", description = "Dot size, default = ${DEFAULT-VALUE}", defaultValue = "1.0")
+    @Option(names = {"--dot-size"}, paramLabel = "[0.0-inf]", description = "Dot size, default = ${DEFAULT-VALUE}", defaultValue = "30.0")
     private double dotSize;
 
     @Option(names = {"--dot-transparency"}, paramLabel = "[0.0-1.0]", description = "Dot transparency, default = ${DEFAULT-VALUE}", defaultValue = "1.0")
-    private double dotTransparency;
+    private float dotTransparency;
+
+    @Option(names = {"--max-n-pathways"}, paramLabel = "[1-inf]", description = "Max number of pathways to include in chart. '--pathway-ids' overrides this option.", defaultValue = "20")
+    private int maxNPathways;
+
+    @Option(names = {"--output-file"}, paramLabel = "FILE", description = "Output file path for the dot plot (e.g., ./output/enrichment_dot_plot.png)")
+    private String outputFilePath;
 
     @Override
     public void run() {
-        System.out.println("dotSize = " + dotSize);
-        System.out.println("dotTransparency = " + dotTransparency);
+        commonToAll.setLoggingScope();
+
+        List<Deg> degs = commonFileParams.getDegs();
+        List<Pathway> pathways = commonFileParams.getPathways();
+        List<PathwayGene> pathwayGenes = commonFileParams.getPathwayGenes();
+
+        String[] colorArray = (commonChartParams.colorManual != null && commonChartParams.colorManual.length != 0) ? commonChartParams.colorManual : commonChartParams.colorManual;
+
+        EnrichmentAnalysisService enrichmentService = new EnrichmentAnalysisService();
+        try {
+            enrichmentService.generateEnrichmentChart(
+                    degs,
+                    pathways,
+                    pathwayGenes,
+                    maxNPathways,
+                    outputFilePath,
+                    colorArray,
+                    commonChartParams.colorScheme,
+                    EnrichmentAnalysisService.ChartType.DOT_CHART, // Dot chart
+                    dotSize,
+                    dotTransparency
+            );
+        } catch (IOException e) {
+            System.err.println("Error reading input data or saving PNG: " + e.getMessage());
+        }
     }
 }
 
-@Command(name = "cumm_expr_var_chart", version = "Cumulative expression variation chart 1.0", mixinStandardHelpOptions = true)
-class CumulativeExprVarChart implements Runnable {
+
+/**
+ * First-layer (CLI-) sub-command |
+ * Makes a bar-chart showing ratio's average log-fold-change on differently expressed genes per pathway.
+ */
+@Command(name = "perc_lfc_per_pathway_chart", version = "percLogFChangePerPathway 1.0", mixinStandardHelpOptions = true, description = "Makes a bar-chart showing ratio's average log-fold-change on differently expressed genes per pathway.")
+class PercLogFChangePerPathwayCmd implements Runnable {
     @Mixin
-    CommonToAll commonToAll = new CommonToAll();
+    private CommonToAll commonToAll;
     @Mixin
-    CommonFileParams commonFileParams = new CommonFileParams();
+    private CommonFileParams commonFileParams;
     @Mixin
-    CommonChartParams commonChartParams = new CommonChartParams();
+    private CommonChartParams commonChartParams;
 
     @Option(names = {"--pathway-ids"}, paramLabel = "hsa(...)", arity = "0..*", split = ",", description = "Pathway ids of interest")
     private String[] pathwayIds;
-
     @Option(names = {"--max-n-pathways"}, paramLabel = "[1-inf]", description = "Max number of pathways to include in chart. '--pathway-ids' overrides this option.")
     private int maxNPathways;
 
     @Override
     public void run() {
-
+        commonToAll.setLoggingScope();
+        List<Deg> degs = commonFileParams.getDegs();
+        List<Pathway> pathways = commonFileParams.getPathways();
+        List<PathwayGene> pathwayGenes = commonFileParams.getPathwayGenes();
+        PercLfcBarChart percLfcBarChart = new PercLfcBarChart(getChartGeneratorsBuilder(degs, pathways, pathwayGenes));
+        percLfcBarChart.saveChart();
+    }
+    private PercLfcBarChart.Builder getChartGeneratorsBuilder(List<Deg> degs, List<Pathway> pathways, List<PathwayGene> pathwayGenes) {
+        return new PercLfcBarChart.Builder(
+                commonChartParams.title,
+                commonChartParams.xAxisTitle,
+                commonChartParams.yAxisTitle,
+                degs,
+                pathways,
+                pathwayGenes,
+                commonChartParams.outputPath)
+                .colorManual(commonChartParams.colorManual)
+                .maxNPathways(maxNPathways)
+                .imageFormat(commonChartParams.imageFormat)
+                .pathwayIds(pathwayIds);
     }
 }
 
-@Command(name = "con_table", version = "Continuity table 1.0", mixinStandardHelpOptions = true)
+/**
+ * First-layer (CLI-) sub-command |
+ * Prints or stores to text file a continuity table of count data on 2 aspects of degs for every pathway: presence in pathway and presence of significance
+ */
+@Command(name = "con_table", version = "Continuity table 1.0", mixinStandardHelpOptions = true,
+        description = "Prints or stores to text file a continuity table of count data on 2 aspects of DEGs for every pathway: presence in pathway and presence of significance")
 class ContinuityTable implements Runnable {
     @Mixin
-    CommonToAll commonToAll = new CommonToAll();
-    @Mixin
-    CommonFileParams commonFileParams = new CommonFileParams();
+    private CommonToAll commonToAll;
 
-    @Option(names = {"--output"}, paramLabel = "[csv|print]", description = "Option on how to return output table. (csv-file or print to terminal)")
+    @Mixin
+    private CommonFileParams commonFileParams;
+
+    @Option(names = {"--output"}, paramLabel = "[file|print]", description = "Option on how to return output table. (csv-file or print to terminal)", defaultValue = "file")
     private String output;
 
     @Option(names = {"--outputFilePath"}, description = "File to write table text to.")
@@ -152,9 +207,35 @@ class ContinuityTable implements Runnable {
 
     @Override
     public void run() {
+        commonToAll.setLoggingScope();
+        TwoByTwoContingencyTable twoByTwoContingencyTable = new TwoByTwoContingencyTable(
+                commonFileParams.getDegs(),
+                commonFileParams.getPathways(),
+                commonFileParams.getPathwayGenes(),
+                commonToAll.pval
+        );
 
+        String outputTable = twoByTwoContingencyTable.getTable();
+
+        handleOutput(outputTable);
+    }
+
+    private void handleOutput(String outputTable) {
+        if ("file".equalsIgnoreCase(output)) {
+            if (outputFilePath != null) {
+                try {
+                    java.nio.file.Files.write(outputFilePath.toPath(), outputTable.getBytes());
+                    System.out.println("Continuity table written to: " + outputFilePath.getPath());
+                } catch (IOException e) {
+                    System.err.println("Error writing continuity table to file: " + e.getMessage());
+                }
+            } else {
+                System.err.println("No output file path provided. Use '--outputFilePath' to specify the file.");
+            }
+        } else if ("print".equalsIgnoreCase(output)) {
+            System.out.println(outputTable);
+        } else {
+            System.err.println("Invalid output option. Use '--output [file|print]'.");
+        }
     }
 }
-
-
-
