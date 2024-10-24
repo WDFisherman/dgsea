@@ -129,9 +129,9 @@ public class PercLfcPathways {
         Map<String, Double> lfcAllPathways = IntStream.range(0, pathwayPercentages.length).boxed()
                 .collect(Collectors.toMap(i -> pathwayIds[i], i -> pathwayPercentages[i]));
         return lfcAllPathways.entrySet().stream()
-            .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
-            .limit(maxNPathways)
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, _) -> e1, HashMap::new));
+                .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+                .limit(maxNPathways)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, _) -> e1, HashMap::new));
     }
 
 
