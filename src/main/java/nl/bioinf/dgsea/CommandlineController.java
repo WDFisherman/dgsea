@@ -93,8 +93,6 @@ class EnrichDotChart implements Runnable {
     @Option(names = {"--dot-transparency"}, paramLabel = "[0.0-1.0]", description = "Dot transparency, default = ${DEFAULT-VALUE}", defaultValue = "1.0")
     private float dotTransparency;
 
-    @Option(names = {"--color"}, paramLabel = "COLORS", description = "Manual colors for the dots, provide as a comma-separated list (e.g., red,blue,green).")
-    private String[] colorManual;
 
     @Option(names = {"--max-n-pathways"}, paramLabel = "[1-inf]", description = "Max number of pathways to include in chart. '--pathway-ids' overrides this option.", defaultValue = "20")
     private int maxNPathways;
@@ -110,7 +108,7 @@ class EnrichDotChart implements Runnable {
         List<Pathway> pathways = commonFileParams.getPathways();
         List<PathwayGene> pathwayGenes = commonFileParams.getPathwayGenes();
 
-        String[] colorArray = (colorManual != null && colorManual.length != 0) ? colorManual : commonChartParams.colorManual;
+        String[] colorArray = (commonChartParams.colorManual != null && commonChartParams.colorManual.length != 0) ? commonChartParams.colorManual : commonChartParams.colorManual;
 
         EnrichmentAnalysisService enrichmentService = new EnrichmentAnalysisService();
         try {
@@ -120,7 +118,6 @@ class EnrichDotChart implements Runnable {
         }
     }
 }
-
 
 /**
  * First-layer (CLI-) sub-command |
