@@ -8,7 +8,6 @@
 package nl.bioinf.dgsea;
 
 import nl.bioinf.dgsea.data_processing.*;
-import nl.bioinf.dgsea.services.EnrichmentAnalysisService;
 import nl.bioinf.dgsea.table_outputs.TwoByTwoContingencyTable;
 import nl.bioinf.dgsea.visualisations.PercLfcBarChart;
 import picocli.CommandLine;
@@ -51,7 +50,6 @@ class EnrichBarChart implements Runnable {
     @Option(names = {"--max-n-pathways"}, paramLabel = "[1-inf]", description = "Max number of pathways to include in chart. '--pathway-ids' overrides this option.", defaultValue = "20")
     private int maxNPathways;
 
-
     @Override
     public void run() {
         commonToAll.setLoggingScope();
@@ -64,12 +62,24 @@ class EnrichBarChart implements Runnable {
 
         EnrichmentAnalysisService enrichmentService = new EnrichmentAnalysisService();
         try {
-            enrichmentService.generateEnrichmentBarChart(degs, pathways, pathwayGenes, maxNPathways, outputFilePath, colorArray, commonChartParams.colorScheme);
+            enrichmentService.generateEnrichmentChart(
+                    degs,
+                    pathways,
+                    pathwayGenes,
+                    maxNPathways,
+                    outputFilePath,
+                    colorArray,
+                    commonChartParams.colorScheme,
+                    EnrichmentAnalysisService.ChartType.BAR_CHART, // Bar chart
+                    null,  // dotSize niet nodig
+                    null   // dotTransparency niet nodig
+            );
         } catch (IOException e) {
             System.err.println("Error reading input data or saving PNG: " + e.getMessage());
         }
     }
 }
+
 
 
 
@@ -93,7 +103,6 @@ class EnrichDotChart implements Runnable {
     @Option(names = {"--dot-transparency"}, paramLabel = "[0.0-1.0]", description = "Dot transparency, default = ${DEFAULT-VALUE}", defaultValue = "1.0")
     private float dotTransparency;
 
-
     @Option(names = {"--max-n-pathways"}, paramLabel = "[1-inf]", description = "Max number of pathways to include in chart. '--pathway-ids' overrides this option.", defaultValue = "20")
     private int maxNPathways;
 
@@ -112,12 +121,24 @@ class EnrichDotChart implements Runnable {
 
         EnrichmentAnalysisService enrichmentService = new EnrichmentAnalysisService();
         try {
-            enrichmentService.generateEnrichmentDotChart(degs, pathways, pathwayGenes, maxNPathways, dotSize, dotTransparency, outputFilePath, colorArray, commonChartParams.colorScheme);
+            enrichmentService.generateEnrichmentChart(
+                    degs,
+                    pathways,
+                    pathwayGenes,
+                    maxNPathways,
+                    outputFilePath,
+                    colorArray,
+                    commonChartParams.colorScheme,
+                    EnrichmentAnalysisService.ChartType.DOT_CHART, // Dot chart
+                    dotSize,
+                    dotTransparency
+            );
         } catch (IOException e) {
             System.err.println("Error reading input data or saving PNG: " + e.getMessage());
         }
     }
 }
+
 
 /**
  * First-layer (CLI-) sub-command |
