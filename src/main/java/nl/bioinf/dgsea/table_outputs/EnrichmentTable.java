@@ -5,11 +5,16 @@ import nl.bioinf.dgsea.data_processing.Pathway;
 import nl.bioinf.dgsea.data_processing.PathwayGene;
 import nl.bioinf.dgsea.data_processing.EnrichmentResult;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Class to calculate and store enrichment results for gene pathways.
+ * Class to calculate and store enrichment results for gene pathways based on differentially expressed genes (DEGs).
+ * This class supports methods for calculating enrichment scores, p-values, and adjusted p-values
+ * using hypergeometric testing and Bonferroni correction.
  */
 public class EnrichmentTable {
     private final List<Pathway> pathways;
@@ -18,7 +23,7 @@ public class EnrichmentTable {
     private final List<EnrichmentResult> enrichmentResults;
 
     /**
-     * Constructor for EnrichmentTable.
+     * Constructs an EnrichmentTable with the specified pathways, DEGs, and pathway-gene relationships.
      *
      * @param pathways      List of pathways.
      * @param degs          List of differentially expressed genes (DEGs).
@@ -32,178 +37,191 @@ public class EnrichmentTable {
     }
 
     /**
-     * Calculates enrichment scores and stores the results.
+     * Calculates enrichment scores and p-values for each pathway and stores the results in `enrichmentResults`.
+     * The method applies the Bonferroni correction to adjust p-values for multiple comparisons.
+     * Writes results to a CSV file specified by the outputFilePath.
+     *
+     * @param outputFilePath Path to the output CSV file.
      */
-    public void calculateEnrichment() {
-        System.out.println("Pathway\tObserved DEGs\tExpected DEGs\tEnrichment Score\tP-value\tAdjusted P-value");
+    public void calculateEnrichment(String outputFilePath) {
+        // Write header to CSV
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFilePath))) {
+            writer.write("Pathway,Observed DEGs,Expected DEGs,Enrichment Score,P-value,Adjusted P-value");
+            writer.newLine();
 
-        for (Pathway pathway : pathways) {
-            String pathwayId = pathway.pathwayId();
-            String description = pathway.description();
+            for (Pathway pathway : pathways) {
+                String pathwayId = pathway.pathwayId();
+                String description = pathway.description();
 
-            // Step 1: Calculate observed DEGs
-            int observedDegCount = calculateObservedDegCount(pathwayId);
+                int observedDegCount = calculateObservedDegCount(pathwayId);
+                int totalGenesInPathway = countTotalGenesInPathway(pathwayId);
+                double expectedDegCount = calculateExpectedDegCount(totalGenesInPathway);
+                double enrichmentScore = calculateEnrichmentScore(observedDegCount, expectedDegCount);
+                double pValue = (observedDegCount > 0)
+                        ? calculateHypergeometricPValue(observedDegCount, totalGenesInPathway, pathwayGenes.size(), degs.size())
+                        : 1.0;
+                double adjustedPValue = adjustPValue(pValue);
 
-            // Step 2: Calculate expected DEGs (using a simple proportion approach)
-            int totalGenesInPathway = countTotalGenesInPathway(pathwayId);
-            double expectedDegCount = calculateExpectedDegCount(totalGenesInPathway);
+                enrichmentResults.add(new EnrichmentResult(pathwayId, enrichmentScore, pValue, adjustedPValue));
 
-            // Step 3: Calculate enrichment score (ES)
-            double enrichmentScore = calculateEnrichmentScore(observedDegCount, expectedDegCount);
-
-            // Step 4: Calculate p-value using the hypergeometric test
-            double pValue = (observedDegCount > 0)
-                    ? calculateHypergeometricPValue(observedDegCount, totalGenesInPathway, pathwayGenes.size(), degs.size())
-                    : 1.0; // Default to 1 (not significant)
-
-            // Step 5: Adjust p-value (Bonferroni)
-            double adjustedPValue = adjustPValue(pValue);
-
-            // Store the result in the enrichmentResults list
-            enrichmentResults.add(new EnrichmentResult(pathwayId, enrichmentScore, pValue, adjustedPValue));
-
-            // Print the result (optional, for logging purposes)
-            System.out.println(description + "\t" + observedDegCount + "\t" + expectedDegCount +
-                    "\t" + enrichmentScore + "\t" + pValue + "\t" + adjustedPValue);
+                // Write the results to the CSV file
+                writer.write(String.join(",",
+                        description,
+                        String.valueOf(observedDegCount),
+                        String.valueOf(expectedDegCount),
+                        String.valueOf(enrichmentScore),
+                        String.valueOf(pValue),
+                        String.valueOf(adjustedPValue)));
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            System.err.println("Error writing to CSV file: " + e.getMessage());
         }
     }
 
-    /**
-     * Calculates the observed number of DEGs in the specified pathway.
-     *
-     * @param pathwayId ID of the pathway.
-     * @return Count of observed DEGs.
-     */
-    public int calculateObservedDegCount(String pathwayId) {
-        return (int) pathwayGenes.stream()
-                .filter(pg -> pg.pathwayId().equals(pathwayId))
-                .filter(pg -> isDeg(pg.geneSymbol()))
-                .count();
-    }
-
-    /**
-     * Counts total number of genes in the specified pathway.
-     *
-     * @param pathwayId ID of the pathway.
-     * @return Count of total genes in the pathway.
-     */
-    public int countTotalGenesInPathway(String pathwayId) {
-        return (int) pathwayGenes.stream()
-                .filter(pg -> pg.pathwayId().equals(pathwayId))
-                .count();
-    }
-
-    /**
-     * Calculates the expected number of DEGs based on the total number of genes in the pathway.
-     *
-     * @param totalGenesInPathway Total genes in the pathway.
-     * @return Expected number of DEGs.
-     */
-    public double calculateExpectedDegCount(int totalGenesInPathway) {
-        double proportionOfDegs = degs.size() / (double) pathwayGenes.size();
-        return totalGenesInPathway * proportionOfDegs;
-    }
-
-    /**
-     * Calculates the enrichment score.
-     *
-     * @param observedDegCount Observed DEGs count.
-     * @param expectedDegCount Expected DEGs count.
-     * @return Enrichment score.
-     */
-    public double calculateEnrichmentScore(int observedDegCount, double expectedDegCount) {
-        if (expectedDegCount <= 0) {
-            return 0; // Prevent division by zero
-        }
-        if (observedDegCount == 0) {
-            return 0; // Return zero if no DEGs
-        }
-        return (observedDegCount - expectedDegCount) / Math.sqrt(expectedDegCount);
-    }
-
-    /**
-     * Checks if a gene symbol is a DEG.
-     *
-     * @param geneSymbol The gene symbol to check.
-     * @return True if it is a DEG, false otherwise.
-     */
-    private boolean isDeg(String geneSymbol) {
-        return degs.stream().anyMatch(deg -> deg.geneSymbol().equals(geneSymbol));
-    }
-
-    /**
-     * Calculates the hypergeometric p-value.
-     *
-     * @param observedDegCount Number of DEGs observed in the pathway.
-     * @param totalGenesInPathway Total number of genes in the pathway.
-     * @param totalGenes Total number of genes in the dataset.
-     * @param totalDegs Total number of DEGs in the dataset.
-     * @return P-value based on hypergeometric test.
-     */
-    public double calculateHypergeometricPValue(int observedDegCount, int totalGenesInPathway, int totalGenes, int totalDegs) {
-        if (totalGenesInPathway == 0 || totalDegs == 0) {
-            return 1.0; // Cannot calculate p-value with zero genes or DEGs
+        /**
+         * Calculates the observed count of DEGs in the specified pathway.
+         *
+         * @param pathwayId ID of the pathway.
+         * @return Count of observed DEGs within the pathway.
+         */
+        public int calculateObservedDegCount(String pathwayId) {
+            return (int) pathwayGenes.stream()
+                    .filter(pg -> pg.pathwayId().equals(pathwayId))
+                    .filter(pg -> isDeg(pg.geneSymbol()))
+                    .count();
         }
 
-        double pValue = 0.0;
-        for (int k = observedDegCount; k <= totalGenesInPathway; k++) {
-            pValue += hypergeometricProbability(k, totalGenesInPathway, totalDegs, totalGenes);
+        /**
+         * Counts the total number of genes associated with the specified pathway.
+         *
+         * @param pathwayId ID of the pathway.
+         * @return Total number of genes in the pathway.
+         */
+        public int countTotalGenesInPathway(String pathwayId) {
+            return (int) pathwayGenes.stream()
+                    .filter(pg -> pg.pathwayId().equals(pathwayId))
+                    .count();
         }
 
-        return Double.isNaN(pValue) ? 1.0 : pValue; // If NaN, set p-value to 1
-    }
-
-    /**
-     * Calculates hypergeometric probability.
-     *
-     * @param k Number of observed successes (DEGs in pathway).
-     * @param n Number of trials (total genes in pathway).
-     * @param K Number of successes in population (total DEGs).
-     * @param N Total population size (total genes).
-     * @return Hypergeometric probability.
-     */
-    public double hypergeometricProbability(int k, int n, int K, int N) {
-        if (k > n || K > N || k < 0 || n < 0 || K < 0 || N < 0) {
-            return 0.0; // Invalid parameters return a probability of 0
+        /**
+         * Calculates the expected number of DEGs in a pathway based on the overall proportion of DEGs.
+         *
+         * @param totalGenesInPathway Total number of genes in the pathway.
+         * @return Expected number of DEGs in the pathway.
+         */
+        public double calculateExpectedDegCount(int totalGenesInPathway) {
+            double proportionOfDegs = degs.size() / (double) pathwayGenes.size();
+            return totalGenesInPathway * proportionOfDegs;
         }
 
-        double numerator = binomialCoefficient(K, k) * binomialCoefficient(N - K, n - k);
-        double denominator = binomialCoefficient(N, n);
-        return numerator / denominator;
-    }
-
-    private double binomialCoefficient(int n, int k) {
-        if (k > n) return 0;
-        if (k == 0 || k == n) return 1;
-
-        double coeff = 1;
-        for (int i = 1; i <= k; i++) {
-            coeff *= (n - i + 1);
-            coeff /= i;
+        /**
+         * Calculates the enrichment score for a pathway based on observed and expected DEG counts.
+         *
+         * @param observedDegCount Observed number of DEGs.
+         * @param expectedDegCount Expected number of DEGs.
+         * @return Calculated enrichment score.
+         */
+        public double calculateEnrichmentScore(int observedDegCount, double expectedDegCount) {
+            if (expectedDegCount <= 0) {
+                return 0;
+            }
+            if (observedDegCount == 0) {
+                return 0;
+            }
+            return (observedDegCount - expectedDegCount) / Math.sqrt(expectedDegCount);
         }
-        return coeff;
-    }
 
-    /**
-     * Adjusts the p-value using the Bonferroni correction method.
-     *
-     * @param pValue Original p-value to adjust.
-     * @return Adjusted p-value.
-     */
-    public double adjustPValue(double pValue) {
-        int totalTests = pathways.size();
-        if (Double.isNaN(pValue)) {
-            return 1.0; // If NaN, set adjusted p-value to 1
+        /**
+         * Determines if a gene is a DEG based on its gene symbol.
+         *
+         * @param geneSymbol Gene symbol to check.
+         * @return True if the gene is a DEG; false otherwise.
+         */
+        private boolean isDeg(String geneSymbol) {
+            return degs.stream().anyMatch(deg -> deg.geneSymbol().equals(geneSymbol));
         }
-        return Math.min(pValue * totalTests, 1.0); // Ensure p-value does not exceed 1
-    }
 
-    /**
-     * Returns the list of enrichment results.
-     *
-     * @return List of EnrichmentResult objects.
-     */
-    public List<EnrichmentResult> getEnrichmentResults() {
-        return enrichmentResults;
+        /**
+         * Calculates the hypergeometric p-value for observing a specific number of DEGs in a pathway.
+         *
+         * @param observedDegCount Number of observed DEGs.
+         * @param totalGenesInPathway Total genes in the pathway.
+         * @param totalGenes Total genes in the dataset.
+         * @param totalDegs Total DEGs in the dataset.
+         * @return Calculated p-value.
+         */
+        public double calculateHypergeometricPValue(int observedDegCount, int totalGenesInPathway, int totalGenes, int totalDegs) {
+            if (totalGenesInPathway == 0 || totalDegs == 0) {
+                return 1.0;
+            }
+
+            double pValue = 0.0;
+            for (int k = observedDegCount; k <= totalGenesInPathway; k++) {
+                pValue += hypergeometricProbability(k, totalGenesInPathway, totalDegs, totalGenes);
+            }
+
+            return Double.isNaN(pValue) ? 1.0 : pValue;
+        }
+
+        /**
+         * Calculates the hypergeometric probability for observing a certain number of DEGs in a pathway.
+         *
+         * @param k Number of observed DEGs.
+         * @param n Total genes in the pathway.
+         * @param K Total DEGs in the dataset.
+         * @param N Total genes in the dataset.
+         * @return Calculated hypergeometric probability.
+         */
+        public double hypergeometricProbability(int k, int n, int K, int N) {
+            if (k > n || K > N || k < 0 || n < 0 || K < 0 || N < 0) {
+                return 0.0;
+            }
+
+            double numerator = binomialCoefficient(K, k) * binomialCoefficient(N - K, n - k);
+            double denominator = binomialCoefficient(N, n);
+            return numerator / denominator;
+        }
+
+        /**
+         * Calculates the binomial coefficient, used in hypergeometric probability calculations.
+         *
+         * @param n Total items.
+         * @param k Chosen items.
+         * @return Binomial coefficient value.
+         */
+        private double binomialCoefficient(int n, int k) {
+            if (k > n) return 0;
+            if (k == 0 || k == n) return 1;
+
+            double coeff = 1;
+            for (int i = 1; i <= k; i++) {
+                coeff *= (n - i + 1);
+                coeff /= i;
+            }
+            return coeff;
+        }
+
+        /**
+         * Adjusts a p-value using the Bonferroni correction.
+         *
+         * @param pValue Original p-value.
+         * @return Adjusted p-value.
+         */
+        public double adjustPValue(double pValue) {
+            int totalTests = pathways.size();
+            if (Double.isNaN(pValue)) {
+                return 1.0;
+            }
+            return Math.min(pValue * totalTests, 1.0);
+        }
+
+        /**
+         * Retrieves the list of enrichment results.
+         *
+         * @return List of {@link EnrichmentResult} objects.
+         */
+        public List<EnrichmentResult> getEnrichmentResults() {
+            return enrichmentResults;
+        }
     }
-}

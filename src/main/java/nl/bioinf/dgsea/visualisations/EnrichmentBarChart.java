@@ -23,6 +23,7 @@ import nl.bioinf.dgsea.data_processing.EnrichmentResult;
 
 /**
  * Class for creating and saving an enrichment bar chart using JFreeChart.
+ * This class visualizes enrichment results in a bar chart format and provides options for custom colors.
  */
 public class EnrichmentBarChart {
     private final String title;
@@ -55,6 +56,12 @@ public class EnrichmentBarChart {
         ChartUtils.saveChartAsPNG(file, barChart, width, height);
     }
 
+    /**
+     * Creates the bar chart with the provided dataset.
+     *
+     * @param dataset Dataset containing enrichment scores.
+     * @return Configured JFreeChart instance for the bar chart.
+     */
     private JFreeChart createChart(DefaultCategoryDataset dataset) {
         JFreeChart barChart = ChartFactory.createBarChart(
                 title,                    // Title of the chart
@@ -77,10 +84,17 @@ public class EnrichmentBarChart {
         return barChart;
     }
 
+    /**
+     * Applies user-defined or default colors to the bar chart.
+     *
+     * @param barChart The chart to which colors will be applied.
+     */
     private void applyColors(JFreeChart barChart) {
         CategoryPlot plot = barChart.getCategoryPlot();
         BarRenderer renderer = (BarRenderer) plot.getRenderer();
         Color colorItem;
+
+        // Apply colors to each series based on user input or default settings
         for (int i = 0; i < enrichmentResults.size(); i++) {
             if (colorManual == null || colorManual.length == 0) {
                 colorItem = getDefaultColor(i);
@@ -98,7 +112,6 @@ public class EnrichmentBarChart {
      * @return The corresponding Color object, or gray if invalid.
      */
     Color getColorFromString(String colorStr) {
-        // A mapping of common color names to their corresponding Color objects
         Map<String, Color> colorNameMap = new HashMap<>();
         colorNameMap.put("red", Color.RED);
         colorNameMap.put("blue", Color.BLUE);
@@ -112,16 +125,14 @@ public class EnrichmentBarChart {
         colorNameMap.put("black", Color.BLACK);
         colorNameMap.put("white", Color.WHITE);
 
-        // First, check if the colorStr is a named color
         if (colorNameMap.containsKey(colorStr.toLowerCase())) {
             return colorNameMap.get(colorStr.toLowerCase());
         }
 
-        // Otherwise, try interpreting it as a hex color code
         try {
             return Color.decode(colorStr);
         } catch (NumberFormatException e) {
-            System.err.println("Invalid color format: " + colorStr); // Log the error
+            System.err.println("Invalid color format: " + colorStr);
             return Color.GRAY; // Fallback color
         }
     }
@@ -133,7 +144,6 @@ public class EnrichmentBarChart {
      * @return The default Color object.
      */
     Color getDefaultColor(int index) {
-        // Geef een standaardkleur terug op basis van de index
         return switch (index % 5) {
             case 0 -> Color.RED;
             case 1 -> Color.BLUE;
@@ -152,7 +162,7 @@ public class EnrichmentBarChart {
      */
     DefaultCategoryDataset createDataset(List<EnrichmentResult> enrichmentResults, List<Pathway> pathways) {
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        Set<String> addedSeriesNames = new HashSet<>(); // Set voor unieke series
+        Set<String> addedSeriesNames = new HashSet<>(); // Set to track unique series names
 
         for (EnrichmentResult result : enrichmentResults) {
             Pathway matchingPathway = pathways.stream()
@@ -163,13 +173,12 @@ public class EnrichmentBarChart {
             if (matchingPathway != null) {
                 String description = matchingPathway.description();
 
-                // Controleer of de beschrijving al is toegevoegd
+                // Check if the description has already been added
                 if (!addedSeriesNames.contains(description)) {
-                    dataset.addValue(result.enrichmentScore(), description, description);  // Gebruik description als serie- en categorie naam
-                    addedSeriesNames.add(description); // Voeg beschrijving toe aan de set
+                    dataset.addValue(result.enrichmentScore(), description, description);  // Use description as series and category name
+                    addedSeriesNames.add(description); // Add description to the set
                 } else {
-                    // Optioneel: logica om te reageren op een duplicaat
-                    System.out.println("Beschrijving '" + description + "' bestaat al. Overslaan.");
+                    System.out.println("Description '" + description + "' already exists. Skipping.");
                 }
             }
         }
