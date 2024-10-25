@@ -1,3 +1,9 @@
+/**
+ * Unit tests for the EnrichmentBarChart class, which is responsible
+ * for creating bar charts representing enrichment results for pathways.
+ * This class verifies that the chart generation, dataset creation,
+ * and color handling functions work as intended.
+ */
 package nl.bioinf.dgsea.visualisations;
 
 import nl.bioinf.dgsea.data_processing.EnrichmentResult;
@@ -15,7 +21,9 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Unit tests for the EnrichmentBarChart class.
+ * The EnrichmentBarChartTest class tests the functionality of the
+ * EnrichmentBarChart class, ensuring that bar charts can be created
+ * and that dataset creation and color handling work correctly.
  */
 public class EnrichmentBarChartTest {
     private static final String OUTPUT_FILE_PATH = "test_chart.png";
@@ -24,6 +32,10 @@ public class EnrichmentBarChartTest {
     private List<EnrichmentResult> enrichmentResults;
     private List<Pathway> pathways;
 
+    /**
+     * Sets up the test environment before each test case.
+     * Initializes mock data for enrichment results and pathways.
+     */
     @BeforeEach
     public void setUp() {
         // Setup mock data for testing
@@ -40,6 +52,10 @@ public class EnrichmentBarChartTest {
         );
     }
 
+    /**
+     * Tests the creation of the bar chart, verifying that no exceptions
+     * are thrown and that the output file is created successfully.
+     */
     @Test
     public void testCreateBarChart() {
         assertDoesNotThrow(() -> {
@@ -58,6 +74,13 @@ public class EnrichmentBarChartTest {
         });
     }
 
+    /**
+     * Tests the dataset creation method to ensure it returns a dataset
+     * with the correct number of entries and validates the values
+     * against the enrichment results.
+     *
+     * @throws IOException if there is an issue in dataset creation.
+     */
     @Test
     public void testCreateDataset() throws IOException {
         EnrichmentBarChart chart = new EnrichmentBarChart(
@@ -83,6 +106,12 @@ public class EnrichmentBarChartTest {
         }
     }
 
+    /**
+     * Tests the color mapping functionality by verifying that color names
+     * and hex codes are correctly converted to Color objects.
+     *
+     * @throws IOException if there is an issue with color handling.
+     */
     @Test
     public void testGetColorFromString() throws IOException {
         EnrichmentBarChart chart = new EnrichmentBarChart(
@@ -105,6 +134,12 @@ public class EnrichmentBarChartTest {
         assertEquals(Color.GRAY, invalidColor, "Should return Color.GRAY for an invalid color name.");
     }
 
+    /**
+     * Tests the retrieval of default colors based on their index, ensuring
+     * the expected color is returned for each index.
+     *
+     * @throws IOException if there is an issue with default color retrieval.
+     */
     @Test
     public void testGetDefaultColor() throws IOException {
         EnrichmentBarChart chart = new EnrichmentBarChart(

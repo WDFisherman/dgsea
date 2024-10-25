@@ -1,3 +1,9 @@
+/**
+ * Unit tests for the EnrichmentDotPlot class, which is responsible
+ * for creating dot plots representing enrichment results for pathways.
+ * This class verifies that the dot plot generation, dataset creation,
+ * and color handling functions work as intended.
+ */
 package nl.bioinf.dgsea.visualisations;
 
 import nl.bioinf.dgsea.data_processing.EnrichmentResult;
@@ -15,7 +21,9 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Unit tests for the EnrichmentDotPlot class.
+ * The EnrichmentDotPlotTest class tests the functionality of the
+ * EnrichmentDotPlot class, ensuring that dot plots can be created
+ * and that dataset creation and color handling work correctly.
  */
 public class EnrichmentDotPlotTest {
     private static final String OUTPUT_FILE_PATH = "test_dot_plot.png";
@@ -26,6 +34,10 @@ public class EnrichmentDotPlotTest {
     private List<EnrichmentResult> enrichmentResults;
     private List<Pathway> pathways;
 
+    /**
+     * Sets up the test environment before each test case.
+     * Initializes mock data for enrichment results and pathways.
+     */
     @BeforeEach
     public void setUp() {
         // Setup mock data for testing
@@ -44,6 +56,10 @@ public class EnrichmentDotPlotTest {
         );
     }
 
+    /**
+     * Tests the creation of the dot plot, verifying that no exceptions
+     * are thrown and that the output file is created successfully.
+     */
     @Test
     public void testCreateDotPlot() {
         assertDoesNotThrow(() -> {
@@ -64,6 +80,13 @@ public class EnrichmentDotPlotTest {
         });
     }
 
+    /**
+     * Tests the dataset creation method to ensure it returns a dataset
+     * with the correct number of series and validates the values
+     * against the enrichment results.
+     *
+     * @throws IOException if there is an issue in dataset creation.
+     */
     @Test
     public void testCreateDataset() throws IOException {
         EnrichmentDotPlot dotPlot = new EnrichmentDotPlot(
@@ -95,6 +118,12 @@ public class EnrichmentDotPlotTest {
         }
     }
 
+    /**
+     * Tests the color mapping functionality by verifying that color names
+     * and hex codes are correctly converted to Color objects.
+     *
+     * @throws IOException if there is an issue with color handling.
+     */
     @Test
     public void testGetColorFromString() throws IOException {
         EnrichmentDotPlot dotPlot = new EnrichmentDotPlot(
@@ -119,6 +148,12 @@ public class EnrichmentDotPlotTest {
         assertEquals(Color.GRAY, invalidColor, "Should return Color.GRAY for an invalid color name.");
     }
 
+    /**
+     * Tests the retrieval of default colors based on their index, ensuring
+     * the expected color is returned for each index.
+     *
+     * @throws IOException if there is an issue with default color retrieval.
+     */
     @Test
     public void testGetDefaultColor() throws IOException {
         EnrichmentDotPlot dotPlot = new EnrichmentDotPlot(

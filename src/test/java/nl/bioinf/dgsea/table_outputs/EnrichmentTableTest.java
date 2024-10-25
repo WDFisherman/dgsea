@@ -1,3 +1,9 @@
+/**
+ * Unit tests for the EnrichmentTable class.
+ * This class contains various test cases to verify the correct functionality
+ * of the EnrichmentTable methods, ensuring that enrichment calculations and
+ * statistical analyses are performed as expected.
+ */
 package nl.bioinf.dgsea.table_outputs;
 
 import nl.bioinf.dgsea.data_processing.Deg;
@@ -14,9 +20,12 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Unit tests for the EnrichmentTable class.
+ * The EnrichmentTableTest class tests the methods of the EnrichmentTable class
+ * to ensure correctness of enrichment score calculations, P-value adjustments,
+ * and overall functionality with various input scenarios.
  */
 public class EnrichmentTableTest {
+
     private static final String PATHWAY1_ID = "pathway1";
     private static final String PATHWAY2_ID = "pathway2";
     private static final String PATHWAY3_ID = "pathway3";
@@ -36,6 +45,11 @@ public class EnrichmentTableTest {
     private List<PathwayGene> pathwayGenes;
     private EnrichmentTable enrichmentTable;
 
+    /**
+     * Sets up the test environment before each test case.
+     * Initializes the list of pathways, DEGs, and pathway genes,
+     * and creates an instance of the EnrichmentTable class.
+     */
     @BeforeEach
     public void setUp() {
         pathways = Arrays.asList(
@@ -51,48 +65,72 @@ public class EnrichmentTableTest {
         enrichmentTable = new EnrichmentTable(pathways, degs, pathwayGenes);
     }
 
+    /**
+     * Tests the calculation of observed DEGs in a given pathway.
+     */
     @Test
     public void testCalculateObservedDegCount() {
         int observedCount = enrichmentTable.calculateObservedDegCount(PATHWAY1_ID);
         assertEquals(2, observedCount, "Expected 2 observed DEGs in pathway1.");
     }
 
+    /**
+     * Tests the counting of total genes in a given pathway.
+     */
     @Test
     public void testCountTotalGenesInPathway() {
         int totalCount = enrichmentTable.countTotalGenesInPathway(PATHWAY1_ID);
         assertEquals(2, totalCount, "Expected 2 total genes in pathway1.");
     }
 
+    /**
+     * Tests the calculation of expected DEGs based on proportions.
+     */
     @Test
     public void testCalculateExpectedDegCount() {
         double expectedCount = enrichmentTable.calculateExpectedDegCount(2);
         assertEquals(1.2, expectedCount, 0.01, "Expected count based on proportions should be approximately 1.2.");
     }
 
+    /**
+     * Tests the calculation of the enrichment score.
+     */
     @Test
     public void testCalculateEnrichmentScore() {
         double enrichmentScore = enrichmentTable.calculateEnrichmentScore(2, 1.0);
         assertEquals(1.0, enrichmentScore, 0.01, "Enrichment score should be 1.0.");
     }
 
+    /**
+     * Tests the calculation of the hypergeometric P-value.
+     */
     @Test
     public void testCalculateHypergeometricPValue() {
         double pValue = enrichmentTable.calculateHypergeometricPValue(2, 2, 5, 3); // 5 total genes, 3 DEGs
         assertTrue(pValue >= 0 && pValue <= 1, "P-value should be between 0 and 1.");
     }
 
+    /**
+     * Tests the calculation of hypergeometric probability.
+     */
     @Test
     public void testHypergeometricProbability() {
         double probability = enrichmentTable.hypergeometricProbability(2, 2, 3, 5); // 3 DEGs in 5 total genes
         assertTrue(probability >= 0 && probability <= 1, "Probability should be between 0 and 1.");
     }
 
+    /**
+     * Tests the adjustment of P-values.
+     */
     @Test
     public void testAdjustPValue() {
         double adjustedPValue = enrichmentTable.adjustPValue(0.05);
         assertEquals(0.15, adjustedPValue, 0.01, "Expected adjusted p-value should be 0.15.");
     }
 
+    /**
+     * Tests the overall calculation of enrichment.
+     */
     @Test
     public void testCalculateEnrichment() {
         enrichmentTable.calculateEnrichment();
@@ -102,6 +140,9 @@ public class EnrichmentTableTest {
         assertEquals(PATHWAY1_ID, results.get(0).pathwayId(), "First pathway should be pathway1.");
     }
 
+    /**
+     * Tests the behavior when input lists are empty.
+     */
     @Test
     public void testEmptyInputLists() {
         enrichmentTable = new EnrichmentTable(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
@@ -111,6 +152,9 @@ public class EnrichmentTableTest {
         assertTrue(results.isEmpty(), "Expected no results for empty input lists.");
     }
 
+    /**
+     * Tests the case where there are no observed DEGs.
+     */
     @Test
     public void testNoObservedDegs() {
         List<Deg> noDegs = Arrays.asList();
@@ -124,6 +168,9 @@ public class EnrichmentTableTest {
         }
     }
 
+    /**
+     * Tests the calculation of enrichment with overlapping pathway genes.
+     */
     @Test
     public void testOverlappingPathwayGenes() {
         pathwayGenes = Arrays.asList(
@@ -135,5 +182,43 @@ public class EnrichmentTableTest {
 
         List<EnrichmentResult> results = enrichmentTable.getEnrichmentResults();
         assertFalse(results.isEmpty(), "Expected results to be calculated despite overlapping pathway genes.");
+    }
+
+    /**
+     * Tests the calculation of enrichment score when the expected count is zero.
+     */
+    @Test
+    public void testCalculateEnrichmentScoreWithZeroExpected() {
+        double enrichmentScore = enrichmentTable.calculateEnrichmentScore(2, 0.0);
+        assertEquals(0.0, enrichmentScore, "Enrichment score should be 0 when expected count is 0.");
+    }
+
+    /**
+     * Tests the hypergeometric probability calculation with negative values.
+     */
+    @Test
+    public void testHypergeometricProbabilityWithNegativeValues() {
+        double probability = enrichmentTable.hypergeometricProbability(-1, -1, -1, -1);
+        assertEquals(0.0, probability, "Probability should be 0 for negative input values.");
+    }
+
+    /**
+     * Tests the adjustment of P-values with very small P-values.
+     */
+    @Test
+    public void testAdjustPValueWithSmallPValue() {
+        double adjustedPValue = enrichmentTable.adjustPValue(0.00001);
+        assertEquals(0.00003, adjustedPValue, 0.00001, "Expected adjusted p-value should be correctly calculated.");
+    }
+
+    /**
+     * Tests the enrichment calculation when there are no pathways.
+     */
+    @Test
+    public void testCalculateEnrichmentWithoutPathways() {
+        enrichmentTable = new EnrichmentTable(new ArrayList<>(), degs, pathwayGenes);
+        enrichmentTable.calculateEnrichment();
+        List<EnrichmentResult> results = enrichmentTable.getEnrichmentResults();
+        assertTrue(results.isEmpty(), "Expected no enrichment results when there are no pathways.");
     }
 }
