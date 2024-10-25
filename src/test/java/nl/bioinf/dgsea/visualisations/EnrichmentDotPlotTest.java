@@ -47,7 +47,7 @@ public class EnrichmentDotPlotTest {
     @Test
     public void testCreateDotPlot() {
         assertDoesNotThrow(() -> {
-            EnrichmentDotPlot dotPlot = new EnrichmentDotPlot(
+            new EnrichmentDotPlot(
                     "Enrichment Dot Plot",
                     enrichmentResults,
                     pathways,

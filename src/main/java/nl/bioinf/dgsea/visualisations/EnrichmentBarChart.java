@@ -25,12 +25,9 @@ import nl.bioinf.dgsea.data_processing.EnrichmentResult;
  * Class for creating and saving an enrichment bar chart using JFreeChart.
  */
 public class EnrichmentBarChart {
-    private String title;
-    private List<EnrichmentResult> enrichmentResults;
-    private List<Pathway> pathways;
-    private String outputFilePath;
-    private Color[] colorManual; // User-defined colors
-    private String colorScheme; // Color scheme if no manual colors are given
+    private final String title;
+    private final List<EnrichmentResult> enrichmentResults;
+    private final Color[] colorManual; // User-defined colors
 
     /**
      * Constructor for EnrichmentBarChart.
@@ -40,15 +37,12 @@ public class EnrichmentBarChart {
      * @param pathways         The pathways corresponding to the enrichment results.
      * @param outputFilePath   The path where the chart image will be saved.
      * @param colorManual      User-defined colors for the bars.
-     * @param colorScheme      Default color scheme if no manual colors are provided.
      * @throws IOException if an error occurs while saving the chart.
      */
     public EnrichmentBarChart(String title, List<EnrichmentResult> enrichmentResults, List<Pathway> pathways,
                               String outputFilePath, Color[] colorManual) throws IOException {
         this.title = title;
         this.enrichmentResults = enrichmentResults;
-        this.pathways = pathways;
-        this.outputFilePath = outputFilePath;
         this.colorManual = colorManual;
 
         DefaultCategoryDataset dataset = createDataset(enrichmentResults, pathways);
@@ -140,14 +134,13 @@ public class EnrichmentBarChart {
      */
     Color getDefaultColor(int index) {
         // Geef een standaardkleur terug op basis van de index
-        switch (index % 5) {
-            case 0: return Color.RED;
-            case 1: return Color.BLUE;
-            case 2: return Color.GREEN;
-            case 3: return Color.ORANGE;
-            case 4: return Color.MAGENTA;
-            default: return Color.BLACK; // Fallback color
-        }
+        return switch (index % 5) {
+            case 0 -> Color.RED;
+            case 1 -> Color.BLUE;
+            case 2 -> Color.GREEN;
+            case 3 -> Color.ORANGE;
+            default -> Color.MAGENTA; // Fallback color
+        };
     }
 
     /**
@@ -161,8 +154,7 @@ public class EnrichmentBarChart {
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
         Set<String> addedSeriesNames = new HashSet<>(); // Set voor unieke series
 
-        for (int i = 0; i < enrichmentResults.size(); i++) {
-            EnrichmentResult result = enrichmentResults.get(i);
+        for (EnrichmentResult result : enrichmentResults) {
             Pathway matchingPathway = pathways.stream()
                     .filter(pathway -> pathway.pathwayId().equals(result.pathwayId()))
                     .findFirst()

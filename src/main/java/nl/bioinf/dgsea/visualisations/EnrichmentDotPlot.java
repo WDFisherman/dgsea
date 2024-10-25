@@ -29,12 +29,10 @@ import nl.bioinf.dgsea.data_processing.EnrichmentResult;
  * Class to create a dot plot for enrichment results using JFreeChart.
  */
 public class EnrichmentDotPlot {
-    private String title;
-    private List<EnrichmentResult> enrichmentResults;
-    private List<Pathway> pathways;
-    private String outputFilePath;
-    private final Color[] colorManual; // User-defined colors
-    private String colorScheme;   // Color scheme if no manual colors are given
+    private final String title;
+    private final List<EnrichmentResult> enrichmentResults;
+    private final List<Pathway> pathways;
+    private final Color[] colorManual; // User-defined colors\
     private double dotSize;       // Size of the dots
     private float dotTransparency; // Transparency of the dots
 
@@ -57,7 +55,6 @@ public class EnrichmentDotPlot {
         this.title = title;
         this.enrichmentResults = enrichmentResults;
         this.pathways = pathways;
-        this.outputFilePath = outputFilePath;
         this.colorManual = colorManual;
         setDotSize(dotSize);
         setDotTransparency(dotTransparency);
@@ -184,14 +181,13 @@ public class EnrichmentDotPlot {
     }
 
     Color getDefaultColor(int index) {
-        switch (index % 5) {
-            case 0: return Color.RED;
-            case 1: return Color.BLUE;
-            case 2: return Color.GREEN;
-            case 3: return Color.ORANGE;
-            case 4: return Color.MAGENTA;
-            default: return Color.BLACK; // Fallback color
-        }
+        return switch (index % 5) {
+            case 0 -> Color.RED;
+            case 1 -> Color.BLUE;
+            case 2 -> Color.GREEN;
+            case 3 -> Color.ORANGE;
+            default -> Color.MAGENTA; // Fallback color
+        };
     }
 
     XYSeriesCollection createDataset(List<EnrichmentResult> enrichmentResults, List<Pathway> pathways) {
@@ -228,7 +224,7 @@ public class EnrichmentDotPlot {
     }
 
     private void addItemLabels(XYLineAndShapeRenderer renderer) {
-        XYItemLabelGenerator labelGenerator = (dataset, series, item) -> pathways.get(series).description();
+        XYItemLabelGenerator labelGenerator = (_, series, _) -> pathways.get(series).description();
         renderer.setDefaultItemLabelGenerator(labelGenerator);
         renderer.setDefaultItemLabelsVisible(true);
         renderer.setDefaultItemLabelFont(new Font("SansSerif", Font.PLAIN, 14));

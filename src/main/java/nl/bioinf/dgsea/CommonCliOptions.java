@@ -11,9 +11,12 @@ import picocli.CommandLine;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
+import java.awt.*;
 import java.io.File;
+import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 public class CommonCliOptions {
     public static void main(String[] args) {
@@ -25,7 +28,12 @@ class CommonToAll {
     @Option(names = {"-v", "-verbosity"}, description = "Verbose logging", defaultValue = "true")
     boolean[] verbose;
 
-    @Option(names = {"--pval"}, paramLabel = "[0.0-1.0 ? 0.05]", description = "P-value threshold. For counting significant degs in con_table. For filtering degs before making a plot in enrich_bar_chart, enrich_dot_chart and perc_lfc_per_pathway_chart, default = ${DEFAULT-VALUE}", defaultValue="0.01")
+    @Option(
+            names = {"--pval"}, paramLabel = "[0.0-1.0 ? 0.05]",
+            description = """
+    P-value threshold. For counting significant degs in con_table. For filtering degs before making a plot in enrich_bar_chart, enrich_dot_chart and perc_lfc_per_pathway_chart, default = ${DEFAULT-VALUE}
+    """,
+            defaultValue="0.01")
     double pval;
 
     public void setLoggingScope() {
@@ -90,12 +98,14 @@ class CommonChartParams {
 
     @Option(names = {"--title", "-t", "-T"}, description = "Title of chart")
     String title;
-    @Option(names = {"--x-axis"}, description = "X-axis title of chart, default = 'png'", defaultValue = "png")
+    @Option(names = {"--x-axis-label", "-x-lab"}, description = "X-axis title of chart")
     String xAxisTitle;
-    @Option(names = {"--y-axis"}, description = "Y-axis title of chart, default = 'png'", defaultValue = "png")
+    @Option(names = {"--y-axis-label", "-y-lab"}, description = "Y-axis title of chart")
     String yAxisTitle;
-    @Option(names = {"--image-format"}, paramLabel = "[png|jpg ? png]", description = "Image format of output image, default = 'png'", defaultValue = "png")
+    @Option(names = {"--image-format", "-if"}, paramLabel = "png|jpg", description = "Image format of output image, default = '${DEFAULT-VALUE}'", defaultValue = "png")
     String imageFormat;
+    @Option(names = {"--max-n-pathways", "-p-max"}, paramLabel = "1-inf", description = "Max number of pathways to include in chart. '--pathway-ids' overrides this option. Default = ${DEFAULT-VALUE}", defaultValue = "20")
+    int maxNPathways;
 
     @Option(names = {"--color-manual", "-cm"}, arity = "1..*", split = ";", paramLabel = "red|0xRRGGBB", description = """
     One or more colors to apply to chart. Cycles trough if too few colors were given. Default colors apply if none are given. Options:

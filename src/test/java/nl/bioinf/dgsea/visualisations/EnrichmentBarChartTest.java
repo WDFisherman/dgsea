@@ -43,7 +43,7 @@ public class EnrichmentBarChartTest {
     @Test
     public void testCreateBarChart() {
         assertDoesNotThrow(() -> {
-            EnrichmentBarChart chart = new EnrichmentBarChart(
+            new EnrichmentBarChart(
                     "Enrichment Bar Chart",
                     enrichmentResults,
                     pathways,

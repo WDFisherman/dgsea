@@ -17,6 +17,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Mixin;
 
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -49,14 +50,13 @@ class EnrichBarChart implements Runnable {
     @Mixin
     private CommonChartParams commonChartParams;
 
-    @Option(names = {"--output-file"}, paramLabel = "FILE", description = "Output file path for the bar chart (e.g., ./output/enrichment_bar_chart.png)")
+    @Option(names = {"--output-file", "-o", "-O"}, paramLabel = "FILE", description = "Output file path for the bar chart (e.g., ./output/enrichment_bar_chart.png)")
     private String outputFilePath;
 
-    @Option(names = {"--max-n-pathways"}, paramLabel = "[1-inf]", description = "Max number of pathways to include in chart. '--pathway-ids' overrides this option.", defaultValue = "20")
-    private int maxNPathways;
 
     @Override
     public void run() {
+        commonChartParams.validateOptions();
         commonToAll.setLoggingScope();
 
         List<Deg> degs = commonFileParams.getDegs();
@@ -71,11 +71,10 @@ class EnrichBarChart implements Runnable {
                     degs,
                     pathways,
                     pathwayGenes,
-                    maxNPathways,
+                    commonChartParams.maxNPathways,
                     outputFilePath,
                     commonChartParams.title,
                     colorArray,
-                    commonChartParams.colorScheme,
                     EnrichmentAnalysisService.ChartType.BAR_CHART, // Bar chart
                     null,  // dotSize niet nodig
                     null   // dotTransparency niet nodig
@@ -103,20 +102,16 @@ class EnrichDotChart implements Runnable {
     @Mixin
     private CommonChartParams commonChartParams;
 
-    @Option(names = {"--dot-size"}, paramLabel = "[0.0-inf]", description = "Dot size, default = ${DEFAULT-VALUE}", defaultValue = "30.0")
+    @Option(names = {"--dot-size", "-ds", "-DS"}, paramLabel = "0.0-inf", description = "Dot size, default = ${DEFAULT-VALUE}", defaultValue = "30.0")
     private double dotSize;
-
-    @Option(names = {"--dot-transparency"}, paramLabel = "[0.0-1.0]", description = "Dot transparency, default = ${DEFAULT-VALUE}", defaultValue = "1.0")
+    @Option(names = {"--dot-transparency", "-dt", "-DT"}, paramLabel = "0.0-1.0", description = "Dot transparency, default = ${DEFAULT-VALUE}", defaultValue = "1.0")
     private float dotTransparency;
-
-    @Option(names = {"--max-n-pathways"}, paramLabel = "[1-inf]", description = "Max number of pathways to include in chart. '--pathway-ids' overrides this option.", defaultValue = "20")
-    private int maxNPathways;
-
-    @Option(names = {"--output-file"}, paramLabel = "FILE", description = "Output file path for the dot plot (e.g., ./output/enrichment_dot_plot.png)")
+    @Option(names = {"--output-file", "-o", "-O"}, paramLabel = "FILE", description = "Output file path for the dot chart (e.g., ./output/enrichment_dot_chart.png)")
     private String outputFilePath;
 
     @Override
     public void run() {
+        commonChartParams.validateOptions();
         commonToAll.setLoggingScope();
 
         List<Deg> degs = commonFileParams.getDegs();
@@ -131,7 +126,7 @@ class EnrichDotChart implements Runnable {
                     degs,
                     pathways,
                     pathwayGenes,
-                    maxNPathways,
+                    commonChartParams.maxNPathways,
                     outputFilePath,
                     commonChartParams.title,
                     colorArray,
@@ -159,13 +154,12 @@ class PercLogFChangePerPathwayCmd implements Runnable {
     @Mixin
     private CommonChartParams commonChartParams;
 
-    @Option(names = {"--pathway-ids"}, paramLabel = "hsa(...)", arity = "0..*", split = ",", description = "Pathway ids of interest")
+    @Option(names = {"--pathway-ids", "-p-ids", "-P-IDS"}, paramLabel = "hsa123", arity = "0..*", split = ",", description = "Pathway ids of interest")
     private String[] pathwayIds;
-    @Option(names = {"--max-n-pathways"}, paramLabel = "[1-inf]", description = "Max number of pathways to include in chart. '--pathway-ids' overrides this option.")
-    private int maxNPathways;
 
     @Override
     public void run() {
+        commonChartParams.validateOptions();
         commonToAll.setLoggingScope();
         List<Deg> degs = commonFileParams.getDegs();
         List<Pathway> pathways = commonFileParams.getPathways();
@@ -205,10 +199,9 @@ class ContinuityTable implements Runnable {
     @Mixin
     private CommonFileParams commonFileParams;
 
-    @Option(names = {"--output"}, paramLabel = "[file|print]", description = "Option on how to return output table. (csv-file or print to terminal)", defaultValue = "file")
+    @Option(names = {"--outputType", "-t", "-T"}, paramLabel = "file|print", description = "Option on how to return output table. (csv-file or print to terminal)", defaultValue = "file")
     private String output;
-
-    @Option(names = {"--outputFilePath"}, description = "File to write table text to.")
+    @Option(names = {"--outputFilePath", "-o", "-O"}, description = "File to write table text to.")
     private File outputFilePath;
 
     @Override

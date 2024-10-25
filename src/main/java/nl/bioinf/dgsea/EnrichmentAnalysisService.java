@@ -64,8 +64,8 @@ public class EnrichmentAnalysisService {
 
         switch (chartType) {
             case BAR_CHART -> {
-                EnrichmentBarChart barChart = new EnrichmentBarChart(
-                        "Top " + maxNPathways + " Pathway Enrichment",
+                new EnrichmentBarChart(
+                        title,
                         topResults,
                         pathways,
                         outputFile,
@@ -74,8 +74,8 @@ public class EnrichmentAnalysisService {
                 System.out.println("Bar chart saved as PNG at: " + outputFile);
             }
             case DOT_CHART -> {
-                EnrichmentDotPlot dotPlot = new EnrichmentDotPlot(
-                        "Pathway Enrichment Dot Plot (Top " + maxNPathways + ")",
+                new EnrichmentDotPlot(
+                        title,
                         topResults,
                         pathways,
                         outputFile,
