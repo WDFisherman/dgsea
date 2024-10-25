@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class EnrichmentDotPlotTest {
     private static final String OUTPUT_FILE_PATH = "test_dot_plot.png";
-    private static final String[] COLOR_MANUAL = new String[]{"red", "green", "blue"};
+    private static final Color[] COLOR_MANUAL = new Color[]{Color.red, Color.green, Color.blue};
     private static final double DOT_SIZE = 10.0;
     private static final float DOT_TRANSPARENCY = 0.5f;
 
@@ -53,7 +53,6 @@ public class EnrichmentDotPlotTest {
                     pathways,
                     OUTPUT_FILE_PATH,
                     COLOR_MANUAL,
-                    null,
                     DOT_SIZE,
                     DOT_TRANSPARENCY
             );
@@ -71,7 +70,6 @@ public class EnrichmentDotPlotTest {
                 enrichmentResults,
                 pathways,
                 OUTPUT_FILE_PATH,
-                null,
                 null,
                 DOT_SIZE,
                 DOT_TRANSPARENCY
@@ -103,7 +101,6 @@ public class EnrichmentDotPlotTest {
                 pathways,
                 OUTPUT_FILE_PATH,
                 null,
-                null,
                 DOT_SIZE,
                 DOT_TRANSPARENCY
         );
@@ -126,7 +123,6 @@ public class EnrichmentDotPlotTest {
                 enrichmentResults,
                 pathways,
                 OUTPUT_FILE_PATH,
-                null,
                 null,
                 DOT_SIZE,
                 DOT_TRANSPARENCY

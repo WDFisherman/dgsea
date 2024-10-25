@@ -33,7 +33,7 @@ public class EnrichmentDotPlot {
     private List<EnrichmentResult> enrichmentResults;
     private List<Pathway> pathways;
     private String outputFilePath;
-    private String[] colorManual; // User-defined colors
+    private final Color[] colorManual; // User-defined colors
     private String colorScheme;   // Color scheme if no manual colors are given
     private double dotSize;       // Size of the dots
     private float dotTransparency; // Transparency of the dots
@@ -46,21 +46,19 @@ public class EnrichmentDotPlot {
      * @param pathways           The list of pathways.
      * @param outputFilePath     The file path to save the plot.
      * @param colorManual        User-defined colors for the dots.
-     * @param colorScheme        Default color scheme.
      * @param dotSize            Size of the dots.
      * @param dotTransparency    Transparency of the dots.
      * @throws IOException If an error occurs while saving the chart.
      */
     public EnrichmentDotPlot(String title, List<EnrichmentResult> enrichmentResults,
                              List<Pathway> pathways, String outputFilePath,
-                             String[] colorManual, String colorScheme,
+                             Color[] colorManual,
                              double dotSize, float dotTransparency) throws IOException {
         this.title = title;
         this.enrichmentResults = enrichmentResults;
         this.pathways = pathways;
         this.outputFilePath = outputFilePath;
         this.colorManual = colorManual;
-        this.colorScheme = colorScheme;
         setDotSize(dotSize);
         setDotTransparency(dotTransparency);
 
@@ -145,17 +143,15 @@ public class EnrichmentDotPlot {
     }
 
     private void applyColors(XYLineAndShapeRenderer renderer) {
+        Color colorItem;
         for (int i = 0; i < enrichmentResults.size(); i++) {
-            Color color;
-            if (colorManual != null && colorManual.length > 0) {
-                color = getColorFromString(colorManual[i % colorManual.length]);
+            if (colorManual == null || colorManual.length == 0) {
+                colorItem = getDefaultColor(i);
             } else {
-                color = getDefaultColor(i);
+                colorItem = colorManual[i % colorManual.length];
             }
-
-            // Apply transparency to the color
-            color = new Color(color.getRed(), color.getGreen(), color.getBlue(), (int) (dotTransparency * 255));
-            renderer.setSeriesPaint(i, color);
+            colorItem = new Color(colorItem.getRed(), colorItem.getGreen(), colorItem.getBlue(), (int) (dotTransparency * 255));
+            renderer.setSeriesPaint(i, colorItem);
         }
     }
 

@@ -5,6 +5,7 @@ import nl.bioinf.dgsea.table_outputs.EnrichmentTable;
 import nl.bioinf.dgsea.visualisations.EnrichmentBarChart;
 import nl.bioinf.dgsea.visualisations.EnrichmentDotPlot;
 
+import java.awt.*;
 import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
@@ -26,8 +27,8 @@ public class EnrichmentAnalysisService {
      * @param pathwayGenes    List of PathwayGene mappings.
      * @param maxNPathways    Maximum number of pathways to display.
      * @param outputFilePath  File path for the output image. Default based on chart type if null.
+     * @param title           Title of the plot
      * @param colorManual     Array of colors for manual chart customization.
-     * @param colorScheme     Color scheme for the chart.
      * @param chartType       The type of chart to generate (BAR_CHART or DOT_CHART).
      * @param dotSize         Size of the dots (optional, relevant for dot-chart).
      * @param dotTransparency Transparency of the dots (optional, relevant for dot-chart).
@@ -39,8 +40,8 @@ public class EnrichmentAnalysisService {
             List<PathwayGene> pathwayGenes,
             int maxNPathways,
             String outputFilePath,
-            String[] colorManual,
-            String colorScheme,
+            String title,
+            Color[] colorManual,
             ChartType chartType,
             Double dotSize,
             Float dotTransparency
@@ -68,8 +69,7 @@ public class EnrichmentAnalysisService {
                         topResults,
                         pathways,
                         outputFile,
-                        colorManual,
-                        colorScheme
+                        colorManual
                 );
                 System.out.println("Bar chart saved as PNG at: " + outputFile);
             }
@@ -80,7 +80,6 @@ public class EnrichmentAnalysisService {
                         pathways,
                         outputFile,
                         colorManual,
-                        colorScheme,
                         dotSize != null ? dotSize : 30.0,  // Default size
                         dotTransparency != null ? dotTransparency : 1.0f // Default transparency
                 );

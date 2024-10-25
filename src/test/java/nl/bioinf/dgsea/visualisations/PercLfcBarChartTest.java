@@ -5,8 +5,10 @@ import org.jfree.data.time.DateRange;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import java.awt.*;
 import java.io.*;
 import java.util.*;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -61,17 +63,7 @@ class PercLfcBarChartTest {
     @Test
     void saveChart_setColorPink() {
         String testName = "color_pink";
-        PercLfcBarChart.Builder chartGeneratorsBuilder = getBuilderRequiredWorking(testName).colorManual(new String[]{"pink"});
-        assertFileWasMade(chartGeneratorsBuilder, testName, "png");
-    }
-
-    /**
-     * Does set chart have color default colors, because gloo is not a recognized color?
-     */
-    @Test
-    void saveChart_setInvalidColorGloo() {
-        String testName = "invalid_color_gloo";
-        PercLfcBarChart.Builder chartGeneratorsBuilder = getBuilderRequiredWorking(testName).colorManual(new String[]{"gloo"});
+        PercLfcBarChart.Builder chartGeneratorsBuilder = getBuilderRequiredWorking(testName).colorManual(new Color[]{Color.pink});
         assertFileWasMade(chartGeneratorsBuilder, testName, "png");
     }
 
@@ -81,7 +73,7 @@ class PercLfcBarChartTest {
     @Test
     void saveChart_setNoColor() {
         String testName = "no_color";
-        PercLfcBarChart.Builder chartGeneratorsBuilder = getBuilderRequiredWorking(testName).colorManual(new String[]{});
+        PercLfcBarChart.Builder chartGeneratorsBuilder = getBuilderRequiredWorking(testName).colorManual(new Color[]{});
         assertFileWasMade(chartGeneratorsBuilder, testName, "png");
     }
 
@@ -91,9 +83,16 @@ class PercLfcBarChartTest {
     @Test
     void saveChart_setFewColors() {
         String testName = "few_colors";
-        PercLfcBarChart.Builder chartGeneratorsBuilder = getBuilderRequiredWorking(testName).colorManual(new String[]{"yellow", "red", "black"});
+        PercLfcBarChart.Builder chartGeneratorsBuilder = getBuilderRequiredWorking(testName).colorManual(new Color[]{Color.yellow, Color.red, Color.black});
         assertFileWasMade(chartGeneratorsBuilder, testName, "png");
     }
+
+//    @Test
+//    void saveChart_setRgbColor() {
+//        String testName = "rgb_color";
+//        PercLfcBarChart.Builder chartGeneratorsBuilder = getBuilderRequiredWorking(testName).colorManual(new Color[]{"rgb(255, 210, 55)"});
+//        assertFileWasMade(chartGeneratorsBuilder, testName, "png");
+//    }
 
     /**
      * Does set chart save as a proper jpeg?

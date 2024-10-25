@@ -29,7 +29,7 @@ public class EnrichmentBarChart {
     private List<EnrichmentResult> enrichmentResults;
     private List<Pathway> pathways;
     private String outputFilePath;
-    private String[] colorManual; // User-defined colors
+    private Color[] colorManual; // User-defined colors
     private String colorScheme; // Color scheme if no manual colors are given
 
     /**
@@ -44,13 +44,12 @@ public class EnrichmentBarChart {
      * @throws IOException if an error occurs while saving the chart.
      */
     public EnrichmentBarChart(String title, List<EnrichmentResult> enrichmentResults, List<Pathway> pathways,
-                              String outputFilePath, String[] colorManual, String colorScheme) throws IOException {
+                              String outputFilePath, Color[] colorManual) throws IOException {
         this.title = title;
         this.enrichmentResults = enrichmentResults;
         this.pathways = pathways;
         this.outputFilePath = outputFilePath;
         this.colorManual = colorManual;
-        this.colorScheme = colorScheme;
 
         DefaultCategoryDataset dataset = createDataset(enrichmentResults, pathways);
         JFreeChart barChart = createChart(dataset);
@@ -87,16 +86,14 @@ public class EnrichmentBarChart {
     private void applyColors(JFreeChart barChart) {
         CategoryPlot plot = barChart.getCategoryPlot();
         BarRenderer renderer = (BarRenderer) plot.getRenderer();
-
-        // Kleurtoewijzing met validatie
+        Color colorItem;
         for (int i = 0; i < enrichmentResults.size(); i++) {
-            Color color;
-            if (colorManual != null && colorManual.length > 0) {
-                color = getColorFromString(colorManual[i % colorManual.length]);
+            if (colorManual == null || colorManual.length == 0) {
+                colorItem = getDefaultColor(i);
             } else {
-                color = getDefaultColor(i);
+                colorItem = colorManual[i % colorManual.length];
             }
-            renderer.setSeriesPaint(i, color);
+            renderer.setSeriesPaint(i, colorItem);
         }
     }
 

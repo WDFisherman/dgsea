@@ -63,7 +63,7 @@ class EnrichBarChart implements Runnable {
         List<Pathway> pathways = commonFileParams.getPathways();
         List<PathwayGene> pathwayGenes = commonFileParams.getPathwayGenes();
 
-        String[] colorArray = commonChartParams.colorManual != null && commonChartParams.colorManual.length != 0 ? commonChartParams.colorManual : null;
+        Color[] colorArray = commonChartParams.getColorManualAsColors();
 
         EnrichmentAnalysisService enrichmentService = new EnrichmentAnalysisService();
         try {
@@ -73,6 +73,7 @@ class EnrichBarChart implements Runnable {
                     pathwayGenes,
                     maxNPathways,
                     outputFilePath,
+                    commonChartParams.title,
                     colorArray,
                     commonChartParams.colorScheme,
                     EnrichmentAnalysisService.ChartType.BAR_CHART, // Bar chart
@@ -122,7 +123,7 @@ class EnrichDotChart implements Runnable {
         List<Pathway> pathways = commonFileParams.getPathways();
         List<PathwayGene> pathwayGenes = commonFileParams.getPathwayGenes();
 
-        String[] colorArray = commonChartParams.colorManual;
+        Color[] colorArray = commonChartParams.getColorManualAsColors();
 
         EnrichmentAnalysisService enrichmentService = new EnrichmentAnalysisService();
         try {
@@ -132,8 +133,8 @@ class EnrichDotChart implements Runnable {
                     pathwayGenes,
                     maxNPathways,
                     outputFilePath,
+                    commonChartParams.title,
                     colorArray,
-                    commonChartParams.colorScheme,
                     EnrichmentAnalysisService.ChartType.DOT_CHART, // Dot chart
                     dotSize,
                     dotTransparency
@@ -181,8 +182,8 @@ class PercLogFChangePerPathwayCmd implements Runnable {
                 pathways,
                 pathwayGenes,
                 commonChartParams.outputPath)
-                .colorManual(commonChartParams.colorManual)
-                .maxNPathways(maxNPathways)
+                .colorManual(commonChartParams.getColorManualAsColors())
+                .maxNPathways(commonChartParams.maxNPathways)
                 .imageFormat(commonChartParams.imageFormat)
                 .pathwayIds(pathwayIds);
     }

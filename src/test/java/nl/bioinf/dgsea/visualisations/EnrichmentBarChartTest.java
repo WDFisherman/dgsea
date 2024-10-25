@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class EnrichmentBarChartTest {
     private static final String OUTPUT_FILE_PATH = "test_chart.png";
-    private static final String[] COLOR_MANUAL = new String[]{"red", "green", "blue"};
+    private static final Color[] COLOR_MANUAL = new Color[]{Color.red, Color.green, Color.blue};
 
     private List<EnrichmentResult> enrichmentResults;
     private List<Pathway> pathways;
@@ -48,8 +48,7 @@ public class EnrichmentBarChartTest {
                     enrichmentResults,
                     pathways,
                     OUTPUT_FILE_PATH,
-                    COLOR_MANUAL,
-                    null
+                    COLOR_MANUAL
             );
 
             // Check if the chart was created successfully
@@ -65,7 +64,6 @@ public class EnrichmentBarChartTest {
                 enrichmentResults,
                 pathways,
                 OUTPUT_FILE_PATH,
-                null,
                 null
         );
 
@@ -90,7 +88,6 @@ public class EnrichmentBarChartTest {
                 enrichmentResults,
                 pathways,
                 OUTPUT_FILE_PATH,
-                null,
                 null
         );
 
@@ -112,7 +109,6 @@ public class EnrichmentBarChartTest {
                 enrichmentResults,
                 pathways,
                 OUTPUT_FILE_PATH,
-                null,
                 null
         );
 

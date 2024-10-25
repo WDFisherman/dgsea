@@ -6,6 +6,8 @@ import nl.bioinf.dgsea.data_processing.Pathway;
 import nl.bioinf.dgsea.data_processing.PathwayGene;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import picocli.CommandLine;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
@@ -82,7 +84,11 @@ class CommonFileParams {
  * Has common chart cli- params/options. Common to all possible charts. (note: cannot be record because of picocli)
  */
 class CommonChartParams {
-    @Option(names = {"--title"}, description = "Title of chart, default = 'png'", defaultValue = "png")
+    Logger logger = LogManager.getLogger();
+    @CommandLine.Spec
+    CommandLine.Model.CommandSpec spec;
+
+    @Option(names = {"--title", "-t", "-T"}, description = "Title of chart")
     String title;
     @Option(names = {"--x-axis"}, description = "X-axis title of chart, default = 'png'", defaultValue = "png")
     String xAxisTitle;
@@ -91,23 +97,41 @@ class CommonChartParams {
     @Option(names = {"--image-format"}, paramLabel = "[png|jpg ? png]", description = "Image format of output image, default = 'png'", defaultValue = "png")
     String imageFormat;
 
-    @Option(
-            names = {"--color-scheme"},
-            paramLabel = "[viridis|plasma|inferno|magma|cividis|grays|purples|blues|greens|oranges|reds]",
-            description = "Color scheme to apply to chart, default = '${DEFAULT-VALUE}'. 'color-manual' overrides this option.",
-            defaultValue="viridis",
-            completionCandidates = CommonChartParams.ColorSchemeCandidates.class) // Only a single implementation, because this doesn't work in all kinds of terminal-emulators.
-    String colorScheme;
-
-    @Option(names = {"--color-manual"}, arity = "0..*", paramLabel = "[red|green|blue|purple|orange|gray|black|pink|yellow|magenta|cyan|brown 1...]", description = "One or more colors to apply to chart. Overrides '--color-scheme'. Cycles trough if too few colors were given.")
-    String[] colorManual;
+    @Option(names = {"--color-manual", "-cm"}, arity = "1..*", split = ";", paramLabel = "red|0xRRGGBB", description = """
+    One or more colors to apply to chart. Cycles trough if too few colors were given. Default colors apply if none are given. Options:
+    red,green,blue,for more see: https://docs.oracle.com/javase/6/docs/java/awt/Color.html, 000000-FFFFFF, #000000-#FFFFFF, 0x000000-0xFFFFFF""")
+    private String[] colorManual;
     @Parameters(index = "3+",paramLabel = "<outputPathImage.*>", description = "Output path of generated chart")
     File outputPath;
 
-    static class ColorSchemeCandidates implements Iterable<String> {
-        @Override
-        public java.util.Iterator<String> iterator() {
-            return Arrays.asList("viridis","plasma","inferno","magma","cividis","grays","purples","blues","greens","oranges","reds").iterator();
+    public Color[] getColorManualAsColors() {
+        if (colorManual == null) return new Color[0];
+        Color[] colorManualAsColors = new Color[colorManual.length];
+        for (int i = 0; i < colorManual.length; i++) {
+            try {
+                colorManualAsColors[i] = Color.decode(colorManual[i]);
+            } catch (Exception _) {
+                try {
+                    Field field = Class.forName("java.awt.Color").getField(colorManual[i % colorManual.length]);
+                    colorManualAsColors[i] = (Color) field.get(null);
+                } catch (Exception _) {
+                    logger.error("Given color was neither hexadecimal, nor a valid Java color string. Given color: {}", colorManual[i % colorManual.length]);
+                }
+            }
         }
+        return Arrays.stream(colorManualAsColors).filter(Objects::nonNull).toArray(Color[]::new);
+    }
+
+    public void validateOptions() {
+        if (!(Objects.equals(imageFormat, "png") || Objects.equals(imageFormat, "jpg"))) {
+            throw new CommandLine.ParameterException(spec.commandLine(), "Invalid image format option. Use '--image-format png or '--image-format jpg'.");
+        }
+        if (maxNPathways <= 0) {
+            throw new CommandLine.ParameterException(spec.commandLine(), "Invalid max number pathways option. Use '--max-n-pathway 1'.");
+        }
+    }
+
+    public void setColorManual(String[] colorManual) {
+        this.colorManual = colorManual;
     }
 }

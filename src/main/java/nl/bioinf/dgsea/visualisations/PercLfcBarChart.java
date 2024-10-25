@@ -34,7 +34,7 @@ public class PercLfcBarChart {
     private final String                 title; // chart-styling >>
     private final String                 xAxis;
     private final String                 yAxis;
-    private final String[]               colorManual; //<<
+    private final Color[]                colorManual; //<<
     private final String                 imageFormat;
     private final File                   outputFilePath; // data-selection >>
     private final int                    maxNPathways;
@@ -67,7 +67,7 @@ public class PercLfcBarChart {
         private final List<Deg> degs;
         private final File outputFilePath;
 
-        private String[]               colorManual = null;
+        private Color[]                colorManual = null;
         private String                 imageFormat = "png";
         private int                    maxNPathways = 20;
         private String[]               pathwayIds = null;
@@ -82,7 +82,7 @@ public class PercLfcBarChart {
             this.outputFilePath = outputFilePath;
         }
 
-        public Builder colorManual(String[] val) {  colorManual = val; return this;}
+        public Builder colorManual(Color[] val) {  colorManual = val; return this;}
         public Builder imageFormat(String val) {    imageFormat = val; return this;}
         public Builder maxNPathways(int val) {      maxNPathways = val; return this;}
         public Builder pathwayIds(String[] val) { pathwayIds = val; return this;}
@@ -165,26 +165,11 @@ public class PercLfcBarChart {
      * @param cplot plot to set series paint for
      */
     private void applyColors(CategoryPlot cplot) {
-        if (colorManual != null && colorManual.length > 0) {
-            for (int i = 0; i < pathwayIds.length; i++) {
-                Color color;
-                try {
-                    color = Color.decode(colorManual[i % colorManual.length]);
-                } catch (NumberFormatException e) {
-                    try {
-                        Field field = Class.forName("java.awt.Color").getField(colorManual[i % colorManual.length]);
-                        color = (Color)field.get(null);
-                    } catch (Exception e2) {
-                        color = getDefaultColor(i);
-                        logger.warn("Given color was neither decimal, octal, or hexidecimal, nor a valid Java color string. Given color: {}", colorManual[i % colorManual.length]);
-                    }
-                }
-                cplot.getRenderer().setSeriesPaint(i, color);
-            }
-        } else {
-            for (int i = 0; i < pathwayIds.length; i++) {
+        for (int i = 0; i < pathwayIds.length; i++) {
+            if (colorManual == null || colorManual.length == 0) {
                 cplot.getRenderer().setSeriesPaint(i, getDefaultColor(i));
-            }
+            } else
+                cplot.getRenderer().setSeriesPaint(i, colorManual[i % colorManual.length]);
         }
     }
 
