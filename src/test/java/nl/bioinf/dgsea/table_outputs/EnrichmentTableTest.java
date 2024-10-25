@@ -133,7 +133,7 @@ public class EnrichmentTableTest {
      */
     @Test
     public void testCalculateEnrichment() {
-        enrichmentTable.calculateEnrichment();
+        enrichmentTable.calculateEnrichment("src/test/resources/testCalculateEnrichment.png");
         List<EnrichmentResult> results = enrichmentTable.getEnrichmentResults();
 
         assertEquals(3, results.size(), "Expected 3 enrichment results for pathways.");
@@ -146,7 +146,7 @@ public class EnrichmentTableTest {
     @Test
     public void testEmptyInputLists() {
         enrichmentTable = new EnrichmentTable(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
-        enrichmentTable.calculateEnrichment();
+        enrichmentTable.calculateEnrichment("src/test/resources/testEmptyInputLists.png");
         List<EnrichmentResult> results = enrichmentTable.getEnrichmentResults();
 
         assertTrue(results.isEmpty(), "Expected no results for empty input lists.");
@@ -159,7 +159,7 @@ public class EnrichmentTableTest {
     public void testNoObservedDegs() {
         List<Deg> noDegs = Arrays.asList();
         enrichmentTable = new EnrichmentTable(pathways, noDegs, pathwayGenes);
-        enrichmentTable.calculateEnrichment();
+        enrichmentTable.calculateEnrichment("src/test/resources/testNoObservedDegs.png");
 
         List<EnrichmentResult> results = enrichmentTable.getEnrichmentResults();
         for (EnrichmentResult result : results) {
@@ -178,7 +178,7 @@ public class EnrichmentTableTest {
                 new PathwayGene(PATHWAY2_ID, 2, "GENE1", "ENSG00000123456") // GENE1 is in both pathways
         );
         enrichmentTable = new EnrichmentTable(pathways, degs, pathwayGenes);
-        enrichmentTable.calculateEnrichment();
+        enrichmentTable.calculateEnrichment("src/test/resources/testOverlappingPathwayGenes.png");
 
         List<EnrichmentResult> results = enrichmentTable.getEnrichmentResults();
         assertFalse(results.isEmpty(), "Expected results to be calculated despite overlapping pathway genes.");
@@ -217,7 +217,7 @@ public class EnrichmentTableTest {
     @Test
     public void testCalculateEnrichmentWithoutPathways() {
         enrichmentTable = new EnrichmentTable(new ArrayList<>(), degs, pathwayGenes);
-        enrichmentTable.calculateEnrichment();
+        enrichmentTable.calculateEnrichment("src/test/resources/testCalculateEnrichmentWithoutPathways.png");
         List<EnrichmentResult> results = enrichmentTable.getEnrichmentResults();
         assertTrue(results.isEmpty(), "Expected no enrichment results when there are no pathways.");
     }

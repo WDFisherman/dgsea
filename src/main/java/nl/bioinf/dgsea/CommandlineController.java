@@ -62,10 +62,6 @@ class EnrichBarChart implements Runnable {
             description = "Output file path for the bar chart (e.g., ./output/enrichment_bar_chart.png)")
     private String outputFilePath;
 
-    @Option(names = {"--max-n-pathways"}, paramLabel = "[1-inf]",
-            description = "Max number of pathways to include in chart. '--pathway-ids' overrides this option.",
-            defaultValue = "20")
-    private int maxNPathways;
 
     /**
      * Executes the command to generate and save an enrichment bar chart.
