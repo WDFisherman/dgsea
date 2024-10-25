@@ -44,9 +44,11 @@ public class EnrichmentAnalysisService {
             ChartType chartType,
             Double dotSize,
             Float dotTransparency
+
     ) throws IOException {
         EnrichmentTable enrichmentTable = new EnrichmentTable(pathways, degs, pathwayGenes);
-        enrichmentTable.calculateEnrichment();
+        enrichmentTable.calculateEnrichment("output.csv");
+
         List<EnrichmentResult> results = enrichmentTable.getEnrichmentResults();
 
         List<EnrichmentResult> significantResults = results.stream()
