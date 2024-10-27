@@ -1,17 +1,36 @@
 # DGSEA-tools
 
-DGSEA-tools provide several tools to gain insights into gene-enrichment data as part of a differential gene set enrichment analysis.
+**DGSEA-tools** provide several tools to gain insights into gene-enrichment data as part of a differential gene set enrichment analysis.
 Using results of this analysis tool you will be able to:
-* Get count data on 2 aspects of degs for every pathway: presence in pathway and presence of significance
-* Compare enrichment scores between pathways in a bar-chart
-* Compare enrichment scores and its relationship with p- significance values between pathways in a dot-chart
-* Compare pathways average deg(differently expressed gene) log-fold-change with one another in a bar-chart
+- Obtain count data on two aspects of differentially expressed genes (DEGs) for each pathway: presence in the pathway and significance presence.
+- Compare enrichment scores between pathways using bar charts.
+- Analyze the relationship between enrichment scores and p-values across pathways with dot charts.
+- Compare the average log-fold change of DEGs among pathways using bar charts.
 
-Differential gene set enrichment analysis relies on the output data of a differential gene expression analysis(dgea). 
-This in the form of log-fold-change data and significance measured as a p-value. 
-This can be formed from count sequencing data that can be linked to gene, 
-    from either a [microarray](https://www.genome.gov/genetics-glossary/Microarray-Technology), [*-omics](https://www.britannica.com/science/omics)(cDNA, RNA, proteins) expression sequencing, or similar background.
-Note: As of writing this tool can only process single-omics data.
+
+Differential gene set enrichment analysis relies on output data from differential gene expression analysis (DGEA), specifically in the form of log-fold change data and significance measured as p-values. This data can originate from count sequencing linked to genes, such as:
+
+- [Microarray](https://www.genome.gov/genetics-glossary/Microarray-Technology)
+- [Omics](https://www.britannica.com/science/omics) (cDNA, RNA, proteins) expression sequencing
+
+**Note:** Currently, this tool only processes single-omics data.
+
+## Table of Contents
+
+1. [Example Results and Interpretation](#example-results-and-interpretation)
+   - [Contingency Table](#contingency-table)
+   - [Enrichment Charts](#enrichment-charts)
+     - [Bar Chart](#bar-chart)
+     - [Dot Chart](#dot-chart)
+   - [Average Log-Fold Change of DEGs per Pathway](#average-log-fold-change-of-degs-per-pathway)
+2. [Installation](#installation)
+3. [Usage](#usage)
+4. [Support](#support)
+5. [Contributing](#contributing)
+6. [Authors and Acknowledgments](#authors-and-acknowledgments)
+7. [License](#license)
+8. [References and Further Reading](#references-and-further-reading)
+9. [Changelog](#changelog)
 
 ## Example results (interpretation)
 
@@ -130,8 +149,8 @@ The results can be filtered using option `--max-n-pathways`, selecting the top-*
 
 ## Installation
 
-This tool requires JRE 22 to be installed on your computer. 
-For just running the application we recommend downloading the pre-build jar in this repo. See: `builds/`.
+To install DGSEA-tools, ensure that **JRE 22** is installed on your computer. Download the pre-built JAR file from the `builds/` directory.
+
 
 ## Usage
 Basic test usage, based on the test data in this repo under: `src/test/resources/`:
@@ -217,18 +236,24 @@ This command generates an enrichment dot chart using given data.
 ```
 
 ## Support
-In case you are having trouble running this application, or you're discovered a bug, 
-    you are always welcome to send an e-mail(see section: Authors and acknowledgment).
+
+If you encounter issues or discover bugs while using this application feel welcome to reach out via email (see the **Authors and Acknowledgments** section).
 
 ## Contributing
 We would like to inform that there are no outside contributions needed. You are welcome to send us feature suggestions and bug-reports.
 
-## Authors and acknowledgment
-Made by:
-* Jort Gommers: j.r.gommers@st.hanze.nl
-* Willem Daniël Visser: wi.d.visser@st.hanze.nl \
-Data contribution:
-* Marcel Kempenaar: m.kempenaar@pl.hanze.nl
+## Authors and Acknowledgments
+
+Developed by:
+- Jort Gommers: [j.r.gommers@st.hanze.nl](mailto:j.r.gommers@st.hanze.nl)
+- Willem Daniël Visser: [wi.d.visser@st.hanze.nl](mailto:wi.d.visser@st.hanze.nl)
+
+Data contributions by:
+- Marcel Kempenaar: [m.kempenaar@pl.hanze.nl](mailto:m.kempenaar@pl.hanze.nl)
 
 ## License
 No specific licensing applies 
+
+## Changelog
+
+- **v1.0**: Initial release with basic functionality.
