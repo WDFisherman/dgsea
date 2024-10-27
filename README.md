@@ -23,14 +23,15 @@ Differential gene set enrichment analysis relies on output data from differentia
      - [Bar Chart](#bar-chart)
      - [Dot Chart](#dot-chart)
    - [Average Log-Fold Change of DEGs per Pathway](#average-log-fold-change-of-degs-per-pathway)
-2. [Installation](#installation)
-3. [Usage](#usage)
-4. [Support](#support)
-5. [Contributing](#contributing)
-6. [Authors and Acknowledgments](#authors-and-acknowledgments)
-7. [License](#license)
-8. [References and Further Reading](#references-and-further-reading)
-9. [Changelog](#changelog)
+2. [In Progress](#in-progress)
+3. [Installation](#installation)
+4. [Usage](#usage)
+5. [Support](#support)
+6. [Contributing](#contributing)
+7. [Authors and Acknowledgments](#authors-and-acknowledgments)
+8. [License](#license)
+9. [References and Further Reading](#references-and-further-reading)
+10. [Changelog](#changelog)
 
 ## Example results (interpretation)
 
@@ -146,6 +147,10 @@ The results can be filtered using option `--max-n-pathways`, selecting the top-*
     This chart also has the option to set custom x and y labs using `x-axis` and `y-axis`.
 
 ![](assets/outputLfcBarChart.png)
+
+## In Progress
+
+- Due to issues with JFree, the customization features for **dot size** and **dot transparency** in the dot chart functionality are currently being developed and are not operational at this time. Stay tuned for updates on these features in future releases.
 
 ## Installation
 
