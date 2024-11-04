@@ -8,13 +8,16 @@ package nl.bioinf.dgsea.visualisations;
 
 import nl.bioinf.dgsea.data_processing.EnrichmentResult;
 import nl.bioinf.dgsea.data_processing.Pathway;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.jfree.data.xy.XYSeriesCollection;
 
 import java.awt.*;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.List;
 
@@ -33,6 +36,8 @@ public class EnrichmentDotPlotTest {
 
     private List<EnrichmentResult> enrichmentResults;
     private List<Pathway> pathways;
+    private static final double VALID_DOT_SIZE = 10.0;
+    private static final float VALID_DOT_TRANSPARENCY = 0.5f;
 
     /**
      * Sets up the test environment before each test case.
@@ -54,8 +59,8 @@ public class EnrichmentDotPlotTest {
                 new Pathway("pathway3", "Fatty Acid Biosynthesis"),
                 new Pathway("pathway4", "Pathway with NaN") // To test the NaN case
         );
-    }
 
+    }
     /**
      * Tests the creation of the dot plot, verifying that no exceptions
      * are thrown and that the output file is created successfully.
@@ -116,14 +121,9 @@ public class EnrichmentDotPlotTest {
         }
     }
 
-    /**
-     * Tests the color mapping functionality by verifying that color names
-     * and hex codes are correctly converted to Color objects.
-     *
-     * @throws IOException if there is an issue with color handling.
-     */
+
     @Test
-    public void testGetColorFromString() throws IOException {
+    public void testSetDotSizeValid() throws IOException {
         EnrichmentDotPlot dotPlot = new EnrichmentDotPlot(
                 "Enrichment Dot Plot",
                 enrichmentResults,
@@ -133,5 +133,75 @@ public class EnrichmentDotPlotTest {
                 DOT_SIZE,
                 DOT_TRANSPARENCY
         );
+        assertDoesNotThrow(() -> dotPlot.setDotSize(VALID_DOT_SIZE), "Valid dot size should not throw an exception.");
     }
+
+    /**
+     * Tests setting an invalid dot size (0 or negative) and verifies an exception is thrown.
+     */
+    @Test
+    public void testSetDotSizeInvalid() throws IOException {
+        EnrichmentDotPlot dotPlot = new EnrichmentDotPlot(
+                "Enrichment Dot Plot",
+                enrichmentResults,
+                pathways,
+                OUTPUT_FILE_PATH,
+                null,
+                DOT_SIZE,
+                DOT_TRANSPARENCY
+        );
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> dotPlot.setDotSize(0),
+                "Dot size of 0 should throw IllegalArgumentException.");
+        assertEquals("Dot size must be positive.", exception.getMessage());
+
+        exception = assertThrows(IllegalArgumentException.class, () -> dotPlot.setDotSize(-5),
+                "Negative dot size should throw IllegalArgumentException.");
+        assertEquals("Dot size must be positive.", exception.getMessage());
+    }
+
+    /**
+     * Tests setting a valid dot transparency within the range [0, 1].
+     */
+    @Test
+    public void testSetDotTransparencyValid() throws IOException {
+        EnrichmentDotPlot dotPlot = new EnrichmentDotPlot(
+                "Enrichment Dot Plot",
+                enrichmentResults,
+                pathways,
+                OUTPUT_FILE_PATH,
+                null,
+                DOT_SIZE,
+                DOT_TRANSPARENCY
+        );
+
+        assertDoesNotThrow(() -> dotPlot.setDotTransparency(0.0f), "Transparency of 0 should not throw an exception.");
+        assertDoesNotThrow(() -> dotPlot.setDotTransparency(0.5f), "Transparency of 0.5 should not throw an exception.");
+        assertDoesNotThrow(() -> dotPlot.setDotTransparency(1.0f), "Transparency of 1 should not throw an exception.");
+    }
+
+    /**
+     * Tests setting an invalid dot transparency value outside the range [0, 1] and verifies an exception is thrown.
+     */
+    @Test
+    public void testSetDotTransparencyInvalid() throws IOException {
+        EnrichmentDotPlot dotPlot = new EnrichmentDotPlot(
+                "Enrichment Dot Plot",
+                enrichmentResults,
+                pathways,
+                OUTPUT_FILE_PATH,
+                null,
+                DOT_SIZE,
+                DOT_TRANSPARENCY
+        );
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> dotPlot.setDotTransparency(-0.1f),
+                "Transparency below 0 should throw IllegalArgumentException.");
+        assertEquals("Transparency must be between 0 and 1.", exception.getMessage());
+
+        exception = assertThrows(IllegalArgumentException.class, () -> dotPlot.setDotTransparency(1.1f),
+                "Transparency above 1 should throw IllegalArgumentException.");
+        assertEquals("Transparency must be between 0 and 1.", exception.getMessage());
+    }
+
 }

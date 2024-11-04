@@ -80,7 +80,7 @@ public class EnrichmentDotPlot {
      * @param dotSize The size of the dots, must be positive.
      * @throws IllegalArgumentException if dotSize is not positive.
      */
-    private void setDotSize(double dotSize) {
+    void setDotSize(double dotSize) {
         if (dotSize <= 0) {
             throw new IllegalArgumentException("Dot size must be positive.");
         }
@@ -93,7 +93,7 @@ public class EnrichmentDotPlot {
      * @param dotTransparency The transparency value between 0 (completely transparent) and 1 (completely opaque).
      * @throws IllegalArgumentException if dotTransparency is not between 0 and 1.
      */
-    private void setDotTransparency(float dotTransparency) {
+    void setDotTransparency(float dotTransparency) {
         if (dotTransparency < 0 || dotTransparency > 1) {
             throw new IllegalArgumentException("Transparency must be between 0 and 1.");
         }
