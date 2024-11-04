@@ -14,10 +14,8 @@ import org.jfree.chart.ChartUtils;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import nl.bioinf.dgsea.data_processing.Pathway;
