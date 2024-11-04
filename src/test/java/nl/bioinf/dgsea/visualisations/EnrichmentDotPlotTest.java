@@ -133,41 +133,5 @@ public class EnrichmentDotPlotTest {
                 DOT_SIZE,
                 DOT_TRANSPARENCY
         );
-
-        // Test color name to Color mapping
-        Color redColor = dotPlot.getColorFromString("red");
-        assertEquals(Color.RED, redColor, "Should return Color.RED for 'red' string.");
-
-        Color hexColor = dotPlot.getColorFromString("#00FF00");
-        assertEquals(Color.GREEN, hexColor, "Should return Color.GREEN for '#00FF00' hex code.");
-
-        Color invalidColor = dotPlot.getColorFromString("invalidColorName");
-        assertEquals(Color.GRAY, invalidColor, "Should return Color.GRAY for an invalid color name.");
-    }
-
-    /**
-     * Tests the retrieval of default colors based on their index, ensuring
-     * the expected color is returned for each index.
-     *
-     * @throws IOException if there is an issue with default color retrieval.
-     */
-    @Test
-    public void testGetDefaultColor() throws IOException {
-        EnrichmentDotPlot dotPlot = new EnrichmentDotPlot(
-                "Enrichment Dot Plot",
-                enrichmentResults,
-                pathways,
-                OUTPUT_FILE_PATH,
-                null,
-                DOT_SIZE,
-                DOT_TRANSPARENCY
-        );
-
-        // Test default color retrieval
-        assertEquals(Color.RED, dotPlot.getDefaultColor(0), "Index 0 should return Color.RED.");
-        assertEquals(Color.BLUE, dotPlot.getDefaultColor(1), "Index 1 should return Color.BLUE.");
-        assertEquals(Color.GREEN, dotPlot.getDefaultColor(2), "Index 2 should return Color.GREEN.");
-        assertEquals(Color.ORANGE, dotPlot.getDefaultColor(3), "Index 3 should return Color.ORANGE.");
-        assertEquals(Color.MAGENTA, dotPlot.getDefaultColor(4), "Index 4 should return Color.MAGENTA.");
     }
 }

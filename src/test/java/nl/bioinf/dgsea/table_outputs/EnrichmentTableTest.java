@@ -137,7 +137,7 @@ public class EnrichmentTableTest {
         List<EnrichmentResult> results = enrichmentTable.getEnrichmentResults();
 
         assertEquals(3, results.size(), "Expected 3 enrichment results for pathways.");
-        assertEquals(PATHWAY1_ID, results.get(0).pathwayId(), "First pathway should be pathway1.");
+        assertEquals(PATHWAY1_ID, results.getFirst().pathwayId(), "First pathway should be pathway1.");
     }
 
     /**
@@ -157,7 +157,7 @@ public class EnrichmentTableTest {
      */
     @Test
     public void testNoObservedDegs() {
-        List<Deg> noDegs = Arrays.asList();
+        List<Deg> noDegs = List.of();
         enrichmentTable = new EnrichmentTable(pathways, noDegs, pathwayGenes);
         enrichmentTable.calculateEnrichment("src/test/resources/testNoObservedDegs.png");
 

@@ -57,6 +57,7 @@ class EnrichBarChart implements Runnable {
     private CommonFileParams commonFileParams;
     @Mixin
     private CommonChartParams commonChartParams;
+    private final Logger logger = LogManager.getLogger(this.getClass());
 
     @Option(names = {"--output-file", "-o", "-O"}, paramLabel = "FILE",
             description = "Output file path for the bar chart (e.g., ./output/enrichment_bar_chart.png)")
@@ -93,7 +94,7 @@ class EnrichBarChart implements Runnable {
                     null   // dotTransparency not needed
             );
         } catch (IOException e) {
-            System.err.println("Error reading input data or saving PNG: " + e.getMessage());
+            logger.error("Error reading input data or saving PNG: {}", e.getMessage());
         }
     }
 }
@@ -111,6 +112,7 @@ class EnrichDotChart implements Runnable {
     private CommonFileParams commonFileParams;
     @Mixin
     private CommonChartParams commonChartParams;
+    private final Logger logger = LogManager.getLogger(EnrichDotChart.class);
 
     @Option(names = {"--dot-size", "-ds", "-DS"}, paramLabel = "[0.0-inf]",
             description = "Dot size, default = ${DEFAULT-VALUE}", defaultValue = "30.0")
@@ -152,7 +154,7 @@ class EnrichDotChart implements Runnable {
                     dotTransparency
             );
         } catch (IOException e) {
-            System.err.println("Error reading input data or saving PNG: " + e.getMessage());
+            logger.error("Error reading input data or saving PNG: {}", e.getMessage());
         }
     }
 }
@@ -225,7 +227,7 @@ class ContinuityTable implements Runnable {
     @CommandLine.Spec
     CommandLine.Model.CommandSpec spec;
 
-    Logger logger = LogManager.getLogger(ContinuityTable.class);
+    final Logger logger = LogManager.getLogger(ContinuityTable.class);
 
     @Mixin
     private CommonToAll commonToAll;

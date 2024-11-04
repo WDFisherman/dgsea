@@ -57,7 +57,6 @@ class CommonToAll {
      * Adjusts the log level according to the verbosity array.
      */
     public void setLoggingScope() {
-        System.out.println("verbose = " + Arrays.toString(verbose));
         if (verbose.length > 1) {
             LogManager.getLogger().atLevel(Level.WARN).log(verbose);
         } else if (verbose.length > 0) {
@@ -140,7 +139,7 @@ class CommonFileParams {
  * This includes titles, image format, color schemes, and output path.
  */
 class CommonChartParams {
-    Logger logger = LogManager.getLogger();
+    final Logger logger = LogManager.getLogger();
     @CommandLine.Spec
     CommandLine.Model.CommandSpec spec;
 

@@ -4,6 +4,8 @@ import nl.bioinf.dgsea.data_processing.*;
 import nl.bioinf.dgsea.table_outputs.EnrichmentTable;
 import nl.bioinf.dgsea.visualisations.EnrichmentBarChart;
 import nl.bioinf.dgsea.visualisations.EnrichmentDotPlot;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.awt.*;
 import java.io.IOException;
@@ -18,6 +20,7 @@ import java.util.stream.Collectors;
  * pathway enrichment results based on gene expression data.
  */
 public class EnrichmentAnalysisService {
+    private final Logger logger = LogManager.getLogger(EnrichmentAnalysisService.class);
 
     /**
      * Generates an enrichment chart (bar-chart or dot-chart) based on the provided data.
@@ -73,7 +76,7 @@ public class EnrichmentAnalysisService {
                         outputFile,
                         colorManual
                 );
-                System.out.println("Bar chart saved as PNG at: " + outputFile);
+                logger.info("Bar chart saved as PNG at: " + outputFile);
             }
             case DOT_CHART -> {
                 new EnrichmentDotPlot(
@@ -85,7 +88,7 @@ public class EnrichmentAnalysisService {
                         dotSize != null ? dotSize : 30.0,  // Default size
                         dotTransparency != null ? dotTransparency : 1.0f // Default transparency
                 );
-                System.out.println("Dot plot saved as PNG at: " + outputFile);
+                logger.info("Dot plot saved as PNG at: {}", outputFile);
             }
         }
     }

@@ -85,8 +85,6 @@ public class PercLfcBarChart {
         public Builder imageFormat(String val) {    imageFormat = val; return this;}
         public Builder maxNPathways(int val) {      maxNPathways = val; return this;}
         public Builder pathwayIds(String[] val) { pathwayIds = val; return this;}
-
-
     }
 
     /**

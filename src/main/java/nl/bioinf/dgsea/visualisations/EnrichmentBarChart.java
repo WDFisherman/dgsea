@@ -1,5 +1,7 @@
 package nl.bioinf.dgsea.visualisations;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.CategoryAxis;
@@ -29,6 +31,7 @@ public class EnrichmentBarChart {
     private final String title;
     private final List<EnrichmentResult> enrichmentResults;
     private final Color[] colorManual; // User-defined colors
+    private final Logger logger = LogManager.getLogger();
 
     /**
      * Constructor for EnrichmentBarChart.
@@ -106,44 +109,12 @@ public class EnrichmentBarChart {
     }
 
     /**
-     * Converts a color name or hex code to a Color object.
-     *
-     * @param colorStr The name or hex code of the color.
-     * @return The corresponding Color object, or gray if invalid.
-     */
-    Color getColorFromString(String colorStr) {
-        Map<String, Color> colorNameMap = new HashMap<>();
-        colorNameMap.put("red", Color.RED);
-        colorNameMap.put("blue", Color.BLUE);
-        colorNameMap.put("green", Color.GREEN);
-        colorNameMap.put("orange", Color.ORANGE);
-        colorNameMap.put("yellow", Color.YELLOW);
-        colorNameMap.put("pink", Color.PINK);
-        colorNameMap.put("magenta", Color.MAGENTA);
-        colorNameMap.put("cyan", Color.CYAN);
-        colorNameMap.put("gray", Color.GRAY);
-        colorNameMap.put("black", Color.BLACK);
-        colorNameMap.put("white", Color.WHITE);
-
-        if (colorNameMap.containsKey(colorStr.toLowerCase())) {
-            return colorNameMap.get(colorStr.toLowerCase());
-        }
-
-        try {
-            return Color.decode(colorStr);
-        } catch (NumberFormatException e) {
-            System.err.println("Invalid color format: " + colorStr);
-            return Color.GRAY; // Fallback color
-        }
-    }
-
-    /**
      * Provides a default color based on the index.
      *
      * @param index The index of the series.
      * @return The default Color object.
      */
-    Color getDefaultColor(int index) {
+    static Color getDefaultColor(int index) {
         return switch (index % 5) {
             case 0 -> Color.RED;
             case 1 -> Color.BLUE;
@@ -178,7 +149,7 @@ public class EnrichmentBarChart {
                     dataset.addValue(result.enrichmentScore(), description, description);  // Use description as series and category name
                     addedSeriesNames.add(description); // Add description to the set
                 } else {
-                    System.out.println("Description '" + description + "' already exists. Skipping.");
+                    logger.info("Pathway with description: '{}' already exists. Will not be added to bar-chart.", description);
                 }
             }
         }

@@ -4,6 +4,8 @@ import nl.bioinf.dgsea.data_processing.Deg;
 import nl.bioinf.dgsea.data_processing.Pathway;
 import nl.bioinf.dgsea.data_processing.PathwayGene;
 import nl.bioinf.dgsea.data_processing.EnrichmentResult;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -21,6 +23,7 @@ public class EnrichmentTable {
     private final List<Deg> degs;
     private final List<PathwayGene> pathwayGenes;
     private final List<EnrichmentResult> enrichmentResults;
+    private final Logger logger = LogManager.getLogger(EnrichmentTable.class);
 
     /**
      * Constructs an EnrichmentTable with the specified pathways, DEGs, and pathway-gene relationships.
@@ -75,7 +78,7 @@ public class EnrichmentTable {
                 writer.newLine();
             }
         } catch (IOException e) {
-            System.err.println("Error writing to CSV file: " + e.getMessage());
+            logger.error("Error writing to CSV file: {}", e.getMessage());
         }
     }
 

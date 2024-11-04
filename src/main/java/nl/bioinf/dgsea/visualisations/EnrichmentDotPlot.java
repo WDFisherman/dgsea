@@ -1,5 +1,7 @@
 package nl.bioinf.dgsea.visualisations;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.labels.ItemLabelPosition;
@@ -37,6 +39,7 @@ public class EnrichmentDotPlot {
     private final Color[] colorManual; // User-defined colors\
     private double dotSize;       // Size of the dots
     private float dotTransparency; // Transparency of the dots
+    private final Logger logger = LogManager.getLogger(EnrichmentDotPlot.class);
 
     /**
      * Constructor for EnrichmentDotPlot.
@@ -173,63 +176,13 @@ public class EnrichmentDotPlot {
         Color colorItem;
         for (int i = 0; i < enrichmentResults.size(); i++) {
             if (colorManual == null || colorManual.length == 0) {
-                colorItem = getDefaultColor(i);
+                colorItem = EnrichmentBarChart.getDefaultColor(i);
             } else {
                 colorItem = colorManual[i % colorManual.length];
             }
             colorItem = new Color(colorItem.getRed(), colorItem.getGreen(), colorItem.getBlue(), (int) (dotTransparency * 255));
             renderer.setSeriesPaint(i, colorItem);
         }
-    }
-
-    /**
-     * Converts a string representation of a color into a Color object.
-     *
-     * @param colorStr The name or hex code of the color.
-     * @return The corresponding Color object, or gray if invalid.
-     */
-    Color getColorFromString(String colorStr) {
-        // Mapping of common color names to Color objects
-        Map<String, Color> colorNameMap = new HashMap<>();
-        colorNameMap.put("red", Color.RED);
-        colorNameMap.put("blue", Color.BLUE);
-        colorNameMap.put("green", Color.GREEN);
-        colorNameMap.put("orange", Color.ORANGE);
-        colorNameMap.put("yellow", Color.YELLOW);
-        colorNameMap.put("pink", Color.PINK);
-        colorNameMap.put("magenta", Color.MAGENTA);
-        colorNameMap.put("cyan", Color.CYAN);
-        colorNameMap.put("gray", Color.GRAY);
-        colorNameMap.put("black", Color.BLACK);
-        colorNameMap.put("white", Color.WHITE);
-
-        // Check if the colorStr is a named color
-        if (colorNameMap.containsKey(colorStr.toLowerCase())) {
-            return colorNameMap.get(colorStr.toLowerCase());
-        }
-
-        // Otherwise, try interpreting it as a hex color code
-        try {
-            return Color.decode(colorStr);
-        } catch (NumberFormatException e) {
-            return Color.GRAY; // Fallback color
-        }
-    }
-
-    /**
-     * Provides a default color based on the index of the series.
-     *
-     * @param index The index of the series.
-     * @return The default Color object.
-     */
-    Color getDefaultColor(int index) {
-        return switch (index % 5) {
-            case 0 -> Color.RED;
-            case 1 -> Color.BLUE;
-            case 2 -> Color.GREEN;
-            case 3 -> Color.ORANGE;
-            default -> Color.MAGENTA; // Fallback color
-        };
     }
 
     /**
@@ -274,7 +227,7 @@ public class EnrichmentDotPlot {
      */
     private void logDuplicateSeries(String seriesName) {
         // Placeholder for logging duplicates, can be enhanced with a logging framework
-        System.err.println("Series with the name '" + seriesName + "' already exists. Skipping.");
+        logger.error("Series with the name '{}' already exists. Skipping.", seriesName);
     }
 
     /**

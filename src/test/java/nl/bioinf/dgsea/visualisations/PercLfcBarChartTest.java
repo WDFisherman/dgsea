@@ -86,13 +86,6 @@ class PercLfcBarChartTest {
         assertFileWasMade(chartGeneratorsBuilder, testName, "png");
     }
 
-//    @Test
-//    void saveChart_setRgbColor() {
-//        String testName = "rgb_color";
-//        PercLfcBarChart.Builder chartGeneratorsBuilder = getBuilderRequiredWorking(testName).colorManual(new Color[]{"rgb(255, 210, 55)"});
-//        assertFileWasMade(chartGeneratorsBuilder, testName, "png");
-//    }
-
     /**
      * Does set chart save as a proper jpeg?
      */

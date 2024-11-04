@@ -119,39 +119,19 @@ public class EnrichmentBarChartTest {
                 OUTPUT_FILE_PATH,
                 null
         );
-
-        // Test color name to Color mapping
-        Color redColor = chart.getColorFromString("red");
-        assertEquals(Color.RED, redColor, "Should return Color.RED for 'red' string.");
-
-        Color hexColor = chart.getColorFromString("#00FF00");
-        assertEquals(Color.GREEN, hexColor, "Should return Color.GREEN for '#00FF00' hex code.");
-
-        Color invalidColor = chart.getColorFromString("invalidColorName");
-        assertEquals(Color.GRAY, invalidColor, "Should return Color.GRAY for an invalid color name.");
     }
 
     /**
      * Tests the retrieval of default colors based on their index, ensuring
      * the expected color is returned for each index.
-     *
-     * @throws IOException if there is an issue with default color retrieval.
      */
     @Test
-    public void testGetDefaultColor() throws IOException {
-        EnrichmentBarChart chart = new EnrichmentBarChart(
-                "Enrichment Bar Chart",
-                enrichmentResults,
-                pathways,
-                OUTPUT_FILE_PATH,
-                null
-        );
-
+    public void testGetDefaultColor() {
         // Test default color retrieval
-        assertEquals(Color.RED, chart.getDefaultColor(0), "Index 0 should return Color.RED.");
-        assertEquals(Color.BLUE, chart.getDefaultColor(1), "Index 1 should return Color.BLUE.");
-        assertEquals(Color.GREEN, chart.getDefaultColor(2), "Index 2 should return Color.GREEN.");
-        assertEquals(Color.ORANGE, chart.getDefaultColor(3), "Index 3 should return Color.ORANGE.");
-        assertEquals(Color.MAGENTA, chart.getDefaultColor(4), "Index 4 should return Color.MAGENTA.");
+        assertEquals(Color.RED, EnrichmentBarChart.getDefaultColor(0), "Index 0 should return Color.RED.");
+        assertEquals(Color.BLUE, EnrichmentBarChart.getDefaultColor(1), "Index 1 should return Color.BLUE.");
+        assertEquals(Color.GREEN, EnrichmentBarChart.getDefaultColor(2), "Index 2 should return Color.GREEN.");
+        assertEquals(Color.ORANGE, EnrichmentBarChart.getDefaultColor(3), "Index 3 should return Color.ORANGE.");
+        assertEquals(Color.MAGENTA, EnrichmentBarChart.getDefaultColor(4), "Index 4 should return Color.MAGENTA.");
     }
 }
