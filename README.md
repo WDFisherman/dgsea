@@ -17,11 +17,11 @@ Differential gene set enrichment analysis relies on output data from differentia
 
 ## Table of Contents
 
-1. [Example Results and Interpretation](#example-results-and-interpretation)
+1. [Example Results and Interpretation](#example-results-interpretation)
    - [Contingency Table](#contingency-table)
    - [Enrichment Charts](#enrichment-charts)
-     - [Bar Chart](#bar-chart)
-     - [Dot Chart](#dot-chart)
+     - [Bar Chart](#enrichment-bar-chart)
+     - [Dot Chart](#enrichment-dot-chart)
    - [Average Log-Fold Change of DEGs per Pathway](#average-log-fold-change-of-degs-per-pathway)
 2. [In Progress](#in-progress)
 3. [Installation](#installation)
@@ -30,8 +30,7 @@ Differential gene set enrichment analysis relies on output data from differentia
 6. [Contributing](#contributing)
 7. [Authors and Acknowledgments](#authors-and-acknowledgments)
 8. [License](#license)
-9. [References and Further Reading](#references-and-further-reading)
-10. [Changelog](#changelog)
+9. [Changelog](#changelog)
 
 ## Example results (interpretation)
 
@@ -53,7 +52,8 @@ Help-full count data for an overall idea of the gene set enrichment-result.
     C	 | 15	 | 3	 | 18
     C*	 | 2889	 | 923	 | 3812
     Sum	 | 2904	 | 926	 | 3830
-(...)
+    
+    (...)
     
     Fluid shear stress and atherosclerosis (hsa05418)
          | D	 | D*	 | Sum
@@ -91,6 +91,8 @@ Calculating enrichment-scores for pathways is a well established way to transfor
 
 You can compare enrichment-scores between pathways using the `enrich_bar_chart` sub-command:
 
+#### Enrichment bar chart
+
 ![](assets/outputEnrichBarChart.png)
 
 Made using custom chosen colors and a maximum number of pathways(4). 
@@ -99,6 +101,8 @@ Made using custom chosen colors and a maximum number of pathways(4).
     All other pathways will always be put in output.csv.
 
 You can then compare enrichment scores and adjusted p-values between pathways in a dot-chart, using the `enrich_dot_chart` sub-command:
+
+#### Enrichment dot chart
 
 ![](assets/outputEnrichDotChart.png)
 
@@ -110,7 +114,7 @@ Made using custom chosen colors, a maximum number of pathways(30) and custom dot
 ### Average Log-fold-change of degs per pathway
 
 Being able to tell which pathways have the most contribution with its associated degs total absolute log-fold-change(lfc) informs us how seriously effected a pathway is in a dataset.
-    Whenever uniform or not(absolutity).
+    Whenever uniform or not(absolution).
     Taking an average across all the pathways found degs informs us how seriously effected the degs are in that pathway.
     Then putting these averages on a scale 0-100%, informs us how seriously effected the pathway-degs are compared to others.
     In other words did one pathway change on its degs, more than others. Or in isolation to others? (**Disclaimer:** no scientific tests were performed on this method.)

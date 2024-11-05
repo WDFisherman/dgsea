@@ -124,7 +124,7 @@ class PercLfcBarChartTest {
                 new File("lala-folder/output.png")
         );
         PercLfcBarChart percLfcBarChart = new PercLfcBarChart(chartGeneratorsBuilder);
-        assertThrows(RuntimeException.class, percLfcBarChart::saveChart);
+        assertThrows(IOException.class, percLfcBarChart::saveChart);
     }
 
     /**
@@ -147,7 +147,11 @@ class PercLfcBarChartTest {
      */
     private static void assertFileWasMade(PercLfcBarChart.Builder chartGeneratorsBuilder, String testName, String fileExtensionName) {
         PercLfcBarChart percLfcBarChart = new PercLfcBarChart(chartGeneratorsBuilder);
-        percLfcBarChart.saveChart();
+        try {
+            percLfcBarChart.saveChart();
+        } catch (Exception e) {
+            fail("Unexpected error accord during test: " + e.getMessage());
+        }
         assertTrue(new DateRange(
                 System.currentTimeMillis() - (100 * 100), System.currentTimeMillis())
                 .contains(new File(testResourcesFolder + "test_lfc_" + testName + "." + fileExtensionName).lastModified()));

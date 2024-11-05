@@ -8,16 +8,13 @@ package nl.bioinf.dgsea.visualisations;
 
 import nl.bioinf.dgsea.data_processing.EnrichmentResult;
 import nl.bioinf.dgsea.data_processing.Pathway;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.jfree.data.xy.XYSeriesCollection;
 
 import java.awt.*;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.List;
 
@@ -37,7 +34,6 @@ public class EnrichmentDotPlotTest {
     private List<EnrichmentResult> enrichmentResults;
     private List<Pathway> pathways;
     private static final double VALID_DOT_SIZE = 10.0;
-    private static final float VALID_DOT_TRANSPARENCY = 0.5f;
 
     /**
      * Sets up the test environment before each test case.

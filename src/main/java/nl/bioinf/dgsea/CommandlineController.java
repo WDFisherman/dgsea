@@ -7,7 +7,6 @@
  */
 package nl.bioinf.dgsea;
 
-import nl.bioinf.dgsea.data_processing.*;
 import nl.bioinf.dgsea.table_outputs.TwoByTwoContingencyTable;
 import nl.bioinf.dgsea.visualisations.PercLfcBarChart;
 import org.apache.logging.log4j.LogManager;
@@ -20,7 +19,7 @@ import picocli.CommandLine.Mixin;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
+import java.util.Arrays;
 
 
 /**
@@ -51,13 +50,16 @@ public class CommandlineController implements Runnable {
 @Command(name = "enrich_bar_chart", version = "Enrichment bar-chart 1.0", mixinStandardHelpOptions = true,
         description = "Generates and saves an enrichment bar chart showing top enriched pathways.")
 class EnrichBarChart implements Runnable {
+    @CommandLine.Spec
+    private CommandLine.Model.CommandSpec spec;
+    private final Logger logger = LogManager.getLogger(this.getClass());
+
     @Mixin
     private CommonToAll commonToAll;
     @Mixin
     private CommonFileParams commonFileParams;
     @Mixin
     private CommonChartParams commonChartParams;
-    private final Logger logger = LogManager.getLogger(this.getClass());
 
     @Option(names = {"--output-file", "-o", "-O"}, paramLabel = "FILE",
             description = "Output file path for the bar chart (e.g., ./output/enrichment_bar_chart.png)")
@@ -70,24 +72,22 @@ class EnrichBarChart implements Runnable {
      */
     @Override
     public void run() {
+        validateOptions();
+        commonToAll.validateOptions();
         commonChartParams.validateOptions();
         commonToAll.setLoggingScope();
-
-        List<Deg> degs = commonFileParams.getDegs();
-        List<Pathway> pathways = commonFileParams.getPathways();
-        List<PathwayGene> pathwayGenes = commonFileParams.getPathwayGenes();
         
         Color[] colorArray = commonChartParams.getColorManualAsColors();
 
         EnrichmentAnalysisService enrichmentService = new EnrichmentAnalysisService();
         try {
             enrichmentService.generateEnrichmentChart(
-                    degs,
-                    pathways,
-                    pathwayGenes,
-                    commonChartParams.maxNPathways,
+                    commonFileParams.getDegs(),
+                    commonFileParams.getPathways(),
+                    commonFileParams.getPathwayGenes(),
+                    commonChartParams.getMaxNPathways(),
                     outputFilePath,
-                    commonChartParams.title,
+                    commonChartParams.getTitle(),
                     colorArray,
                     EnrichmentAnalysisService.ChartType.BAR_CHART, // Bar chart
                     null,  // dotSize not needed
@@ -95,6 +95,16 @@ class EnrichBarChart implements Runnable {
             );
         } catch (IOException e) {
             logger.error("Error reading input data or saving PNG: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * validates this.outputFilePath not to be null
+     * @throws CommandLine.ParameterException if any validation fails
+     */
+    private void validateOptions() {
+        if (outputFilePath == null) {
+            throw new CommandLine.ParameterException(spec.commandLine(), "Output file path -output-file must be specified");
         }
     }
 }
@@ -106,13 +116,16 @@ class EnrichBarChart implements Runnable {
 @Command(name = "enrich_dot_chart", version = "Enrichment dot-chart 1.0", mixinStandardHelpOptions = true,
         description = "This command generates an enrichment dot chart using given data.")
 class EnrichDotChart implements Runnable {
+    @CommandLine.Spec
+    private CommandLine.Model.CommandSpec spec;
+    private final Logger logger = LogManager.getLogger(EnrichDotChart.class);
+
     @Mixin
     private CommonToAll commonToAll;
     @Mixin
     private CommonFileParams commonFileParams;
     @Mixin
     private CommonChartParams commonChartParams;
-    private final Logger logger = LogManager.getLogger(EnrichDotChart.class);
 
     @Option(names = {"--dot-size", "-ds", "-DS"}, paramLabel = "[0.0-inf]",
             description = "Dot size, default = ${DEFAULT-VALUE}", defaultValue = "30.0")
@@ -130,24 +143,22 @@ class EnrichDotChart implements Runnable {
      */
     @Override
     public void run() {
+        validateOptions();
+        commonToAll.validateOptions();
         commonChartParams.validateOptions();
         commonToAll.setLoggingScope();
-
-        List<Deg> degs = commonFileParams.getDegs();
-        List<Pathway> pathways = commonFileParams.getPathways();
-        List<PathwayGene> pathwayGenes = commonFileParams.getPathwayGenes();
 
         Color[] colorArray = commonChartParams.getColorManualAsColors();
 
         EnrichmentAnalysisService enrichmentService = new EnrichmentAnalysisService();
         try {
             enrichmentService.generateEnrichmentChart(
-                    degs,
-                    pathways,
-                    pathwayGenes,
-                    commonChartParams.maxNPathways,
+                    commonFileParams.getDegs(),
+                    commonFileParams.getPathways(),
+                    commonFileParams.getPathwayGenes(),
+                    commonChartParams.getMaxNPathways(),
                     outputFilePath,
-                    commonChartParams.title,
+                    commonChartParams.getTitle(),
                     colorArray,
                     EnrichmentAnalysisService.ChartType.DOT_CHART, // Dot chart
                     dotSize,
@@ -155,6 +166,27 @@ class EnrichDotChart implements Runnable {
             );
         } catch (IOException e) {
             logger.error("Error reading input data or saving PNG: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * validates this.dotSize and this.dotTransparency to be positive.
+     * validates this.dotTransparency to be lower than 1.0
+     * validates this.outputFilePath not to be null
+     * @throws CommandLine.ParameterException if any validation fails
+     */
+    private void validateOptions() {
+        if (dotSize < 0) {
+            throw new CommandLine.ParameterException(spec.commandLine(), "Dot size --dot-size must be a positive number");
+        }
+        if (dotTransparency < 0.0) {
+            throw new CommandLine.ParameterException(spec.commandLine(), "Dot transparency --dot-transparency must be a positive number");
+        }
+        if (dotTransparency >= 1.0) {
+            throw new CommandLine.ParameterException(spec.commandLine(), "Dot transparency --dot-transparency cannot be greater than 1.0");
+        }
+        if (outputFilePath == null) {
+            throw new CommandLine.ParameterException(spec.commandLine(), "Output file path -output-file must be specified");
         }
     }
 }
@@ -166,6 +198,10 @@ class EnrichDotChart implements Runnable {
         mixinStandardHelpOptions = true,
         description = "Makes a bar-chart showing ratio's average log-fold-change on differently expressed genes per pathway.")
 class PercLogFChangePerPathwayCmd implements Runnable {
+    @CommandLine.Spec
+    private CommandLine.Model.CommandSpec spec;
+    private final Logger logger = LogManager.getLogger(PercLogFChangePerPathwayCmd.class);
+
     @Mixin
     private CommonToAll commonToAll;
     @Mixin
@@ -183,36 +219,49 @@ class PercLogFChangePerPathwayCmd implements Runnable {
      */
     @Override
     public void run() {
+        validateOptions();
+        commonToAll.validateOptions();
         commonChartParams.validateOptions();
         commonToAll.setLoggingScope();
-        List<Deg> degs = commonFileParams.getDegs();
-        List<Pathway> pathways = commonFileParams.getPathways();
-        List<PathwayGene> pathwayGenes = commonFileParams.getPathwayGenes();
-        PercLfcBarChart percLfcBarChart = new PercLfcBarChart(getChartGeneratorsBuilder(degs, pathways, pathwayGenes));
-        percLfcBarChart.saveChart();
+        PercLfcBarChart percLfcBarChart = new PercLfcBarChart(getChartGeneratorsBuilder());
+        try {
+            percLfcBarChart.saveChart();
+        } catch (IOException e) {
+            logger.error(e.getMessage());
+        } catch (IllegalArgumentException e1) {
+            logger.fatal(e1.getMessage());
+        }
     }
 
     /**
      * Builds the chart generator with the necessary parameters.
-     *
-     * @param degs List of differentially expressed genes.
-     * @param pathways List of pathways to analyze.
-     * @param pathwayGenes List of pathway genes associated with the pathways.
      * @return A builder for the PercLfcBarChart.
      */
-    private PercLfcBarChart.Builder getChartGeneratorsBuilder(List<Deg> degs, List<Pathway> pathways, List<PathwayGene> pathwayGenes) {
+    private PercLfcBarChart.Builder getChartGeneratorsBuilder() {
         return new PercLfcBarChart.Builder(
-                commonChartParams.title,
-                commonChartParams.xAxisTitle,
-                commonChartParams.yAxisTitle,
-                degs,
-                pathways,
-                pathwayGenes,
-                commonChartParams.outputPath)
+                commonChartParams.getTitle(),
+                commonChartParams.getxAxisTitle(),
+                commonChartParams.getyAxisTitle(),
+                commonFileParams.getDegs(),
+                commonFileParams.getPathways(),
+                commonFileParams.getPathwayGenes(),
+                commonChartParams.getOutputPath())
                 .colorManual(commonChartParams.getColorManualAsColors())
-                .maxNPathways(commonChartParams.maxNPathways)
-                .imageFormat(commonChartParams.imageFormat)
+                .maxNPathways(commonChartParams.getMaxNPathways())
+                .imageFormat(commonChartParams.getImageFormat())
                 .pathwayIds(pathwayIds);
+    }
+
+    /**
+     * validates if any string in this.pathwayIds is just a space-character: ' '
+     * @throws CommandLine.ParameterException if any validation fails
+     */
+    private void validateOptions() {
+        if (pathwayIds != null && pathwayIds.length != 0) {
+            if (Arrays.stream(pathwayIds).anyMatch(String::isEmpty)) {
+                throw new CommandLine.ParameterException(spec.commandLine(), "Not any pathway-id in option --pathway-ids can be empty, given pathway-ids: " + Arrays.toString(pathwayIds));
+            }
+        }
     }
 }
 
@@ -224,14 +273,13 @@ class PercLogFChangePerPathwayCmd implements Runnable {
         description = "Prints or stores to text file a continuity table of count data on 2 aspects of DEGs for every pathway: presence in pathway and presence of significance")
 class ContinuityTable implements Runnable {
 
+    final Logger logger = LogManager.getLogger(ContinuityTable.class);
+
     @CommandLine.Spec
     CommandLine.Model.CommandSpec spec;
 
-    final Logger logger = LogManager.getLogger(ContinuityTable.class);
-
     @Mixin
     private CommonToAll commonToAll;
-
     @Mixin
     private CommonFileParams commonFileParams;
 
@@ -248,12 +296,14 @@ class ContinuityTable implements Runnable {
      */
     @Override
     public void run() {
+        validateOptions();
+        commonToAll.validateOptions();
         commonToAll.setLoggingScope();
         TwoByTwoContingencyTable twoByTwoContingencyTable = new TwoByTwoContingencyTable(
                 commonFileParams.getDegs(),
                 commonFileParams.getPathways(),
                 commonFileParams.getPathwayGenes(),
-                commonToAll.pval
+                commonToAll.getPval()
         );
         try {
             String outputTable = twoByTwoContingencyTable.getTable();
@@ -265,25 +315,33 @@ class ContinuityTable implements Runnable {
 
     /**
      * Handles the output of the continuity table based on the specified option.
-     *
      * @param outputTable The generated continuity table as a string.
      */
     private void handleOutput(String outputTable) {
+
         if ("file".equalsIgnoreCase(output)) {
-            if (outputFilePath != null) {
-                try {
-                    java.nio.file.Files.write(outputFilePath.toPath(), outputTable.getBytes());
-                    logger.info("Continuity table written to: {}", outputFilePath.getPath());
-                } catch (IOException e) {
-                    logger.error("Error writing continuity table to file: {}", e.getMessage());
-                }
-            } else {
-                logger.error("No output file path provided. Use '--outputFilePath' to specify the file.");
+            try {
+                java.nio.file.Files.write(outputFilePath.toPath(), outputTable.getBytes());
+                logger.info("Continuity table written to: {}", outputFilePath.getPath());
+            } catch (IOException e) {
+                logger.error("Error writing continuity table to file: {}", e.getMessage());
             }
-        } else if ("print".equalsIgnoreCase(output)) {
-            System.out.println(outputTable);
         } else {
-            throw new CommandLine.ParameterException(spec.commandLine(), "Invalid output option. Use '--output [file|print]'.");
+            System.out.println(outputTable);
+        }
+    }
+
+    /**
+     * validates if this.output is either 'file' or 'print' (case-insensitive)
+     * validates if this.output is 'file', yet no file was given in this.outputFilePath
+     * @throws CommandLine.ParameterException if any validation fails
+     */
+    private void validateOptions() {
+        if (!output.equalsIgnoreCase("file") && !output.equalsIgnoreCase("print")) {
+            throw new CommandLine.ParameterException(spec.commandLine(), "Output type(--outputType) must either be 'file' or 'print', given output option: " + output);
+        }
+        if (outputFilePath == null && output.equalsIgnoreCase("file")) {
+            throw new CommandLine.ParameterException(spec.commandLine(), "Output file path(--outputFilePath) must be specified, if output type is 'file'.");
         }
     }
 }

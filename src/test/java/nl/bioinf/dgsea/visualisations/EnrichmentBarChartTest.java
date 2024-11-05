@@ -112,7 +112,7 @@ public class EnrichmentBarChartTest {
      */
     @Test
     public void testGetColorFromString() throws IOException {
-        EnrichmentBarChart chart = new EnrichmentBarChart(
+        new EnrichmentBarChart(
                 "Enrichment Bar Chart",
                 enrichmentResults,
                 pathways,

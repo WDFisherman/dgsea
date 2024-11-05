@@ -76,7 +76,7 @@ public class EnrichmentAnalysisService {
                         outputFile,
                         colorManual
                 );
-                logger.info("Bar chart saved as PNG at: " + outputFile);
+                logger.info("Bar chart saved as PNG at: {}", outputFile);
             }
             case DOT_CHART -> {
                 new EnrichmentDotPlot(

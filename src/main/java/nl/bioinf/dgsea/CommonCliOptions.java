@@ -12,6 +12,9 @@ import nl.bioinf.dgsea.data_processing.PathwayGene;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.core.config.LoggerConfig;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -38,32 +41,59 @@ public class CommonCliOptions {
  * This includes verbosity level and p-value thresholds for statistical analysis.
  */
 class CommonToAll {
+    @CommandLine.Spec
+    private CommandLine.Model.CommandSpec spec;
 
     @Option(names = {"-v", "-verbosity"},
             description = "Verbose logging",
             defaultValue = "true")
-    boolean[] verbose;
+    private boolean[] verbose;
 
     @Option(
-            names = {"--pval"}, paramLabel = "[0.0-1.0 ? 0.05]",
+            names = {"--pval"}, paramLabel = "[0.0-1.0]",
             description = """
-    P-value threshold for counting significant DEGs in the continuity table. Used for filtering DEGs before generating plots. Default = ${DEFAULT-VALUE}
+    P-value threshold for counting significant DEGs in the continuity table.
+    Used for filtering DEGs before generating plots. Default = ${DEFAULT-VALUE}
     """,
             defaultValue="0.01")
-    double pval;
+    private double pval;
 
     /**
      * Sets the logging scope based on the verbosity option provided.
      * Adjusts the log level according to the verbosity array.
      */
     public void setLoggingScope() {
-        if (verbose.length > 1) {
-            LogManager.getLogger().atLevel(Level.WARN).log(verbose);
-        } else if (verbose.length > 0) {
-            LogManager.getLogger().atLevel(Level.INFO).log(verbose);
+        LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
+        Configuration config = ctx.getConfiguration();
+        LoggerConfig loggerConfig = config.getLoggerConfig(LogManager.ROOT_LOGGER_NAME);
+        if (verbose.length == 1) {
+            loggerConfig.setLevel(Level.ERROR);
+        } else if (verbose.length == 2) {
+            loggerConfig.setLevel(Level.WARN);
+        } else if (verbose.length == 3) {
+            loggerConfig.setLevel(Level.INFO);
         } else {
-            LogManager.getLogger().atLevel(Level.ERROR).log(verbose);
+            loggerConfig.setLevel(Level.DEBUG);
         }
+        ctx.updateLoggers();
+    }
+
+    /**
+     * validates that this.pval is between 0 and 1, both inclusive.
+     * @throws CommandLine.ParameterException if any validation fails
+     */
+    public void validateOptions() {
+        if (pval < 0 || pval > 1) {
+            throw new CommandLine.ParameterException(spec.commandLine(), "P-value --pval must be between 0.0 and 1.0. Given pval: " + pval);
+        }
+    }
+
+    public void setVerbose(boolean[] verbose) {
+        this.verbose = verbose;
+    }
+
+    public double getPval() {
+        return pval;
     }
 }
 
@@ -73,6 +103,7 @@ class CommonToAll {
  */
 class CommonFileParams {
     private final FileParseUtils fileParseUtils = new FileParseUtils();
+    private final Logger logger = LogManager.getLogger(CommonFileParams.class);
 
     @Parameters(
             index = "0",
@@ -95,13 +126,14 @@ class CommonFileParams {
      * Parses and retrieves a list of differentially expressed genes (DEGs).
      *
      * @return List of DEGs.
-     * @throws RuntimeException if an error occurs while parsing the input file.
      */
     public List<Deg> getDegs() {
         try {
             return fileParseUtils.parseDegsFile(inputFileDegs);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            logger.fatal(e.getMessage());
+            System.exit(-1);
+            return null;
         }
     }
 
@@ -109,13 +141,14 @@ class CommonFileParams {
      * Parses and retrieves a list of pathways from the input file.
      *
      * @return List of pathways.
-     * @throws RuntimeException if an error occurs while parsing the input file.
      */
     public List<Pathway> getPathways() {
         try {
             return fileParseUtils.parsePathwayFile(inputFilePathwayDescriptions);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            logger.fatal(e.getMessage());
+            System.exit(-1);
+            return null;
         }
     }
 
@@ -123,13 +156,14 @@ class CommonFileParams {
      * Parses and retrieves a list of pathway genes from the input file.
      *
      * @return List of pathway genes.
-     * @throws RuntimeException if an error occurs while parsing the input file.
      */
     public List<PathwayGene> getPathwayGenes() {
         try {
             return fileParseUtils.parsePathwayGeneFile(inputFilePathwayGenes);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            logger.fatal(e.getMessage());
+            System.exit(-1);
+            return null;
         }
     }
 }
@@ -141,41 +175,49 @@ class CommonFileParams {
 class CommonChartParams {
     final Logger logger = LogManager.getLogger();
     @CommandLine.Spec
-    CommandLine.Model.CommandSpec spec;
+    private CommandLine.Model.CommandSpec spec;
+
+    @Parameters(index = "3+",
+            paramLabel = "<outputPathImage.*>",
+            description = "Output path of generated chart")
+    private File outputPath;
 
     @Option(names = {"--title", "-t", "-T"},
             description = "Title of the chart")
-    String title;
+    private String title;
 
     @Option(names = {"--x-axis-label", "-x-lab"},
             description = "X-axis title of the chart")
-    String xAxisTitle;
+    private String xAxisTitle;
 
     @Option(names = {"--y-axis-label", "-y-lab"},
             description = "Y-axis title of the chart")
-    String yAxisTitle;
+    private String yAxisTitle;
 
     @Option(names = {"--image-format", "-if"},
             paramLabel = "png|jpg",
             description = "Image format of the output image, default = '${DEFAULT-VALUE}'",
             defaultValue = "png")
-    String imageFormat;
+    private String imageFormat;
+
     @Option(names = {"--max-n-pathways", "-p-max"}, paramLabel = "1-inf", description = "Max number of pathways to include in chart. '--pathway-ids' overrides this option. Default = ${DEFAULT-VALUE}", defaultValue = "20")
-    int maxNPathways;
+    private int maxNPathways;
 
     @Option(names = {"--color-manual", "-cm"},
             arity = "1..*",
             split = ";",
             paramLabel = "red|0xRRGGBB",
             description = """
-    One or more colors to apply to chart. Cycles trough if too few colors were given. Default colors apply if none are given. Options:
-    red,green,blue,for more see: https://docs.oracle.com/javase/6/docs/java/awt/Color.html, 000000-FFFFFF, #000000-#FFFFFF, 0x000000-0xFFFFFF""")
+    One or more colors to apply to chart. Cycles trough if too few colors were given. Any invalid color will be ignored. Default colors apply if none/no valid ones are given.
+    Options: red,green,blue,for more see: https://docs.oracle.com/javase/6/docs/java/awt/Color.html, 000000-FFFFFF, #000000-#FFFFFF, 0x000000-0xFFFFFF""")
     private String[] colorManual;
-    @Parameters(index = "3+",
-                paramLabel = "<outputPathImage.*>",
-                description = "Output path of generated chart")
-    File outputPath;
 
+    /**
+     * Takes user color input(this.colorManual),
+     *  translates those colors to Java compatible colors(java.awt.Color) and
+     *  logs any non-translatable colors
+     * @return all translated colors, non-translatable are ignored
+     */
     public Color[] getColorManualAsColors() {
         if (colorManual == null) return new Color[0];
         Color[] colorManualAsColors = new Color[colorManual.length];
@@ -194,16 +236,46 @@ class CommonChartParams {
         return Arrays.stream(colorManualAsColors).filter(Objects::nonNull).toArray(Color[]::new);
     }
 
+    /**
+     * validates if this.imageFormat is either 'png' or 'jpg'.
+     * validates if this.maxNPathways is 0 or higher.
+     * @throws CommandLine.ParameterException if any validation fails
+     */
     public void validateOptions() {
         if (!(Objects.equals(imageFormat, "png") || Objects.equals(imageFormat, "jpg"))) {
             throw new CommandLine.ParameterException(spec.commandLine(), "Invalid image format option. Use '--image-format png or '--image-format jpg'.");
         }
         if (maxNPathways <= 0) {
-            throw new CommandLine.ParameterException(spec.commandLine(), "Invalid max number pathways option. Use '--max-n-pathway 1'.");
+            throw new CommandLine.ParameterException(spec.commandLine(), "Max number pathways option(--max-n-pathway) cannot be negative.");
         }
     }
 
+    // only for testing
     public void setColorManual(String[] colorManual) {
         this.colorManual = colorManual;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public String getxAxisTitle() {
+        return xAxisTitle;
+    }
+
+    public String getyAxisTitle() {
+        return yAxisTitle;
+    }
+
+    public String getImageFormat() {
+        return imageFormat;
+    }
+
+    public File getOutputPath() {
+        return outputPath;
+    }
+
+    public int getMaxNPathways() {
+        return maxNPathways;
     }
 }

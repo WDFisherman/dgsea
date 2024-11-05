@@ -91,7 +91,7 @@ public class PercLfcBarChart {
      * Gets calculated data then transforms it to bar-chart/categorical data.
      *  Then makes bar-chart and saves this to an image.
      */
-    public void saveChart() {
+    public void saveChart() throws IOException, IllegalArgumentException {
         DefaultCategoryDataset objDataset = getDefaultCategoryDataset();
 
         JFreeChart objChart = ChartFactory.createBarChart(
@@ -114,7 +114,7 @@ public class PercLfcBarChart {
             }
             logger.info("Chart was saved to file: {}", outputFilePath);
         } catch(IOException e) {
-            throw new RuntimeException("Failed to save chart to image file, given file path: %s".formatted(outputFilePath));
+            throw new IOException("Failed to save chart to image file, given file path: %s".formatted(outputFilePath));
         }
     }
 
@@ -122,7 +122,7 @@ public class PercLfcBarChart {
      * Gets calculated data then transforms it into bar-chart/categorical data.
      * @return bar-chart/categorical data
      */
-    private DefaultCategoryDataset getDefaultCategoryDataset() {
+    private DefaultCategoryDataset getDefaultCategoryDataset() throws IllegalArgumentException {
         DefaultCategoryDataset objDataset = new DefaultCategoryDataset();
         PercLfcPathways percLfcPathways = new PercLfcPathways(this.degs, this.pathwayGenes);
         if (pathwayIds == null) { // not provided by end-user

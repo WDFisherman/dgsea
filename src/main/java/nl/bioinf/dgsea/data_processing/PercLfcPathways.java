@@ -39,7 +39,7 @@ public class PercLfcPathways {
      * @throws IllegalArgumentException if pathwayIds is empty/not set
      * @return pathway-id, percentage-value pairs
      */
-    public double[] percAllPathways(String[] pathwayIds) {
+    public double[] percAllPathways(String[] pathwayIds) throws IllegalArgumentException {
         if (pathwayIds == null || pathwayIds.length == 0) throw new IllegalArgumentException("pathwayIds cannot be empty or null");
         double[] pathwayPercentages = new double[pathwayIds.length]; // could receive averages and then be modified to percentages
         final double[]  avgLfcAllPathways = new double[pathwayIds.length];
@@ -64,7 +64,7 @@ public class PercLfcPathways {
      * @throws IllegalArgumentException if pathway-id was not found in input data, field: pathwayGenes
      * @return Sum of averages in all pathways
      */
-    private double getTotalLfc(String[] pathwayIds, double[] avgLfcAllPathways) {
+    private double getTotalLfc(String[] pathwayIds, double[] avgLfcAllPathways) throws IllegalArgumentException {
         double totalLfcAllPathways = 0.0;
         int pathwayIndex = 0;
         final Map<String, List<PathwayGene>> pathwayGeneMap = getPathwayGeneMap();
@@ -75,7 +75,7 @@ public class PercLfcPathways {
             int countDegsInPathway = 0;
             List<PathwayGene> genesForPathway = pathwayGeneMap.getOrDefault(pathwayId, Collections.emptyList());
             if (genesForPathway.isEmpty())
-                throw new IllegalArgumentException("Pathway not found: provided pathway-id: %s was not found in the pathway-genes data".formatted(pathwayId.toLowerCase()));
+                throw new IllegalArgumentException("Pathway not found: provided pathway-id: '%s' was not found in the pathway-genes data".formatted(pathwayId.toLowerCase()));
             // Only iterate over the genes that belong to the current pathwayId
             for (PathwayGene gene : genesForPathway) {
                 if (!degMap.containsKey(gene.geneSymbol())) continue;

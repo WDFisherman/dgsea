@@ -6,7 +6,6 @@
 package nl.bioinf.dgsea;
 
 import picocli.CommandLine;
-import java.util.Arrays;
 
 /**
  * The Main class serves as the entry point for the DGSEA application.
